@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Informe de Carta Astral</title>
+  <style>
+    body {
+  font-family: 'Georgia', serif;
+  margin: 40px 20px; /* 40 arriba/abajo, 20 izquierda/derecha */
+  line-height: 1.6;
+  color: #333;
+}
+    .portada {
+      text-align: center;
+      margin-top: 100px;
+    }
+    .portada img {
+      width: 300px;
+      height: auto;
+    }
+    h1 {
+      font-size: 26px;
+      text-align: center;
+      margin-top: 40px;
+    }
+    h2 {
+      font-size: 22px;
+      margin-top: 40px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+    }
+    .dato {
+      font-weight: bold;
+    }
+    .carta-img {
+      text-align: center;
+      margin: 40px 0;
+    }
+    .section {
+      margin-top: 40px;
+    }
+	ul.planetas {
+    column-count: 2;
+    column-gap: 40px;
+}
+        .aspectario {
+            font-family: Arial, sans-serif;
+            margin: 20px 0;
+        }
+        
+        .aspectario h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .aspectario table {
+            border-collapse: collapse;
+            margin: 0 auto;
+            background: white;
+        }
+        
+        .aspectario td {
+            width: 15px;
+            height: 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+            padding: 0;
+            vertical-align: middle;
+        }
+        
+        .aspectario .planeta {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .aspectario .aspecto {
+            font-weight: bold;
+        }
+        
+        .aspectario .conjuncion { color: #ff0000; } /* Rojo */
+        .aspectario .oposicion { color: #0000ff; } /* Azul */
+        .aspectario .trigono { color: #00ff00; } /* Verde */
+        .aspectario .cuadratura { color: #ff0000; } /* Rojo */
+        .aspectario .sextil { color: #0000ff; } /* Azul */
+        .aspectario .quincuncio { color: #800080; } /* Púrpura */
+        .aspectario .semicuadratura { color: #ff8000; } /* Naranja */
+        .aspectario .sesquicuadratura { color: #ff8000; } /* Naranja */
+  </style>
+</head>
+<body>
+
+<!-- Portada -->
+<div class="portada">
+  <img src="{{ url_for('static', filename='astrologia-3.JPG') }}" alt="Carta Astral">
+  <h1>{{ nombre }}</h1>
+</div>
+<p><span class="dato">Fecha de nacimiento:</span> {{ fecha }}</p>
+<p><span class="dato">Hora de nacimiento:</span> {{ hora }}</p>
+<p><span class="dato">Lugar de nacimiento:</span> {{ ciudad }}, {{ pais }}</p>
+
+    <p>El lugar de nacimiento no hace falta que sea exacto, ya que es una posición a nivel planetario, con lo que un margen de más o menos 50 o 100 km no puede alterar prácticamente los resultados.</p>
+
+    <!-- Carta completa -->
+<div class="carta-img">
+  <img src="{{ url_for('static', filename='carta.png') }}" alt="Carta astral completa con aspectos" style="width:100%; max-width:600px;">
+</div>
+
+  <!-- Introducción -->
+  <div class="section">
+    <h2>Introducción</h2>
+    <p>Te presentamos tu análisis personalizado de carta astral, basado en la posición de los planetas desde el Sol hasta Plutón, ubicaciones en signos y casas, aspectos significativos y configuraciones relevantes.</p>
+  </div>
+
+  <!-- Análisis de personalidad -->
+<h2>Datos planetarios</h2>
+<ul class="planetas">
+  {% for planeta, datos in planetas.items() %}
+  <li><strong>{{ planeta|capitalize }}:</strong> {{ datos.degree|round(2) }}° en {{ datos.sign }}</li>
+{% endfor %}
+</ul>
+
+<h2>Aspectos</h2>
+<div class="aspectario">
+        <h3>Aspectario</h3>
+        <table>
+            <tr>
+                <td class="planeta">☉</td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">☽</td>
+                <td class="aspecto conjuncion">☌</td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">☿</td>
+                <td class="aspecto sextil">⚹</td>
+                <td class="aspecto trigono">△</td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">♀</td>
+                <td class="aspecto cuadratura">□</td>
+                <td class="aspecto sextil">⚹</td>
+                <td class="aspecto oposicion">☍</td>
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">♂</td>
+                <td class="aspecto">✗</td>
+                <td class="aspecto">□</td>
+                <td class="aspecto">Z</td>
+                <td class="aspecto">⚹</td>
+                <td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">♃</td>
+                <td class="aspecto">□</td>
+                <td class="aspecto">□</td>
+                <td class="aspecto">△</td>
+                <td class="aspecto">⚹</td>
+                <td class="aspecto">⚹</td>
+                <td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">♄</td>
+                <td class="aspecto">⚹</td>
+                <td class="aspecto">✗</td>
+                <td class="aspecto">✗</td>
+                <td class="aspecto">✗</td>
+                <td class="aspecto">✗</td>
+                <td class="aspecto">✗</td>
+                <td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">♅</td>
+                <td class="aspecto">✓</td>
+                <td class="aspecto">∠</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">□</td>
+                <td class="aspecto">△</td>
+                <td class="aspecto">✗</td>
+                <td class="aspecto">☍</td>
+                <td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">♆</td>
+                <td class="aspecto">⚹</td>
+                <td class="aspecto">0</td>
+                <td class="aspecto">△</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">✓</td>
+                <td class="aspecto">✓</td>
+                <td class="aspecto">✗</td>
+                <td></td><td></td>
+            </tr>
+            <tr>
+                <td class="planeta">♇</td>
+                <td class="aspecto">△</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">✓</td>
+                <td class="aspecto">□</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">✓</td>
+                <td class="aspecto">✓</td>
+                <td class="aspecto">✗</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="planeta">☊</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">✗</td>
+                <td class="aspecto">□</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">✓</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">☍</td>
+                <td class="aspecto">✗</td>
+                <td class="aspecto">△</td>
+                <td class="aspecto">⊕</td>
+            </tr>
+        </table>
+    </div>
+
+  <!-- Tránsitos futuros -->
+  <div class="section">
+    <h2>Proyecciones a futuro</h2>
+    <p>[Texto generado con los tránsitos importantes para los próximos 1–2 años, o hasta 5 años si hay algo destacable]</p>
+  </div>
+
+  <!-- Preguntas y cierre -->
+  <div class="section">
+    <h2>Preguntas del consultante</h2>
+    <p>[Resumen de respuestas si hubo preguntas durante la sesión]</p>
+
+    <h2>Conclusión</h2>
+    <p>Gracias por confiar en AS Carta Astral. Este informe busca ayudarte a comprenderte mejor y a tomar decisiones más conscientes. La astrología te muestra potenciales, pero tú eres quien elige el rumbo.</p>
+  </div>
+
+</body>
+</html>

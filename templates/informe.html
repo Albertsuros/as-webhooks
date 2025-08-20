@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Informe de Carta Astral - AS Cartastral</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      margin: 40px 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+    .portada {
+      text-align: center;
+      margin-top: 100px;
+      page-break-after: always;
+    }
+    .portada img {
+      width: 300px;
+      height: auto;
+    }
+    h1 {
+      font-size: 26px;
+      text-align: center;
+      margin-top: 40px;
+      color: #2c5aa0;
+    }
+    h2 {
+      font-size: 22px;
+      margin-top: 40px;
+      border-bottom: 2px solid #2c5aa0;
+      padding-bottom: 8px;
+      color: #2c5aa0;
+    }
+    h3 {
+      font-size: 18px;
+      color: #666;
+      margin-top: 25px;
+    }
+    .dato {
+      font-weight: bold;
+      color: #2c5aa0;
+    }
+    .carta-img {
+      text-align: center;
+      margin: 40px 0;
+      page-break-inside: avoid;
+    }
+    .carta-img img {
+      width: 100%;
+      max-width: 600px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .section {
+      margin-top: 40px;
+      page-break-inside: avoid;
+    }
+    .datos-natales {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    ul.planetas {
+      column-count: 2;
+      column-gap: 40px;
+      list-style-type: none;
+      padding: 0;
+    }
+    ul.planetas li {
+      padding: 5px 0;
+      border-bottom: 1px dotted #ddd;
+    }
+    .aspectario {
+      font-family: Arial, sans-serif;
+      margin: 20px 0;
+    }
+    .aspectario h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    .aspectario table {
+      border-collapse: collapse;
+      margin: 0 auto;
+      background: white;
+    }
+    .aspectario td {
+      width: 25px;
+      height: 25px;
+      border: 1px solid #ddd;
+      text-align: center;
+      font-size: 12px;
+      padding: 0;
+      vertical-align: middle;
+    }
+    .aspectario .planeta {
+      background-color: #2c5aa0;
+      color: white;
+      font-weight: bold;
+    }
+    .aspectario .aspecto {
+      font-weight: bold;
+    }
+    .aspectario .conjuncion { color: #ff0000; } /* Rojo */
+    .aspectario .oposicion { color: #0000ff; } /* Azul */
+    .aspectario .trigono { color: #00aa00; } /* Verde */
+    .aspectario .cuadratura { color: #ff0000; } /* Rojo */
+    .aspectario .sextil { color: #0066cc; } /* Azul claro */
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+    .interpretacion {
+      background: #fff8e1;
+      padding: 15px;
+      border-left: 4px solid #ff9800;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    @media print {
+      body { margin: 20px; }
+      .portada { page-break-after: always; }
+      .carta-img { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Portada -->
+<div class="portada">
+  <h1>🌟 INFORME ASTROLÓGICO PERSONALIZADO 🌟</h1>
+  <h2>{{ nombre }}</h2>
+  <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjBmOGZmIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iODAiIHN0cm9rZT0iIzJjNWFhMCIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTA1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMyYzVhYTAiPkFTIENhcnRhc3RyYWw8L3RleHQ+Cjwvc3ZnPgo=" alt="AS Cartastral">
+  <h3>Tu mapa celestial personalizado</h3>
+</div>
+
+<!-- Datos Natales -->
+<div class="datos-natales">
+  <h2>📊 Datos Natales</h2>
+  <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+  <p><span class="dato">Fecha de nacimiento:</span> {{ fecha }}</p>
+  <p><span class="dato">Hora de nacimiento:</span> {{ hora }}</p>
+  <p><span class="dato">Lugar de nacimiento:</span> {{ ciudad }}, {{ pais }}</p>
+  
+  <div class="interpretacion">
+    <strong>Nota importante:</strong> El lugar de nacimiento no hace falta que sea exacto, ya que trabajamos con posiciones planetarias a gran escala. Un margen de 50-100 km no altera significativamente los resultados astrológicos.
+  </div>
+</div>
+
+<!-- Carta Natal Principal -->
+{% if archivos_unicos and archivos_unicos.carta_natal_img %}
+<div class="carta-img">
+  <h2>🌍 Tu Carta Natal</h2>
+  <img src="file://{{ archivos_unicos.carta_natal_img }}" alt="Carta natal completa">
+  <p><em>Tu mapa astrológico personal mostrando las posiciones planetarias en el momento de tu nacimiento</em></p>
+</div>
+{% endif %}
+
+<!-- Introducción -->
+<div class="section">
+  <h2>✨ Introducción a tu Carta Astral</h2>
+  <p>Bienvenido/a a tu análisis astrológico personalizado. Este informe ha sido generado específicamente para ti, basándose en:</p>
+  <ul>
+    <li>🌟 Posiciones exactas de todos los planetas principales (Sol a Plutón)</li>
+    <li>🏠 Ubicaciones en signos zodiacales y casas astrológicas</li>
+    <li>⚡ Aspectos planetarios significativos</li>
+    <li>🔮 Configuraciones astrológicas relevantes para tu personalidad</li>
+  </ul>
+  
+  <div class="interpretacion">
+    <strong>¿Qué es una carta astral?</strong> Es como una fotografía del cielo en el momento exacto de tu nacimiento, vista desde tu lugar de nacimiento. Esta "foto cósmica" revela patrones energéticos únicos que influyen en tu personalidad, talentos y destino.
+  </div>
+</div>
+
+<!-- Datos Planetarios -->
+{% if planetas %}
+<div class="section">
+  <h2>🪐 Posiciones Planetarias</h2>
+  <p>Aquí tienes la ubicación exacta de cada planeta en tu carta natal:</p>
+  
+  <ul class="planetas">
+    {% for planeta, datos in planetas.items() %}
+    <li>
+      <strong>{{ planeta|capitalize }}:</strong> 
+      {{ datos.degree|round(2) }}° en {{ datos.sign }}
+      {% if datos.house %}<em>(Casa {{ datos.house }})</em>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  
+  <div class="interpretacion">
+    <strong>Interpretación:</strong> Cada planeta representa diferentes aspectos de tu personalidad. El Sol es tu esencia, la Luna tus emociones, Mercurio tu mente, Venus tu forma de amar, Marte tu energía, y así sucesivamente.
+  </div>
+</div>
+{% endif %}
+
+<!-- Aspectos Planetarios -->
+<div class="section">
+  <h2>⚡ Aspectos Planetarios</h2>
+  <p>Los aspectos son las "conversaciones" entre planetas que revelan dinámicas internas:</p>
+  
+  <div class="aspectario">
+    <h3>Aspectario</h3>
+    <table>
+      <tr>
+        <td class="planeta">☉</td>
+        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td class="planeta">☽</td>
+        <td class="aspecto conjuncion">☌</td>
+        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td class="planeta">☿</td>
+        <td class="aspecto sextil">⚹</td>
+        <td class="aspecto trigono">△</td>
+        <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td class="planeta">♀</td>
+        <td class="aspecto cuadratura">□</td>
+        <td class="aspecto sextil">⚹</td>
+        <td class="aspecto oposicion">☍</td>
+        <td></td><td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td class="planeta">♂</td>
+        <td class="aspecto">⚹</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">⚹</td>
+        <td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td class="planeta">♃</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">⚹</td>
+        <td class="aspecto">⚹</td>
+        <td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td class="planeta">♄</td>
+        <td class="aspecto">⚹</td>
+        <td class="aspecto">☍</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">⚹</td>
+        <td class="aspecto">☌</td>
+        <td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td class="planeta">♅</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">☍</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">⚹</td>
+        <td class="aspecto">☍</td>
+        <td></td><td></td>
+      </tr>
+      <tr>
+        <td class="planeta">♆</td>
+        <td class="aspecto">⚹</td>
+        <td class="aspecto">☌</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">☍</td>
+        <td class="aspecto">☍</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">⚹</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="planeta">♇</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">☍</td>
+        <td class="aspecto">☍</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">☍</td>
+        <td class="aspecto">△</td>
+        <td class="aspecto">□</td>
+        <td class="aspecto">⚹</td>
+      </tr>
+    </table>
+  </div>
+  
+  <div class="interpretacion">
+    <strong>Símbolos:</strong> ☌ Conjunción (unión), ☍ Oposición (tensión), △ Trígono (armonía), □ Cuadratura (desafío), ⚹ Sextil (oportunidad)
+  </div>
+</div>
+
+<!-- Progresiones Secundarias -->
+{% if archivos_unicos and archivos_unicos.progresiones_img %}
+<div class="carta-img">
+  <h2>🔄 Progresiones Secundarias</h2>
+  <img src="file://{{ archivos_unicos.progresiones_img }}" alt="Carta de progresiones secundarias">
+  <p><em>Tu evolución astrológica actual - cómo has cambiado desde tu nacimiento</em></p>
+  
+  <div class="interpretacion">
+    <strong>¿Qué son las progresiones?</strong> Muestran tu evolución personal y psicológica. Mientras tu carta natal es fija, las progresiones revelan cómo vas desarrollando diferentes aspectos de tu personalidad a lo largo de los años.
+  </div>
+</div>
+{% endif %}
+
+<!-- Tránsitos Actuales -->
+{% if archivos_unicos and archivos_unicos.transitos_img %}
+<div class="carta-img">
+  <h2>🌊 Tránsitos Actuales</h2>
+  <img src="file://{{ archivos_unicos.transitos_img }}" alt="Carta de tránsitos actuales">
+  <p><em>Las influencias planetarias que te afectan en este momento</em></p>
+  
+  <div class="interpretacion">
+    <strong>¿Qué son los tránsitos?</strong> Son las posiciones actuales de los planetas y cómo interactúan con tu carta natal. Te indican las energías cósmicas que influyen en tu vida presente y próximo futuro.
+  </div>
+</div>
+{% endif %}
+
+<!-- Análisis de Personalidad -->
+<div class="section">
+  <h2>🎭 Rasgos de Personalidad Principales</h2>
+  
+  <h3>☀️ Tu Sol (Esencia)</h3>
+  <div class="interpretacion">
+    Tu Sol representa tu núcleo esencial, tu propósito de vida y cómo brillas en el mundo. Es la energía central que te impulsa y define tu identidad básica.
+  </div>
+  
+  <h3>🌙 Tu Luna (Emociones)</h3>
+  <div class="interpretacion">
+    Tu Luna revela tu mundo emocional interno, tus necesidades instintivas y cómo procesas las experiencias a nivel subconsciente. También indica tu relación con lo femenino y la madre.
+  </div>
+  
+  <h3>🎯 Tu Ascendente (Máscara Social)</h3>
+  <div class="interpretacion">
+    Tu Ascendente es la "máscara" que muestras al mundo, tu primera impresión y cómo otros te perciben inicialmente. También influye en tu apariencia física y estilo personal.
+  </div>
+</div>
+
+<!-- Proyecciones Futuras -->
+<div class="section">
+  <h2>🔮 Proyecciones a Futuro</h2>
+  
+  <h3>Próximos 6 meses</h3>
+  <div class="interpretacion">
+    Los tránsitos planetarios actuales sugieren un período de crecimiento personal. Las configuraciones presentes favorecen la reflexión profunda y el desarrollo de nuevas perspectivas sobre tu camino de vida.
+  </div>
+  
+  <h3>Próximo año</h3>
+  <div class="interpretacion">
+    Las progresiones indican una fase de consolidación de logros anteriores. Es un momento propicio para establecer bases sólidas para futuros proyectos y profundizar en el autoconocimiento.
+  </div>
+  
+  <h3>Tendencias a largo plazo</h3>
+  <div class="interpretacion">
+    Los ciclos planetarios mayores señalan una época de transformación gradual pero profunda. Los próximos años serán importantes para definir tu dirección vital y desarrollar tu potencial único.
+  </div>
+</div>
+
+<!-- Recomendaciones -->
+<div class="section">
+  <h2>💡 Recomendaciones Personalizadas</h2>
+  
+  <h3>Para el crecimiento personal:</h3>
+  <ul>
+    <li>🧘 Dedica tiempo a la meditación y reflexión interior</li>
+    <li>📚 Estudia temas que amplíen tu perspectiva del mundo</li>
+    <li>🤝 Cultiva relaciones que nutran tu desarrollo espiritual</li>
+    <li>🎨 Explora tu creatividad a través del arte o la escritura</li>
+  </ul>
+  
+  <h3>Para el desarrollo profesional:</h3>
+  <ul>
+    <li>💼 Busca actividades que alineen con tus valores profundos</li>
+    <li>🌱 Considera proyectos que contribuyan al bienestar colectivo</li>
+    <li>📈 Desarrolla habilidades que potencien tu liderazgo natural</li>
+    <li>🔄 Mantente abierto/a a cambios y nuevas oportunidades</li>
+  </ul>
+</div>
+
+<!-- Conclusión -->
+<div class="section">
+  <h2>🌟 Reflexión Final</h2>
+  <div class="interpretacion">
+    <p>Tu carta astral es un mapa, no un destino fijo. Las configuraciones planetarias muestran potenciales y tendencias, pero tú siempre tienes el libre albedrío para elegir cómo expresar estas energías.</p>
+    
+    <p>Recuerda que la astrología es una herramienta de autoconocimiento que te ayuda a comprender tus patrones internos y a tomar decisiones más conscientes. Úsala como una guía para tu crecimiento personal, no como una limitación.</p>
+    
+    <p><strong>Tu poder está en conocerte a ti mismo/a y elegir conscientemente cómo quieres vivir tu vida.</strong></p>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <h2>📋 Información del Informe</h2>
+  <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}</p>
+  <p><strong>Hora de generación:</strong> {{ hora_generacion }} (Hora local de España)</p>
+  <p><strong>Tipo de análisis:</strong> Carta Astral Completa con Progresiones y Tránsitos</p>
+  <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos Personalizados</p>
+  
+  <hr style="margin: 20px 0;">
+  
+  <p style="font-size: 10px; color: #999;">
+    <strong>Nota legal:</strong> Este informe tiene fines de entretenimiento y desarrollo personal. 
+    La astrología no reemplaza el consejo médico, legal o financiero profesional. 
+    AS Cartastral no se hace responsable de las decisiones tomadas basándose en este análisis.
+  </p>
+  
+  <p style="font-size: 10px; color: #2c5aa0;">
+    Gracias por confiar en AS Cartastral para tu crecimiento personal y espiritual.
+  </p>
+</div>
+
+</body>
+</html>
