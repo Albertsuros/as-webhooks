@@ -1,0 +1,18 @@
+# archivo limpiar_cartas.py
+import os
+import time
+
+# ruta a la carpeta
+CARPETA = "cartas_generadas"
+# 7 días en segundos
+TIEMPO_LIMITE = 7 * 24 * 60 * 60
+
+ahora = time.time()
+
+for archivo in os.listdir(CARPETA):
+    ruta = os.path.join(CARPETA, archivo)
+    if os.path.isfile(ruta):
+        # si el archivo tiene más de 7 días, borrar
+        if ahora - os.path.getmtime(ruta) > TIEMPO_LIMITE:
+            print(f"Borrando {archivo} (antiguo)")
+            os.remove(ruta)
