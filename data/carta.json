@@ -1,0 +1,53 @@
+{
+    "planets": {
+        "Sun": 187.5179588,
+        "Moon": 173.4412534,
+        "Mercury": 197.8142583,
+        "Venus": 151.295761,
+        "Mars": 196.6641745,
+        "Jupiter": 239.2585753,
+        "Saturn": 271.0228133,
+        "Uranus": 139.6662329,
+        "Neptune": 215.6305566,
+        "Pluto": 155.0498082
+    },
+    "houses": {
+        "house  1": 255.997899,
+        "house  2": 290.9657983,
+        "house  3": 331.0750049,
+        "house  4": 7.0053563,
+        "house  5": 34.7595853,
+        "house  6": 56.6718599,
+        "house  7": 75.997899,
+        "house  8": 110.9657983,
+        "house  9": 151.0750049,
+        "house 10": 187.0053563,
+        "house 11": 214.7595853,
+        "house 12": 236.6718599
+    },
+    "points": {
+        "mean Node": 183.5735063,
+        "true Node": 184.0285477,
+        "mean Apogee": 65.3963855
+    },
+    "angles": {
+        "Ascendant": 255.997899,
+        "MC": 187.0053563,
+        "ARMC": 186.432212,
+        "Vertex": 119.1495028,
+        "equat. Asc.": 275.9052313,
+        "co-Asc. W.Koch": 294.5239611,
+        "co-Asc Munkasey": 250.6660381,
+        "Polar Asc.": 114.5239611
+ },
+"aspects": [
+    { "planet1": "Sun", "planet2": "Moon", "aspecto": "trine", "orbe": 4.5, "symbol": "△", "class": "trigono" },
+    { "planet1": "Sun", "planet2": "Mars", "aspecto": "square", "orbe": 2.0, "symbol": "□", "class": "cuadratura" },
+    { "planet1": "Venus", "planet2": "Mars", "aspecto": "sextile", "orbe": 1.3, "symbol": "⚹", "class": "sextil" },
+    { "planet1": "Mercury", "planet2": "Jupiter", "aspecto": "conjunction", "orbe": 5.0, "symbol": "☌", "class": "conjuncion" },
+    { "planet1": "Saturn", "planet2": "Pluto", "aspecto": "sextile", "orbe": 3.2, "symbol": "⚹", "class": "sextil" },
+    { "planet1": "Moon", "planet2": "Neptune", "aspecto": "trine", "orbe": 2.5, "symbol": "△", "class": "trigono" },
+    { "planet1": "Mars", "planet2": "Saturn", "aspecto": "square", "orbe": 1.8, "symbol": "□", "class": "cuadratura" },
+    { "planet1": "Uranus", "planet2": "Neptune", "aspecto": "sextile", "orbe": 4.1, "symbol": "⚹", "class": "sextil" }
+]
+}
