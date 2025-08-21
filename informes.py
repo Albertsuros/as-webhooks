@@ -1178,10 +1178,10 @@ Nota: Este informe es confidencial y está destinado únicamente para el uso per
         traceback.print_exc()
         return False
 
-def procesar_y_enviar_informe(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=None):
-    """Función principal que coordina todo el proceso de generación y envío"""
-    try:
-        print(f"🎯 Procesando informe {tipo_servicio} para: {datos_cliente.get('email', 'Cliente')}")
+def procesar_y_enviar_informe(datos_cliente, tipo_servicio, archivos_unicos=None, resumen_sesion=""):
+    # Temporalmente deshabilitado - WeasyPrint no disponible
+    print("Informes PDF temporalmente deshabilitados")
+    return None
         
         # 1. Generar HTML
         archivo_html = generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion)
