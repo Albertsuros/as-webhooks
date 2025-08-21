@@ -1,0 +1,68 @@
+import os
+from openai import OpenAI
+from datetime import datetime
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def handle_grafologia_webhook(data):
+    """Handler del agente de Grafología con respuestas naturales"""
+    try:
+        mensaje_usuario = data.get("text", "")
+        session_data = data.get("data_extra", {})
+        
+        if "mi letra dice" in mensaje_usuario.lower() or "análisis" in mensaje_usuario.lower():
+            response = """
+            Vamos a analizar tu letra. La grafología es una técnica fascinante que revela aspectos profundos de tu personalidad a través de tu escritura.
+            
+            Para hacer un análisis completo, necesito que me envíes una muestra de tu escritura por email. ¿Ya la enviaste?
+            """
+            
+        elif "inclinación" in mensaje_usuario.lower():
+            response = """
+            La inclinación de tu escritura es muy reveladora. Si tu letra se inclina hacia la derecha, suele indicar una personalidad extrovertida y orientada al futuro. Si es vertical, muestra equilibrio emocional. Si se inclina hacia la izquierda, puede indicar introspección y reflexión.
+            """
+            
+        elif "presión" in mensaje_usuario.lower() or "trazo" in mensaje_usuario.lower():
+            response = """
+            La presión del trazo nos habla de tu energía vital. Un trazo fuerte indica determinación y energía, mientras que un trazo suave sugiere sensibilidad y delicadeza. La presión equilibrada muestra estabilidad emocional.
+            """
+            
+        elif "compatible" in mensaje_usuario.lower() or "pareja" in mensaje_usuario.lower():
+            response = """
+            ¡Interesante pregunta! En grafología podemos analizar la compatibilidad comparando características como la inclinación, el ritmo de escritura y la presión del trazo. Personas con escrituras complementarias suelen tener buena compatibilidad.
+            """
+            
+        elif "trabajo" in mensaje_usuario.lower() or "profesión" in mensaje_usuario.lower():
+            response = """
+            Tu escritura puede revelar aptitudes profesionales fascinantes. Por ejemplo, letra pequeña y ordenada sugiere capacidad analítica, mientras que escritura grande y fluida indica aptitudes de liderazgo y comunicación.
+            """
+            
+        elif "personalidad" in mensaje_usuario.lower():
+            response = """
+            Tu escritura es como una radiografía de tu personalidad. Cada aspecto - desde el tamaño de las letras hasta los espacios entre palabras - revela características únicas tuyas. ¿Qué aspecto específico te interesa más?
+            """
+            
+        elif "enviado" in mensaje_usuario.lower() or "email" in mensaje_usuario.lower():
+            response = """
+            Perfecto, voy a revisar tu muestra de escritura. Dime tu nombre para personalizar el análisis. Mientras tanto, ¿hay algún aspecto específico de tu personalidad que te gustaría que analice?
+            """
+            
+        else:
+            # Respuesta general
+            response = """
+            Hola, soy tu especialista en grafología. Puedo analizar tu escritura para revelar aspectos fascinantes de tu personalidad, aptitudes y características psicológicas.
+            
+            ¿Ya enviaste tu muestra de escritura por email? Si tienes preguntas específicas sobre lo que revela tu letra, pregúntame.
+            """
+        
+        return {
+            "type": "speak",
+            "text": response
+        }
+        
+    except Exception as e:
+        print(f"Error en grafología webhook: {e}")
+        return {
+            "type": "speak", 
+            "text": "Disculpa, ha ocurrido un error. ¿Puedes repetir tu pregunta sobre grafología?"
+        }

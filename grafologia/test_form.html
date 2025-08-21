@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Test Grafología</title>
+  <style>body{font-family:sans-serif;margin:24px} form{margin:12px 0}</style>
+</head>
+<body>
+  <h1>Test Grafología</h1>
+
+  <h3>Health</h3>
+  <p><a href="/grafologia/health" target="_blank">/grafologia/health</a></p>
+
+  <h3>Analizar (JSON)</h3>
+  <form action="/grafologia/analizar" method="post" enctype="multipart/form-data" target="_blank">
+    <input type="file" name="file" accept="image/*" required>
+    <button>Enviar</button>
+  </form>
+
+  <h3>Informe (HTML)</h3>
+  <form action="/grafologia/informe" method="post" enctype="multipart/form-data" target="_blank">
+    <input type="file" name="file" accept="image/*" required>
+    <button>Generar Informe</button>
+  </form>
+
+  <h3>Informe (PDF)</h3>
+  <form action="/grafologia/informe_pdf" method="post" enctype="multipart/form-data" target="_blank">
+    <input type="file" name="file" accept="image/*" required>
+    <button>Generar PDF</button>
+  </form>
+</body>
+</html>

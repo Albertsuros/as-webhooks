@@ -1,0 +1,12 @@
+# Plantilla de reglas adicionales (ejemplo)
+# Copia y pega bloques bajo la dimensión correspondiente en tu rules.yml
+version: 1.0
+dimensiones:
+  - id: sociabilidad
+    peso_max: 1.0
+    reglas:
+      - id: ejemplo_inc_der_super_alta
+        when: "inclinacion_grados > 26"
+        peso: 0.1
+        texto: "Extroversión marcada; vigilar impulsividad."
+        evidencias: ["inclinacion_grados"]

@@ -1,0 +1,124 @@
+{
+  "info": {
+    "name": "Grafologia API v3",
+    "_postman_id": "7c111111-2222-3333-4444-555555555555",
+    "description": "Colección de pruebas para /grafologia",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/grafologia/health",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "grafologia",
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Analizar",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": [
+                "sample.jpg"
+              ]
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base}}/grafologia/analizar",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "grafologia",
+            "analizar"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Informe (HTML)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": [
+                "sample.jpg"
+              ]
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base}}/grafologia/informe",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "grafologia",
+            "informe"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Informe (PDF)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": [
+                "sample.jpg"
+              ]
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base}}/grafologia/informe_pdf",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "grafologia",
+            "informe_pdf"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base",
+      "value": "http://127.0.0.1:5000"
+    }
+  ]
+}

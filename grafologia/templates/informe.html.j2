@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Informe grafológico</title>
+<style>
+body{font-family:Arial, sans-serif; margin:28px}
+.bar{height:8px;background:#eee;border-radius:4px;overflow:hidden}
+.bar>div{height:100%;background:#8ab4f8}
+.card{border:1px solid #ddd;border-radius:8px;padding:10px;margin:8px 0}
+</style>
+</head>
+<body>
+<h1>Informe grafológico</h1>
+<p style="color:#666">Interpretación no científica. Confianza: {{ (result.confianza*100)|round(0) }}%</p>
+{% for dim, data in result.scores.items() %}
+<div class="card">
+  <strong>{{ dim|capitalize }}</strong>
+  <div class="bar"><div style="width: {{ ((data.score + 1.0) / 2.0) * 100 }}%"></div></div>
+  <ul>
+    {% for t in data.textos %}<li>{{ t }}</li>{% endfor %}
+  </ul>
+</div>
+{% endfor %}
+<h3>Medidas</h3>
+<table border="1" cellpadding="6" cellspacing="0">
+{% for k,v in metrics.items() %}
+<tr><th>{{ k }}</th><td>{{ v }}</td></tr>
+{% endfor %}
+</table>
+</body>
+</html>

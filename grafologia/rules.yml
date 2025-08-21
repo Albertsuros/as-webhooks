@@ -1,0 +1,1215 @@
+version: 1.0
+dimensiones:
+  - id: sociabilidad
+    peso_max: 1.0
+    reglas:
+      - id: inc_der_suave
+        when: "8 <= inclinacion_grados <= 14 and var_inclinacion <= 6"
+        peso: 0.15
+        texto: "Apertura y orientación social moderada."
+        evidencias: ["inclinacion_grados","var_inclinacion"]
+      - id: inc_der_media
+        when: "14 < inclinacion_grados <= 20 and var_inclinacion <= 7"
+        peso: 0.18
+        texto: "Sociabilidad y afán de contacto."
+        evidencias: ["inclinacion_grados","var_inclinacion"]
+      - id: inc_der_alta
+        when: "inclinacion_grados > 20"
+        peso: 0.12
+        texto: "Impulso relacional alto (posible impaciencia)."
+        evidencias: ["inclinacion_grados"]
+      - id: margenes_estrechos
+        when: "margen_izq_px < 30 and margen_der_px < 30"
+        peso: 0.1
+        texto: "Menor distancia interpersonal, búsqueda de proximidad."
+        evidencias: ["margen_izq_px","margen_der_px"]
+      - id: margen_izq_corto
+        when: "margen_izq_px < 20"
+        peso: 0.08
+        texto: "Impulso a iniciar rápido, apertura a lo nuevo."
+        evidencias: ["margen_izq_px"]
+      - id: esp_palabras_cortos
+        when: "espaciado_palabras_px > 0 and espaciado_palabras_px < 18"
+        peso: 0.12
+        texto: "Necesidad de cercanía y respuesta inmediata."
+        evidencias: ["espaciado_palabras_px"]
+      - id: esp_palabras_largos
+        when: "espaciado_palabras_px >= 30"
+        peso: -0.1
+        texto: "Mayor reserva/interposición de distancia social."
+        evidencias: ["espaciado_palabras_px"]
+      - id: cv_esp_palabras_bajo
+        when: "cv_esp_palabras <= 0.22"
+        peso: 0.06
+        texto: "Ritmo social estable y predecible."
+        evidencias: ["cv_esp_palabras"]
+      - id: cv_esp_palabras_alto
+        when: "cv_esp_palabras >= 0.35"
+        peso: -0.06
+        texto: "Ritmo relacional irregular."
+        evidencias: ["cv_esp_palabras"]
+      - id: var_inc_alta
+        when: "var_inclinacion >= 12"
+        peso: -0.08
+        texto: "Expresividad cambiante que puede dificultar sintonía."
+        evidencias: ["var_inclinacion"]
+
+  - id: autocontrol
+    peso_max: 1.0
+    reglas:
+      - id: trazo_constante
+        when: "regularidad_tamano <= 0.25 and cv_esp_letras <= 0.25"
+        peso: 0.25
+        texto: "Control y constancia en la ejecución."
+        evidencias: ["regularidad_tamano","cv_esp_letras"]
+      - id: linea_estable
+        when: "abs(pendiente_linea_media) <= 1.2 and ondulacion_base <= 1.8"
+        peso: 0.2
+        texto: "Estabilidad de base y gestión del impulso."
+        evidencias: ["pendiente_linea_media","ondulacion_base"]
+      - id: var_inc_baja
+        when: "var_inclinacion <= 5.0"
+        peso: 0.12
+        texto: "Uniformidad de gesto, dominio del movimiento."
+        evidencias: ["var_inclinacion"]
+      - id: presion_baja
+        when: "grosor_trazo_px < 2.0 and contraste_med < 28"
+        peso: -0.2
+        texto: "Impulso bajo o ahorro de energía."
+        evidencias: ["grosor_trazo_px","contraste_med"]
+      - id: presion_media
+        when: "2.0 <= grosor_trazo_px <= 3.1 and contraste_med >= 25"
+        peso: 0.1
+        texto: "Buen tono de control sostenido."
+        evidencias: ["grosor_trazo_px","contraste_med"]
+      - id: esp_letras_constante
+        when: "cv_esp_letras <= 0.2 and espaciado_letras_px > 0"
+        peso: 0.18
+        texto: "Autocontrol en el micro-ritmo de escritura."
+        evidencias: ["cv_esp_letras","espaciado_letras_px"]
+      - id: oscilacion_base
+        when: "ondulacion_base >= 2.2"
+        peso: -0.12
+        texto: "Fluctuación del control postural."
+        evidencias: ["ondulacion_base"]
+      - id: pendiente_extrema
+        when: "abs(pendiente_linea_media) >= 2.0"
+        peso: -0.08
+        texto: "Desvío postural sostenido."
+        evidencias: ["pendiente_linea_media"]
+
+  - id: organizacion
+    peso_max: 1.0
+    reglas:
+      - id: margenes_equilibrados
+        when: "margen_izq_px >= 15 and margen_der_px >= 15"
+        peso: 0.18
+        texto: "Planificación del espacio en página."
+        evidencias: ["margen_izq_px","margen_der_px"]
+      - id: margenes_constantes
+        when: "margen_izq_px >= 15 and margen_der_px >= 15 and cv_esp_letras <= 0.22"
+        peso: 0.15
+        texto: "Cohesión viso-espacial."
+        evidencias: ["margen_izq_px","margen_der_px","cv_esp_letras"]
+      - id: regularidad_tamano_baja
+        when: "regularidad_tamano <= 0.22"
+        peso: 0.2
+        texto: "Uniformidad de módulos gráficos."
+        evidencias: ["regularidad_tamano"]
+      - id: esp_letras_homogeneo
+        when: "cv_esp_letras <= 0.2 and espaciado_letras_px > 0"
+        peso: 0.2
+        texto: "Ritmo homogéneo, orden micro-espacial."
+        evidencias: ["cv_esp_letras","espaciado_letras_px"]
+      - id: esp_palabras_homogeneo
+        when: "cv_esp_palabras <= 0.25 and espaciado_palabras_px > 0"
+        peso: 0.15
+        texto: "Separación de palabras coherente."
+        evidencias: ["cv_esp_palabras","espaciado_palabras_px"]
+      - id: linea_recta
+        when: "abs(pendiente_linea_media) <= 0.8"
+        peso: 0.1
+        texto: "Tendencia a la horizontalidad/orden."
+        evidencias: ["pendiente_linea_media"]
+      - id: desorden_espaciado
+        when: "cv_esp_letras >= 0.35"
+        peso: -0.15
+        texto: "Irregularidad en el micro-espaciado."
+        evidencias: ["cv_esp_letras"]
+      - id: variacion_tamano
+        when: "regularidad_tamano >= 0.35"
+        peso: -0.15
+        texto: "Tamaño inconstante entre signos."
+        evidencias: ["regularidad_tamano"]
+
+  - id: detalle
+    peso_max: 1.0
+    reglas:
+      - id: x_altura_baja
+        when: "x_altura_px > 0 and x_altura_px < 12"
+        peso: 0.2
+        texto: "Tendencia a lo minucioso/preciso."
+        evidencias: ["x_altura_px"]
+      - id: x_altura_media
+        when: "12 <= x_altura_px <= 16"
+        peso: 0.1
+        texto: "Escala contenida, favorece precisión."
+        evidencias: ["x_altura_px"]
+      - id: gaps_letras_peq
+        when: "espaciado_letras_px > 0 and espaciado_letras_px < 8"
+        peso: 0.12
+        texto: "Economía de espacio, enfoque fino."
+        evidencias: ["espaciado_letras_px"]
+      - id: var_inc_baja
+        when: "var_inclinacion <= 6"
+        peso: 0.1
+        texto: "Uniformidad de gesto favorece nitidez."
+        evidencias: ["var_inclinacion"]
+      - id: trazos_cortos
+        when: "longitud_media_trazo < 16"
+        peso: 0.08
+        texto: "Segmentación fina del movimiento."
+        evidencias: ["longitud_media_trazo"]
+      - id: contraste_medio
+        when: "28 <= contraste_med <= 45"
+        peso: 0.08
+        texto: "Lectura clara de rasgos menudos."
+        evidencias: ["contraste_med"]
+      - id: gaps_letras_altos
+        when: "espaciado_letras_px >= 12"
+        peso: -0.08
+        texto: "Posible pérdida de compacidad micro."
+        evidencias: ["espaciado_letras_px"]
+      - id: x_altura_alta
+        when: "x_altura_px > 18"
+        peso: -0.12
+        texto: "Escala amplia, prioriza legibilidad global vs detalle."
+        evidencias: ["x_altura_px"]
+
+  - id: energia
+    peso_max: 1.0
+    reglas:
+      - id: presion_fuerte
+        when: "grosor_trazo_px >= 3.2 or contraste_med >= 45"
+        peso: 0.3
+        texto: "Intensidad y vigor motor."
+        evidencias: ["grosor_trazo_px","contraste_med"]
+      - id: trazos_largos
+        when: "longitud_media_trazo >= 18"
+        peso: 0.15
+        texto: "Reserva de energía para completar gestos."
+        evidencias: ["longitud_media_trazo"]
+      - id: direccion_ascendente
+        when: "pendiente_linea_media >= 0.8"
+        peso: 0.12
+        texto: "Tono vital y expectativa positiva."
+        evidencias: ["pendiente_linea_media"]
+      - id: presion_media
+        when: "2.5 <= grosor_trazo_px < 3.2"
+        peso: 0.12
+        texto: "Buen tono de ejecución."
+        evidencias: ["grosor_trazo_px"]
+      - id: presion_baja
+        when: "grosor_trazo_px < 2.0 and contraste_med < 28"
+        peso: -0.2
+        texto: "Bajo empuje o fatiga."
+        evidencias: ["grosor_trazo_px","contraste_med"]
+      - id: contraste_bajo
+        when: "contraste_med < 22"
+        peso: -0.12
+        texto: "Débil diferenciación figura-fondo."
+        evidencias: ["contraste_med"]
+      - id: direccion_desc
+        when: "pendiente_linea_media <= -0.8"
+        peso: -0.1
+        texto: "Descenso tónico/cansancio situacional."
+        evidencias: ["pendiente_linea_media"]
+
+  - id: emotividad
+    peso_max: 1.0
+    reglas:
+      - id: var_inc_alta
+        when: "var_inclinacion >= 10"
+        peso: 0.2
+        texto: "Expresividad/variabilidad emotiva."
+        evidencias: ["var_inclinacion"]
+      - id: ondulacion_alta
+        when: "ondulacion_base >= 2.2"
+        peso: 0.15
+        texto: "Oscilación anímica."
+        evidencias: ["ondulacion_base"]
+      - id: gaps_palabras_grandes
+        when: "espaciado_palabras_px >= 30"
+        peso: -0.1
+        texto: "Necesidad de distancia/pausas afectivas."
+        evidencias: ["espaciado_palabras_px"]
+      - id: linea_oscilante
+        when: "abs(pendiente_linea_media) <= 0.5 and 1.8 <= ondulacion_base <= 2.5"
+        peso: 0.08
+        texto: "Matiz expresivo sin perder base."
+        evidencias: ["pendiente_linea_media","ondulacion_base"]
+      - id: var_inc_media
+        when: "6 < var_inclinacion < 10"
+        peso: 0.08
+        texto: "Cambios emocionales moderados."
+        evidencias: ["var_inclinacion"]
+      - id: oscilacion_baja
+        when: "ondulacion_base < 1.2"
+        peso: -0.06
+        texto: "Expresión contenida."
+        evidencias: ["ondulacion_base"]
+
+# ========================================
+# INTERPRETACIONES DETALLADAS PROFESIONALES
+# ========================================
+interpretaciones_detalladas:
+  
+  sociabilidad:
+    alto: # Score > 0.6
+      descripcion_general: |
+        Tu escritura revela una personalidad marcadamente extrovertida y sociable. Eres una persona que se energiza 
+        en el contacto con otros y que busca activamente la compañía y la conexión humana. Tu forma de relacionarte 
+        es espontánea y auténtica, lo que te hace muy atractivo socialmente.
+      
+      caracteristicas_principales: |
+        - Te sientes cómodo siendo el centro de atención
+        - Inicias conversaciones con facilidad, incluso con desconocidos
+        - Prefieres trabajar en equipo que de forma individual
+        - Buscas feedback y validación de otros frecuentemente
+        - Te adaptas rápidamente a nuevos grupos sociales
+        - Tienes una red social amplia y diversa
+        - Expresas tus emociones de forma abierta y directa
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Eres visto como el conector del equipo, quien facilita la comunicación entre departamentos. 
+        Destacas en roles que requieren interacción constante con clientes o colegas. Las reuniones te energizan 
+        en lugar de agotarte.
+        
+        En relaciones: Necesitas una pareja que comprenda tu necesidad de socializar. Eres el que organiza 
+        las salidas con amigos. Tu casa suele ser el punto de encuentro del grupo.
+        
+        En crisis: Buscas apoyo hablando con múltiples personas. Procesas los problemas externamente, 
+        necesitando expresar tus sentimientos para entenderlos.
+      
+      fortalezas:
+        - Liderazgo natural en equipos
+        - Excelente comunicador
+        - Capacidad de networking
+        - Motivador de otros
+        - Facilita la cohesión grupal
+      
+      areas_mejora:
+        - Aprender a valorar los momentos de soledad
+        - Desarrollar la escucha activa
+        - No tomar las críticas como algo personal
+        - Respetar el espacio personal de los introvertidos
+      
+      compatibilidad_pareja: |
+        Ideal con personas también sociables que disfruten de una vida social activa. Puede haber fricciones 
+        con parejas muy introvertidas que prefieran la intimidad privada. Necesitas una pareja que no se sienta 
+        amenazada por tu amplio círculo social.
+      
+      aptitudes_profesionales:
+        - Ventas y atención al cliente
+        - Recursos humanos
+        - Marketing y comunicación
+        - Organización de eventos
+        - Coaching y formación
+        - Relaciones públicas
+      
+      preguntas_cliente:
+        - "¿Te energizan las situaciones sociales o te agotan?"
+        - "¿Eres tú quien suele iniciar los planes con amigos?"
+        - "¿Prefieres trabajar en equipo o de forma individual?"
+        - "¿Cómo procesas los problemas: hablando con otros o reflexionando solo?"
+    
+    medio: # Score 0.3-0.6
+      descripcion_general: |
+        Tienes un perfil social equilibrado, capaz de disfrutar tanto de la compañía como de la soledad. 
+        Esta flexibilidad te permite adaptarte a diferentes situaciones sociales según tu estado de ánimo 
+        y las circunstancias del momento.
+      
+      caracteristicas_principales: |
+        - Alternas entre períodos sociales y momentos de introspección
+        - Eliges cuidadosamente tus círculos sociales
+        - Te sientes cómodo tanto en grupos pequeños como grandes
+        - Puedes liderar cuando es necesario, pero no lo buscas constantemente
+        - Valoras la calidad sobre la cantidad en las relaciones
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Funcionas bien tanto en proyectos de equipo como en tareas individuales. 
+        Eres un mediador natural en conflictos. Te adaptas al estilo de comunicación de tu entorno.
+        
+        En relaciones: Necesitas tanto tiempo de pareja como tiempo con amigos. Valoras las 
+        conversaciones profundas sobre las charlas superficiales.
+      
+      aptitudes_profesionales:
+        - Gestión de proyectos
+        - Consultoría
+        - Educación
+        - Mediación y resolución de conflictos
+    
+    bajo: # Score < 0.3
+      descripcion_general: |
+        Tu escritura sugiere una personalidad más introvertida y reflexiva. Prefieres las relaciones 
+        profundas y significativas sobre los contactos superficiales. Tu mundo interior es rico y 
+        necesitas tiempo a solas para recargar energías.
+      
+      caracteristicas_principales: |
+        - Prefieres grupos pequeños e íntimos
+        - Necesitas tiempo a solas para procesar experiencias
+        - Eres selectivo con tus amistades
+        - Escuchas más de lo que hablas
+        - Observas antes de participar en nuevas situaciones
+        - Valoras la profundidad sobre la cantidad en relaciones
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Destacas en tareas que requieren concentración y análisis profundo. 
+        Prefieres comunicarte por escrito que en reuniones grandes. Necesitas espacios tranquilos.
+        
+        En relaciones: Tienes pocos amigos, pero muy cercanos. Prefieres citas íntimas que 
+        grandes celebraciones. Tu pareja debe respetar tu necesidad de espacio personal.
+      
+      fortalezas:
+        - Capacidad de concentración excepcional
+        - Relaciones profundas y duraderas
+        - Excelente observador
+        - Pensamiento analítico
+        - Autosuficiencia emocional
+      
+      aptitudes_profesionales:
+        - Investigación y análisis
+        - Programación y tecnología
+        - Escritura y edición
+        - Contabilidad y finanzas
+        - Arte y diseño
+
+  autocontrol:
+    alto: # Score > 0.6
+      descripcion_general: |
+        Tu escritura revela un excelente autocontrol emocional y una notable disciplina personal. 
+        Eres una persona que mantiene la calma bajo presión y que es capaz de tomar decisiones 
+        racionales incluso en situaciones emocionalmente cargadas.
+      
+      caracteristicas_principales: |
+        - Mantienes la compostura en situaciones estresantes
+        - Tienes una excelente capacidad de planificación a largo plazo
+        - Eres predecible y confiable en tu comportamiento
+        - Controlas bien tus impulsos y reacciones emocionales
+        - Tienes disciplina para mantener rutinas y hábitos
+        - Tomas decisiones basadas en la lógica más que en las emociones
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Eres visto como el 'puerto seguro' del equipo. En crisis, otros recurren a ti 
+        por tu capacidad de mantener la calma. Cumples deadlines consistentemente y rara vez te ven 
+        estresado públicamente.
+        
+        En relaciones: Tu pareja valora tu estabilidad emocional. No explotas en discusiones, 
+        prefieres resolver conflictos mediante el diálogo pausado. Eres el que mantiene la 
+        familia organizada y centrada.
+        
+        En crisis: Permaneces sereno y buscas soluciones prácticas. Tu primera reacción es 
+        analizar la situación objetivamente antes de actuar.
+      
+      fortalezas:
+        - Liderazgo en situaciones de crisis
+        - Confiabilidad excepcional
+        - Capacidad de gestión y organización
+        - Mediador natural en conflictos
+        - Resistencia al estrés
+      
+      areas_mejora:
+        - Permitirte expresar emociones más libremente
+        - No reprimir demasiado la espontaneidad
+        - Aceptar que no siempre puedes controlarlo todo
+        - Ser más flexible con los cambios inesperados
+      
+      compatibilidad_pareja: |
+        Ideal con personas que valoren la estabilidad y previsibilidad. Puede haber tensión con 
+        parejas muy espontáneas o emocionales que interpreten tu control como frialdad. Tu pareja 
+        debe entender que tu tranquilidad no significa falta de pasión.
+      
+      aptitudes_profesionales:
+        - Gestión y dirección ejecutiva
+        - Finanzas y banca
+        - Medicina y salud
+        - Seguridad y defensa
+        - Gestión de crisis
+        - Administración pública
+      
+      preguntas_cliente:
+        - "¿Los demás recurren a ti en momentos de crisis?"
+        - "¿Te cuesta trabajo expresar tus emociones abiertamente?"
+        - "¿Planificas mucho antes de tomar decisiones importantes?"
+        - "¿Mantienes rutinas diarias sin dificultad?"
+    
+    medio: # Score 0.3-0.6
+      descripcion_general: |
+        Tienes un autocontrol equilibrado que te permite ser flexible según las circunstancias. 
+        Puedes mantener la compostura cuando es necesario, pero también sabes cuándo es apropiado 
+        mostrar emociones o ser más espontáneo.
+      
+      caracteristicas_principales: |
+        - Equilibras la planificación con la espontaneidad
+        - Puedes adaptarte a cambios inesperados
+        - Expresas emociones de forma medida
+        - Tienes autocontrol, pero no eres rígido
+        - Balanceas la lógica con la intuición en las decisiones
+      
+      aptitudes_profesionales:
+        - Gestión de equipos
+        - Educación y formación
+        - Consultoría
+        - Servicios al cliente
+    
+    bajo: # Score < 0.3
+      descripcion_general: |
+        Tu escritura sugiere una personalidad más espontánea e impulsiva. Tiendes a expresar 
+        tus emociones de forma directa y a actuar siguiendo tu intuición. Esta autenticidad 
+        emocional es una de tus mayores fortalezas.
+      
+      caracteristicas_principales: |
+        - Actúas siguiendo tu intuición más que la planificación
+        - Expresas emociones de forma auténtica y directa
+        - Eres espontáneo en tus decisiones
+        - Te adaptas rápidamente a cambios
+        - Priorizas la autenticidad sobre las convenciones
+        - Puedes ser impaciente con procesos muy estructurados
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Aportas creatividad y frescura al equipo. Eres excelente en brainstorming 
+        y situaciones que requieren pensamiento innovador. Puedes frustrarte con demasiada burocracia.
+        
+        En relaciones: Tu pareja siempre sabe lo que sientes. Eres apasionado y expresivo. 
+        Las discusiones pueden ser intensas pero se resuelven rápidamente.
+      
+      fortalezas:
+        - Autenticidad emocional
+        - Creatividad e innovación
+        - Adaptabilidad
+        - Capacidad de inspirar a otros
+        - Resolución rápida de conflictos
+      
+      areas_mejora:
+        - Desarrollar paciencia para planificación a largo plazo
+        - Pensar antes de hablar en situaciones delicadas
+        - Aprender técnicas de gestión del estrés
+        - Practicar la escucha activa
+      
+      aptitudes_profesionales:
+        - Arte y creatividad
+        - Ventas y marketing
+        - Emprendimiento
+        - Comunicación y medios
+        - Trabajo social
+
+  organizacion:
+    alto: # Score > 0.6
+      descripcion_general: |
+        Tu escritura refleja una mente altamente organizada y sistemática. Tienes una capacidad 
+        natural para estructurar información, planificar eficientemente y mantener orden tanto 
+        en tu entorno físico como mental.
+      
+      caracteristicas_principales: |
+        - Todo tiene su lugar y propósito en tu vida
+        - Planificas con anticipación y sigues cronogramas
+        - Tienes sistemas eficientes para gestionar tareas
+        - Prefieres ambientes ordenados y estructurados
+        - Divides proyectos grandes en pasos manejables
+        - Mantienes registros detallados y documentación
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Eres el que otros consultan sobre procesos y procedimientos. Tu escritorio 
+        y archivos están impecablemente organizados. Nunca pierdes deadlines y sueles entregar 
+        antes de tiempo.
+        
+        En casa: Tu hogar refleja orden y funcionalidad. Tienes rutinas establecidas para las 
+        tareas domésticas. Tu agenda personal está planificada con semanas de anticipación.
+        
+        En viajes: Investigas destinos, tienes itinerarios detallados y listas de equipaje. 
+        Otros confían en ti para organizar viajes grupales.
+      
+      fortalezas:
+        - Eficiencia excepcional
+        - Capacidad de gestión de proyectos
+        - Confiabilidad en entregas
+        - Pensamiento sistémico
+        - Reducción de errores por planificación
+      
+      areas_mejora:
+        - Permitir más flexibilidad y espontaneidad
+        - No obsesionarse con detalles menores
+        - Aceptar que no todo se puede planificar
+        - Delegar sin perder el control total
+      
+      aptitudes_profesionales:
+        - Gestión de operaciones
+        - Administración y logística
+        - Gestión de proyectos
+        - Contabilidad y finanzas
+        - Planificación estratégica
+        - Gestión de calidad
+      
+      preguntas_cliente:
+        - "¿Tu espacio de trabajo está siempre ordenado?"
+        - "¿Haces listas para organizar tus tareas?"
+        - "¿Te molesta cuando otros no siguen procedimientos establecidos?"
+        - "¿Planificas tus vacaciones con mucha anticipación?"
+    
+    medio: # Score 0.3-0.6
+      descripcion_general: |
+        Tienes un nivel de organización funcional que te permite ser eficiente sin caer en la rigidez. 
+        Balanceas la estructura con la flexibilidad, adaptándote según las circunstancias.
+      
+      caracteristicas_principales: |
+        - Organizas lo importante, flexible con lo secundario
+        - Puedes trabajar tanto en ambientes ordenados como algo caóticos
+        - Planificas, pero te adaptas a cambios
+        - Balanceas eficiencia con creatividad
+      
+      aptitudes_profesionales:
+        - Gestión de equipos
+        - Consultoría
+        - Educación
+        - Servicios profesionales
+    
+    bajo: # Score < 0.3
+      descripcion_general: |
+        Tu estilo es más fluido e intuitivo que estructurado. Prefieres la flexibilidad y la 
+        adaptabilidad sobre la planificación rígida. Esta aproximación te permite ser muy 
+        creativo e innovador.
+      
+      caracteristicas_principales: |
+        - Trabajas mejor con flexibilidad de horarios y métodos
+        - Eres adaptable a cambios inesperados
+        - Prefieres la intuición sobre la planificación detallada
+        - Te enfocas en el panorama general más que en detalles
+        - Puedes tener varios proyectos en marcha simultáneamente
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Aportas creatividad y pensamiento lateral. Excelente en lluvia de ideas 
+        y soluciones innovadoras. Puede que necesites apoyo en aspectos administrativos.
+        
+        En casa: Tu estilo es más relajado y funcional que perfectamente ordenado. 
+        Priorizas comodidad y accesibilidad sobre orden estricto.
+      
+      fortalezas:
+        - Adaptabilidad excepcional
+        - Pensamiento creativo
+        - Capacidad multitarea
+        - Flexibilidad ante cambios
+        - Visión de conjunto
+      
+      areas_mejora:
+        - Desarrollar sistemas básicos de organización
+        - Crear rutinas para tareas importantes
+        - Usar herramientas de planificación simples
+        - Establecer prioridades claras
+      
+      aptitudes_profesionales:
+        - Creatividad y arte
+        - Innovación y desarrollo
+        - Consultoría estratégica
+        - Emprendimiento
+        - Medios y comunicación
+
+  detalle:
+    alto: # Score > 0.6
+      descripcion_general: |
+        Tu escritura revela una mente analítica que se enfoca naturalmente en los detalles y la precisión. 
+        Tienes una capacidad excepcional para detectar errores, inconsistencias y oportunidades de mejora 
+        que otros podrían pasar por alto.
+      
+      caracteristicas_principales: |
+        - Notas detalles que otros no perciben
+        - Prefieres hacer las cosas bien que rápido
+        - Revisas tu trabajo múltiples veces antes de entregarlo
+        - Te molestan los errores y las imprecisiones
+        - Tienes memoria excepcional para detalles específicos
+        - Prefieres instrucciones claras y específicas
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Eres el que detecta errores en documentos importantes antes de que se publiquen. 
+        Tu trabajo es reconocido por su alta calidad y precisión. Otros te consultan para revisión final.
+        
+        En compras: Comparas precios, lees reseñas completas y verificas especificaciones técnicas. 
+        Raramente haces compras impulsivas.
+        
+        En relaciones: Recuerdas fechas importantes, preferencias específicas de tu pareja, 
+        y detalles de conversaciones pasadas.
+      
+      fortalezas:
+        - Control de calidad excepcional
+        - Capacidad analítica superior
+        - Confiabilidad en precisión
+        - Detección temprana de problemas
+        - Memoria para detalles específicos
+      
+      areas_mejora:
+        - No perderse en detalles menores
+        - Aprender a delegar tareas de revisión
+        - Ser más tolerante con imperfecciones menores de otros
+        - Balancear perfección con eficiencia temporal
+      
+      aptitudes_profesionales:
+        - Control de calidad
+        - Auditoría y revisión
+        - Investigación científica
+        - Edición y corrección
+        - Programación y desarrollo de software
+        - Ingeniería de precisión
+      
+      preguntas_cliente:
+        - "¿Notas errores que otros no ven?"
+        - "¿Revisas tu trabajo varias veces antes de entregarlo?"
+        - "¿Te frustras cuando otros no prestan atención a los detalles?"
+        - "¿Recuerdas conversaciones específicas de hace meses?"
+    
+    medio: # Score 0.3-0.6
+      descripcion_general: |
+        Tienes un enfoque equilibrado hacia los detalles, sabiendo cuándo es importante ser preciso 
+        y cuándo es mejor enfocarse en el panorama general. Esta flexibilidad te hace muy eficiente.
+      
+      caracteristicas_principales: |
+        - Ajustas tu nivel de detalle según la importancia de la tarea
+        - Balanceas precisión con eficiencia
+        - Puedes trabajar tanto en tareas detalladas como conceptuales
+        - Sabes priorizar qué detalles son críticos
+      
+      aptitudes_profesionales:
+        - Gestión de proyectos
+        - Consultoría
+        - Educación
+        - Servicios profesionales
+    
+    bajo: # Score < 0.3
+      descripcion_general: |
+        Tu enfoque está en el panorama general y las ideas grandes más que en los detalles específicos. 
+        Esta perspectiva macro te permite ver oportunidades y conexiones que otros podrían perderse 
+        al enfocarse en lo específico.
+      
+      caracteristicas_principales: |
+        - Ves el bosque completo, no solo los árboles
+        - Te enfocas en conceptos e ideas principales
+        - Prefieres delegar tareas de detalle
+        - Tienes visión estratégica natural
+        - Puedes perder interés en tareas muy específicas
+        - Excelente para brainstorming y conceptualización
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Eres excelente para estrategia y visión general. Aportas ideas innovadoras 
+        en reuniones. Prefieres roles conceptuales sobre operativos.
+        
+        En decisiones: Te enfocas en criterios principales más que en especificaciones técnicas. 
+        Confías en tu intuición y en la opinión de expertos.
+      
+      fortalezas:
+        - Visión estratégica
+        - Pensamiento conceptual
+        - Capacidad de síntesis
+        - Liderazgo visionario
+        - Eficiencia en toma de decisiones
+      
+      areas_mejora:
+        - Desarrollar paciencia para tareas detalladas críticas
+        - Crear sistemas de verificación simple
+        - Colaborar con personas orientadas al detalle
+        - Reconocer cuándo los detalles son cruciales
+      
+      aptitudes_profesionales:
+        - Liderazgo ejecutivo
+        - Planificación estratégica
+        - Desarrollo de negocios
+        - Consultoría de alto nivel
+        - Innovación y creatividad
+
+  energia:
+    alto: # Score > 0.6
+      descripcion_general: |
+        Tu escritura revela una personalidad con alta vitalidad y energía interior. Eres una persona 
+        que aborda la vida con entusiasmo, determinación y una capacidad notable para mantener el 
+        impulso incluso en situaciones desafiantes.
+      
+      caracteristicas_principales: |
+        - Mantienes ritmo acelerado en tus actividades
+        - Tienes resistencia para proyectos de largo plazo
+        - Tu presencia energiza a otros
+        - Prefieres la acción sobre la contemplación pasiva
+        - Recuperas energía rápidamente después del estrés
+        - Tiendes a ser optimista y proactivo
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Eres conocido por tu productividad y capacidad de trabajo. Tomas iniciativas 
+        sin que te lo pidan. Trabajas bien bajo presión y con deadlines ajustados.
+        
+        En tiempo libre: Prefieres actividades activas. Deportes, viajes de aventura, proyectos 
+        personales. Raramente te quedas sin hacer nada.
+        
+        En relaciones: Aportas dinamismo a tu círculo social. Organizas actividades y aventuras. 
+        Tu pareja debe poder seguir tu ritmo de vida.
+      
+      fortalezas:
+        - Productividad excepcional
+        - Capacidad de motivar a otros
+        - Resistencia al estrés
+        - Iniciativa y proactividad
+        - Optimismo natural
+      
+      areas_mejora:
+        - Aprender a relajarte y descansar adecuadamente
+        - No abrumar a otros con tu ritmo
+        - Escuchar tu cuerpo para evitar burnout
+        - Ser paciente con personas de menor energía
+      
+      compatibilidad_pareja: |
+        Ideal con personas que disfruten de un estilo de vida activo. Puede haber tensión con 
+        parejas que prefieran ritmos más pausados. Tu pareja debe tener suficiente energía propia 
+        o al menos apreciar tu vitalidad.
+      
+      aptitudes_profesionales:
+        - Ventas de alto rendimiento
+        - Gestión de equipos
+        - Emprendimiento
+        - Deportes y fitness
+        - Gestión de crisis
+        - Roles de alta demanda
+      
+      preguntas_cliente:
+        - "¿Otros te comentan que tienes mucha energía?"
+        - "¿Prefieres mantenerte ocupado que relajarte?"
+        - "¿Trabajas bien bajo presión?"
+        - "¿Te recuperas rápidamente del cansancio?"
+    
+    medio: # Score 0.3-0.6
+      descripcion_general: |
+        Tienes un nivel de energía equilibrado que te permite ser productivo sin caer en el agotamiento. 
+        Sabes cuándo acelerar y cuándo tomar pausas, lo que te da una ventaja en la sostenibilidad 
+        a largo plazo.
+      
+      caracteristicas_principales: |
+        - Balanceas actividad con descanso
+        - Mantienes energía constante sin picos extremos
+        - Te adaptas al ritmo que requiere cada situación
+        - Sabes gestionar tu energía eficientemente
+      
+      aptitudes_profesionales:
+        - Gestión sostenible de proyectos
+        - Roles que requieren consistencia
+        - Trabajo en equipo
+        - Planificación a largo plazo
+    
+    bajo: # Score < 0.3
+      descripcion_general: |
+        Tu estilo es más reflexivo y pausado. Prefieres la calidad sobre la cantidad, la profundidad 
+        sobre la velocidad. Esta aproximación te permite crear trabajo de alta calidad y relaciones 
+        muy significativas.
+      
+      caracteristicas_principales: |
+        - Prefieres ritmos pausados y reflexivos
+        - Te tomas tiempo para procesar información profundamente
+        - Valoras la calidad sobre la velocidad
+        - Necesitas períodos de descanso para recargar
+        - Trabajas mejor sin presión temporal excesiva
+        - Tu productividad es constante pero sostenible
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Produces trabajo de muy alta calidad. Prefieres deadlines realistas. 
+        Destacas en tareas que requieren reflexión profunda y análisis cuidadoso.
+        
+        En tiempo libre: Disfrutas actividades tranquilas: lectura, arte, naturaleza. 
+        Valoras tiempo de calidad sobre cantidad de actividades.
+      
+      fortalezas:
+        - Trabajo de alta calidad
+        - Pensamiento profundo y reflexivo
+        - Sostenibilidad a largo plazo
+        - Relaciones profundas y significativas
+        - Resistencia al burnout
+      
+      areas_mejora:
+        - Desarrollar técnicas para aumentar energía cuando sea necesario
+        - Comunicar tus necesidades de ritmo a otros
+        - Encontrar fuentes de motivación externa
+        - Establecer metas que te energicen
+      
+      aptitudes_profesionales:
+        - Investigación y análisis
+        - Escritura y edición
+        - Arte y creatividad
+        - Terapia y counseling
+        - Roles que valoren profundidad sobre velocidad
+
+  emotividad:
+    alto: # Score > 0.6
+      descripcion_general: |
+        Tu escritura refleja una rica vida emocional y una gran capacidad de expresividad. Eres una 
+        persona que vive las emociones intensamente y que tiene la habilidad de conectar profundamente 
+        con los sentimientos propios y ajenos.
+      
+      caracteristicas_principales: |
+        - Experimentas emociones de forma intensa y auténtica
+        - Tienes gran empatía hacia los sentimientos de otros
+        - Tu estado de ánimo influye significativamente en tu comportamiento
+        - Expresas tus emociones de forma clara y directa
+        - Eres sensible a las atmósferas emocionales de los entornos
+        - Tus decisiones incorporan factores emocionales importantes
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Aportas pasión y humanidad al equipo. Eres excelente detectando el clima 
+        laboral y las necesidades emocionales de los colegas. Tu trabajo refleja tu estado emocional.
+        
+        En relaciones: Eres profundamente leal y comprometido. Las relaciones son intensas y 
+        significativas. Puedes tomar conflictos de forma muy personal, pero también perdonas genuinamente.
+        
+        En arte/creatividad: Tu expresión creativa está profundamente conectada con tus emociones. 
+        Creas tu mejor trabajo cuando estás emocionalmente inspirado.
+      
+      fortalezas:
+        - Empatía excepcional
+        - Autenticidad emocional
+        - Capacidad de inspirar a otros
+        - Creatividad emocional
+        - Relaciones profundas y significativas
+      
+      areas_mejora:
+        - Desarrollar técnicas de regulación emocional
+        - No tomar las cosas demasiado personalmente
+        - Balancear emoción con lógica en decisiones importantes
+        - Crear límites emocionales saludables
+      
+      compatibilidad_pareja: |
+        Ideal con personas que valoren la profundidad emocional y la autenticidad. Puede haber 
+        desafíos con parejas muy racionales o emocionalmente distantes. Necesitas una pareja 
+        que pueda manejar tu intensidad emocional sin sentirse abrumada.
+      
+      aptitudes_profesionales:
+        - Arte y creatividad
+        - Terapia y counseling
+        - Trabajo social
+        - Comunicación emocional
+        - Marketing emocional
+        - Roles de cuidado y apoyo
+      
+      preguntas_cliente:
+        - "¿Sientes las emociones muy intensamente?"
+        - "¿Tu estado de ánimo afecta tu productividad?"
+        - "¿Otros recurren a ti cuando necesitan apoyo emocional?"
+        - "¿Tomas las críticas de forma personal?"
+    
+    medio: # Score 0.3-0.6
+      descripcion_general: |
+        Tienes un equilibrio emocional que te permite conectar con tus sentimientos sin ser 
+        abrumado por ellos. Esta estabilidad emocional te da ventajas tanto en relaciones 
+        como en toma de decisiones.
+      
+      caracteristicas_principales: |
+        - Balanceas emoción con racionalidad
+        - Puedes expresar emociones cuando es apropiado
+        - Mantienes perspectiva en situaciones emocionales
+        - Tienes empatía sin perder objetividad
+      
+      aptitudes_profesionales:
+        - Liderazgo de equipos
+        - Mediación y negociación
+        - Servicios al cliente
+        - Gestión de relaciones
+    
+    bajo: # Score < 0.3
+      descripcion_general: |
+        Tu aproximación a las emociones es más contenida y reflexiva. Prefieres procesar los 
+        sentimientos internamente antes de expresarlos, y valoras la estabilidad emocional 
+        sobre la expresividad intensa.
+      
+      caracteristicas_principales: |
+        - Procesas emociones de forma privada e interna
+        - Mantienes compostura en situaciones emocionales
+        - Prefieres la estabilidad sobre la intensidad emocional
+        - Eres selectivo sobre cuándo y con quién expresas emociones
+        - Tomas decisiones basadas principalmente en lógica
+        - Otros te ven como tranquilo y ecuánime
+      
+      ejemplos_vida_cotidiana: |
+        En el trabajo: Eres visto como profesional y confiable. Mantienes la calma en crisis 
+        y ayudas a otros a mantener la perspectiva. Tu comunicación es clara y objetiva.
+        
+        En relaciones: Eres un puerto seguro para otros. Tu pareja valora tu estabilidad, 
+        aunque a veces puede desear más expresividad emocional de tu parte.
+      
+      fortalezas:
+        - Estabilidad emocional
+        - Objetividad en situaciones cargadas
+        - Confiabilidad como apoyo para otros
+        - Toma de decisiones racionales
+        - Resistencia al drama emocional
+      
+      areas_mejora:
+        - Permitirte expresar emociones más abiertamente
+        - Desarrollar vocabulario emocional
+        - Conectar más con tus sentimientos internos
+        - Mostrar más empatía emocional hacia otros
+      
+      aptitudes_profesionales:
+        - Finanzas y banca
+        - Gestión ejecutiva
+        - Medicina y salud
+        - Ingeniería y tecnología
+        - Investigación científica
+
+# ========================================
+# PERFILES COMBINADOS Y ESPECIALIZADOS
+# ========================================
+perfiles_especializados:
+  
+  lider_natural:
+    condiciones: 
+      - sociabilidad: ">= 0.6"
+      - autocontrol: ">= 0.5"
+      - energia: ">= 0.6"
+    descripcion: |
+      Tu combinación de alta sociabilidad, buen autocontrol y mucha energía te convierte en un 
+      líder natural. Tienes la capacidad de inspirar y motivar a otros mientras mantienes la 
+      compostura necesaria para tomar decisiones difíciles.
+    
+    aplicaciones_practicas: |
+      - Excelente para roles de liderazgo de equipos
+      - Capacidad natural para motivar y dirigir
+      - Ideal para gestión de crisis y cambios organizacionales
+      - Fuerte potencial para emprendimiento
+    
+    desarrollo_recomendado: |
+      - Desarrollar habilidades de coaching y mentoring
+      - Aprender técnicas avanzadas de comunicación
+      - Estudiar liderazgo situacional
+      - Practicar delegación efectiva
+
+  analista_experto:
+    condiciones:
+      - detalle: ">= 0.7"
+      - organizacion: ">= 0.6"
+      - autocontrol: ">= 0.5"
+    descripcion: |
+      Tu perfil combina atención excepcional al detalle con organización y autocontrol, 
+      creando un analista de clase mundial. Tienes la capacidad de procesar información 
+      compleja y encontrar patrones que otros pasan por alto.
+    
+    aplicaciones_practicas: |
+      - Investigación científica y desarrollo
+      - Análisis financiero y de riesgos
+      - Control de calidad y auditoría
+      - Consultoría especializada
+    
+    desarrollo_recomendado: |
+      - Desarrollar habilidades de comunicación para explicar análisis complejos
+      - Aprender visualización de datos
+      - Estudiar metodologías de investigación avanzadas
+      - Practicar presentación de hallazgos
+
+  creativo_innovador:
+    condiciones:
+      - emotividad: ">= 0.6"
+      - energia: ">= 0.5"
+      - autocontrol: "<= 0.4"
+      - organizacion: "<= 0.5"
+    descripcion: |
+      Tu combinación de alta emotividad, buena energía y flexibilidad en control y organización 
+      te convierte en un innovador natural. Tienes la capacidad de generar ideas originales y 
+      la pasión para desarrollarlas.
+    
+    aplicaciones_practicas: |
+      - Arte y diseño
+      - Marketing creativo y publicidad
+      - Desarrollo de productos innovadores
+      - Escritura y comunicación creativa
+    
+    desarrollo_recomendado: |
+      - Aprender técnicas básicas de gestión de proyectos
+      - Desarrollar habilidades de prototipado rápido
+      - Estudiar metodologías de innovación
+      - Practicar colaboración con perfiles más organizados
+
+  diplomatico_mediador:
+    condiciones:
+      - sociabilidad: ">= 0.5"
+      - autocontrol: ">= 0.6"
+      - emotividad: ">= 0.4"
+      - emotividad: "<= 0.7"
+    descripcion: |
+      Tu equilibrio entre sociabilidad, autocontrol y emotividad moderada te convierte en un 
+      mediador natural. Puedes entender diferentes perspectivas y ayudar a encontrar soluciones 
+      que funcionen para todos.
+    
+    aplicaciones_practicas: |
+      - Recursos humanos y relaciones laborales
+      - Mediación y resolución de conflictos
+      - Diplomacia y negociación
+      - Gestión de stakeholders
+    
+    desarrollo_recomendado: |
+      - Estudiar técnicas de negociación avanzadas
+      - Aprender comunicación no violenta
+      - Desarrollar habilidades de facilitación
+      - Practicar escucha activa y empática
+
+# ========================================
+# PREGUNTAS EXPLORATORIAS POR TEMA
+# ========================================
+preguntas_exploratorias:
+  
+  autoconocimiento:
+    - "¿Qué es lo que más te llama la atención de tu análisis?"
+    - "¿Hay algún resultado que te sorprende?"
+    - "¿En qué área sientes que quisieras desarrollarte más?"
+    - "¿Reconoces estos patrones en tu día a día?"
+  
+  relaciones_pareja:
+    - "¿Cómo describirías tu estilo en las relaciones románticas?"
+    - "¿Qué buscas en una pareja ideal?"
+    - "¿Has notado patrones en tus relaciones pasadas?"
+    - "¿Qué aspectos de tu personalidad crees que más valora tu pareja?"
+  
+  carrera_profesional:
+    - "¿Te sientes realizado en tu trabajo actual?"
+    - "¿Qué tipo de tareas disfrutas más en el trabajo?"
+    - "¿Cómo te relacionas con tus colegas y superiores?"
+    - "¿Tienes aspiraciones de liderazgo o prefieres roles más especializados?"
+  
+  desarrollo_personal:
+    - "¿En qué área personal te gustaría crecer?"
+    - "¿Qué hábitos te gustaría desarrollar o cambiar?"
+    - "¿Cómo manejas el estrés y los desafíos?"
+    - "¿Qué te motiva y te da energía?"
+  
+  comunicacion:
+    - "¿Cómo prefieres comunicarte: hablando o escribiendo?"
+    - "¿Te resulta fácil expresar tus emociones?"
+    - "¿Eres más de escuchar o de hablar en las conversaciones?"
+    - "¿Cómo reaccionas ante los conflictos?"
+
+# ========================================
+# RESPUESTAS A CONSULTAS FRECUENTES
+# ========================================
+consultas_frecuentes:
+  
+  compatibilidad_pareja:
+    pregunta: "¿Soy compatible con mi pareja?"
+    respuesta: |
+      La compatibilidad en grafología se analiza comparando los perfiles de personalidad de ambas personas. 
+      Basándome en tu análisis, puedo decirte qué tipo de personalidad complementaría mejor la tuya:
+      
+      Si tienes alta sociabilidad, necesitas una pareja que o bien comparta tu amor por la vida social, 
+      o que al menos comprenda y respete esta necesidad tuya.
+      
+      Si tienes alto autocontrol, funcionas bien con parejas que valoren la estabilidad, pero cuidado 
+      con reprimir demasiado las emociones.
+      
+      Para una evaluación completa, necesitaríamos analizar también la escritura de tu pareja.
+  
+  cambio_carrera:
+    pregunta: "¿Debería cambiar de carrera?"
+    respuesta: |
+      Tu escritura sugiere aptitudes naturales que pueden guiarte hacia carreras más alineadas con tu personalidad.
+      
+      Considera estos factores basados en tu perfil:
+      - Tu nivel de sociabilidad indica si prosperarías más en roles de interacción constante o trabajo independiente
+      - Tu organización muestra si prefieres ambientes estructurados o flexibles
+      - Tu atención al detalle revela si disfrutas más tareas analíticas o conceptuales
+      
+      La clave está en encontrar un rol que utilice tus fortalezas naturales y te permita expresar tu personalidad auténtica.
+  
+  liderazgo:
+    pregunta: "¿Tengo potencial de liderazgo?"
+    respuesta: |
+      Existen diferentes estilos de liderazgo, y tu escritura puede indicar cuál se adapta mejor a ti:
+      
+      - Liderazgo carismático (alta sociabilidad + alta energía)
+      - Liderazgo estable (alto autocontrol + organización)
+      - Liderazgo innovador (alta emotividad + baja organización)
+      - Liderazgo analítico (alto detalle + autocontrol)
+      
+      Basándome en tu perfil, puedo sugerirte el estilo de liderazgo que más naturalmente desarrollarías.
+  
+  relaciones_sociales:
+    pregunta: "¿Por qué me cuesta hacer amigos?"
+    respuesta: |
+      Las dificultades sociales pueden tener varias causas según tu perfil grafológico:
+      
+      Si tienes baja sociabilidad, es natural que prefieras círculos pequeños de amigos íntimos. 
+      No es un defecto, sino una preferencia de personalidad.
+      
+      Si tienes bajo autocontrol, podrías beneficiarte de desarrollar habilidades de escucha activa.
+      
+      Si tienes alta emotividad, es posible que sientas las interacciones muy intensamente, 
+      lo que puede abrumar a algunos.
+      
+      La clave está en encontrar personas que aprecien tu estilo auténtico de relacionarte.
+
+# ========================================
+# RECOMENDACIONES ESPECÍFICAS POR PERFIL
+# ========================================
+recomendaciones_desarrollo:
+  
+  para_alta_sociabilidad:
+    fortalezas_aprovechar:
+      - "Desarrolla tu networking profesional"
+      - "Considera roles de liderazgo de equipos"
+      - "Utiliza tu carisma para proyectos de cambio"
+    
+    areas_equilibrar:
+      - "Programa tiempo regular de solitud para recargar"
+      - "Practica la escucha activa en conversaciones"
+      - "Desarrolla relaciones uno-a-uno, no solo grupales"
+  
+  para_alto_autocontrol:
+    fortalezas_aprovechar:
+      - "Lidera durante crisis y cambios organizacionales"
+      - "Desarrolla equipos que necesiten estabilidad"
+      - "Considera roles en finanzas o gestión de riesgos"
+    
+    areas_equilibrar:
+      - "Practica expresar emociones de forma constructiva"
+      - "Permite más espontaneidad en tu vida personal"
+      - "Desarrolla empatía emocional hacia otros"
+  
+  para_alta_organizacion:
+    fortalezas_aprovechar:
+      - "Gestiona proyectos complejos y multifacéticos"
+      - "Desarrolla sistemas y procesos para otros"
+      - "Considera consultoría en eficiencia operacional"
+    
+    areas_equilibrar:
+      - "Practica flexibilidad ante cambios inesperados"
+      - "Permite que otros contribuyan con métodos diferentes"
+      - "Desarrolla tolerancia a la ambigüedad"
+  
+  para_alto_detalle:
+    fortalezas_aprovechar:
+      - "Especialízate en control de calidad o auditoría"
+      - "Desarrolla expertise en análisis de datos"
+      - "Considera roles en investigación o desarrollo"
+    
+    areas_equilibrar:
+      - "Practica ver el panorama general regularmente"
+      - "Desarrolla habilidades de comunicación de alto nivel"
+      - "Aprende a priorizar qué detalles son críticos"
+  
+  para_alta_energia:
+    fortalezas_aprovechar:
+      - "Toma liderazgo en proyectos de alto impacto"
+      - "Desarrolla múltiples líneas de carrera o proyectos"
+      - "Considera emprendimiento o roles de innovación"
+    
+    areas_equilibrar:
+      - "Programa descanso regular para evitar burnout"
+      - "Desarrolla paciencia con procesos más lentos"
+      - "Practica mindfulness y técnicas de relajación"
+  
+  para_alta_emotividad:
+    fortalezas_aprovechar:
+      - "Desarrolla tu lado creativo y artístico"
+      - "Considera roles en terapia o trabajo social"
+      - "Utiliza tu empatía en liderazgo de equipos"
+    
+    areas_equilibrar:
+      - "Desarrolla técnicas de regulación emocional"
+      - "Practica tomar perspectiva en situaciones intensas"
+      - "Crea límites emocionales saludables"
