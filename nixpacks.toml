@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["python39", "wkhtmltopdf", "fontconfig", "freetype", "glib", "pango", "cairo", "gdk-pixbuf", "gtk3", "libffi"]
+
+[phases.install]
+dependsOn = ["setup"]
+
+[start]
+cmd = "python main.py"
