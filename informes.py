@@ -6,7 +6,7 @@ Genera informes HTML y PDF para los 7 tipos de servicios IA
 import os
 import pytz
 from datetime import datetime
-# from weasyprint import HTML  # Temporalmente deshabilitado para Railway
+from weasyprint import HTML  # Temporalmente deshabilitado para Railway
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
