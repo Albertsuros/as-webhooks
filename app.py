@@ -4,11 +4,11 @@ import json
 import glob
 from datetime import datetime
 # from weasyprint import HTML as weasyHTML
-from grafologia.routes import grafologia_bp
+# from grafologia.routes import grafologia_bp
 from flask import redirect, url_for
 
 app = Flask(__name__)
-app.register_blueprint(grafologia_bp, url_prefix="/grafologia")
+# app.register_blueprint(grafologia_bp, url_prefix="/grafologia")
 # Aceptar rutas con y sin barra final
 app.url_map.strict_slashes = False
 
