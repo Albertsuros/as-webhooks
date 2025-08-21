@@ -1182,43 +1182,6 @@ def procesar_y_enviar_informe(datos_cliente, tipo_servicio, archivos_unicos=None
     # Temporalmente deshabilitado - WeasyPrint no disponible
     print("Informes PDF temporalmente deshabilitados")
     return None
-        
-        # 1. Generar HTML
-        archivo_html = generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion)
-        if not archivo_html:
-            print("❌ Error generando HTML")
-            return False
-        
-        # 2. Convertir a PDF
-        archivo_pdf = archivo_html.replace('.html', '.pdf')
-        resultado_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
-        if not resultado_pdf:
-            print("❌ Error generando PDF")
-            return False
-        
-        # Usar el resultado (puede ser PDF o HTML fallback)
-        archivo_final = archivo_pdf if resultado_pdf == True else resultado_pdf
-        
-        # 3. Enviar por email
-        email_cliente = datos_cliente.get('email')
-        if email_cliente:
-            nombre_cliente = datos_cliente.get('nombre', 'Cliente')
-            exito_email = enviar_informe_por_email(email_cliente, archivo_final, tipo_servicio, nombre_cliente)
-            if exito_email:
-                print(f"✅ Proceso completo: Informe {tipo_servicio} enviado a {email_cliente}")
-                return True
-            else:
-                print(f"⚠️ Informe generado pero no enviado: {archivo_final}")
-                return archivo_final
-        else:
-            print(f"⚠️ No hay email del cliente. Informe guardado: {archivo_final}")
-            return archivo_final
-            
-    except Exception as e:
-        print(f"❌ Error en proceso completo: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
 
 # Función de utilidad para llamar desde los agentes
 def generar_y_enviar_informe_desde_agente(data, tipo_servicio, resumen_conversacion=None):
