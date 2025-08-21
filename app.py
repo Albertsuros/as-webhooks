@@ -3,7 +3,7 @@ import os
 import json
 import glob
 from datetime import datetime
-from weasyprint import HTML as weasyHTML
+# from weasyprint import HTML as weasyHTML
 from grafologia.routes import grafologia_bp
 from flask import redirect, url_for
 
@@ -121,7 +121,7 @@ def generar_informe():
         nombre_imagen=nombre_imagen,
         aspectos=carta_data.get("aspectos", [])
     )
-    pdf = weasyHTML(string=html, base_url=request.host_url).write_pdf()
+    # pdf = weasyHTML(string=html, base_url=request.host_url).write_pdf()
     response = make_response(pdf)
     response.headers["Content-Type"] = "application/pdf"
     response.headers["Content-Disposition"] = "inline; filename=informe_carta.pdf"
