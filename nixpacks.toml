@@ -1,5 +1,19 @@
 [phases.setup]
-nixPkgs = ["python39", "wkhtmltopdf", "fontconfig", "freetype", "glib", "pango", "cairo", "gdk-pixbuf", "gtk3", "libffi"]
+nixPkgs = [
+  "python39",
+  "cairo",
+  "pango", 
+  "gdk-pixbuf",
+  "libffi",
+  "fontconfig",
+  "freetype",
+  "harfbuzz",
+  "fribidi",
+  "librsvg",
+  "glib",
+  "gtk3",
+  "wkhtmltopdf"
+]
 
 [phases.install]
 dependsOn = ["setup"]
