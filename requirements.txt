@@ -6,7 +6,7 @@ pytz==2023.3
 pyswisseph
 matplotlib
 Werkzeug==2.3.7
-weasyprint
+# weasyprint==60.0  # Requiere librerías del sistema
 google-auth==2.24.0
 google-auth-oauthlib==1.1.0
 google-auth-httplib2==0.1.1
