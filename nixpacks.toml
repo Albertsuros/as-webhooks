@@ -4,15 +4,7 @@ nixPkgs = [
   "cairo",
   "pango", 
   "gdk-pixbuf",
-  "libffi",
-  "fontconfig",
-  "freetype",
-  "harfbuzz",
-  "fribidi",
-  "librsvg",
-  "glib",
-  "gtk3",
-  "wkhtmltopdf"
+  "fontconfig"
 ]
 
 [phases.install]
