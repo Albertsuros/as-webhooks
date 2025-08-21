@@ -6,7 +6,7 @@ Genera informes HTML y PDF para los 7 tipos de servicios IA
 import os
 import pytz
 from datetime import datetime
-from weasyprint import HTML  # Temporalmente deshabilitado para Railway
+# from weasyprint import HTML  # Temporalmente deshabilitado para Railway
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -1179,8 +1179,8 @@ Nota: Este informe es confidencial y está destinado únicamente para el uso per
         return False
 
 def procesar_y_enviar_informe(datos_cliente, tipo_servicio, archivos_unicos=None, resumen_sesion=""):
-    # Temporalmente deshabilitado - WeasyPrint no disponible
-    print("Informes PDF temporalmente deshabilitados")
+    # Temporalmente deshabilitado - faltan dependencias del sistema
+    print("Informes PDF temporalmente deshabilitados - configurando dependencias")
     return None
 
 # Función de utilidad para llamar desde los agentes
