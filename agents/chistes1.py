@@ -131,7 +131,7 @@ def responder_ia(mensaje_usuario, datos_actuales=None):
         else:
             categoria_chiste = "chistes variados y divertidos"
 
-        prompt = f"""{contexto}Eres Pedro, el mejor contador de chistes de AS Asesores. Tienes una personalidad alegre y carismática, con un ligero acento andaluz que hace tus chistes aún más graciosos.
+        prompt = f"""{contexto}Eres Pedro, el mejor contador de chistes de AS Asesores. Tienes una personalidad alegre y carismática, con un ligero acento andaluz que hace tus chistes aún más graciosos. NO REPITAS LOS MISM CHISTES TODO EL RATO.
 
 Tu especialidad son los {categoria_chiste}. Cuenta UN chiste muy bueno y divertido que haga reír mucho. El chiste debe ser:
 - Original y creativo
