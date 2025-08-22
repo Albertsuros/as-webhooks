@@ -1179,9 +1179,50 @@ Nota: Este informe es confidencial y está destinado únicamente para el uso per
         return False
 
 def procesar_y_enviar_informe(datos_cliente, tipo_servicio, archivos_unicos=None, resumen_sesion=""):
-    # Temporalmente deshabilitado - faltan dependencias del sistema
-    print("Informes PDF temporalmente deshabilitados - configurando dependencias")
-    return None
+    """Generar informe HTML y convertir a PDF"""
+    try:
+        print(f"🔄 Generando informe para {datos_cliente.get('nombre', 'Cliente')} - {tipo_servicio}")
+        
+        # Generar HTML
+        archivo_html = generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion)
+        
+        if not archivo_html:
+            print("❌ Error generando HTML")
+            return None
+        
+        # Generar PDF
+        nombre_base = generar_nombre_archivo_unico(tipo_servicio, datos_cliente.get('codigo_servicio', ''))
+        archivo_pdf = f"informes/{nombre_base}.pdf"
+        
+        # Crear directorio si no existe
+        os.makedirs('informes', exist_ok=True)
+        
+        exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+        
+        if exito_pdf:
+            # Enviar por email
+            exito_email = enviar_informe_por_email(
+                datos_cliente['email'], 
+                archivo_pdf, 
+                tipo_servicio, 
+                datos_cliente.get('nombre', 'Cliente')
+            )
+            
+            if exito_email:
+                print(f"✅ Informe completo enviado: {archivo_pdf}")
+                return archivo_pdf
+            else:
+                print("❌ Error enviando email")
+                return archivo_pdf  # PDF generado pero email falló
+        else:
+            print("❌ Error generando PDF")
+            return None
+        
+    except Exception as e:
+        print(f"❌ Error en procesar_y_enviar_informe: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 # Función de utilidad para llamar desde los agentes
 def generar_y_enviar_informe_desde_agente(data, tipo_servicio, resumen_conversacion=None):
