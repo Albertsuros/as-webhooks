@@ -3412,6 +3412,7 @@ def home():
             "/webhook/astrologa_sinastria": "POST - Webhook Astróloga Sinastría",
             "/webhook/astrologa_astrolhoraria": "POST - Webhook Astróloga Horaria",
             "/webhook/psico_coaching": "POST - Webhook Psicología y Coaching",
+            "/webhook/grafologia": "POST - Webhook Grafología",
             "/webhook/lectura_manos": "POST - Webhook Lectura de Manos",
             "/webhook/lectura_facial": "POST - Webhook Lectura Facial",
             "/webhook/busca_empresas1": "POST - Webhook Búsqueda Empresas 1",
