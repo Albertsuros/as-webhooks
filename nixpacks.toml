@@ -3,11 +3,11 @@ nixPkgs = [
   "python39",
   "cairo",
   "pango",
-  "gdk-pixbuf", 
+  "gdk-pixbuf",
   "fontconfig",
-  "freetype",
   "glib",
-  "gobject-introspection"
+  "gobject-introspection",
+  "pkg-config"
 ]
 
 [phases.install]
