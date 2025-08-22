@@ -192,9 +192,3 @@ def handle_chistes1_webhook(data):
         import traceback
         traceback.print_exc()
         return {"type": "speak", "text": "¡Uy! Se me ha ido el santo al cielo. ¿Puedes repetir?"}
-        
-@app.route("/clear-chistes-cache", methods=["POST"])
-def clear_cache():
-    global sessions
-    sessions.clear()
-    return {"status": "Cache cleared"}
