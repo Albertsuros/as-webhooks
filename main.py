@@ -55,7 +55,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-Importar lógica inteligente
 from logica_citas_inteligente import obtener_horarios_disponibles_inteligentes, agendar_cita_inteligente
 
 load_dotenv()
