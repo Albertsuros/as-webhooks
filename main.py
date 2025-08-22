@@ -49,13 +49,13 @@ import sqlite3
 import requests
 import gc
 import pytz
-# from weasyprint import HTML
+from weasyprint import HTML
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-# Importar lógica inteligente
+Importar lógica inteligente
 from logica_citas_inteligente import obtener_horarios_disponibles_inteligentes, agendar_cita_inteligente
 
 load_dotenv()
@@ -1137,22 +1137,16 @@ def webhook_grafologia():
             return jsonify({"error": "Content-Type debe ser application/json"}), 400
 
         data = request.get_json()
-
         if not data:
             return jsonify({"error": "No se recibieron datos JSON"}), 400
 
-        # Preparar datos con identificadores únicos para grafología
         data = preparar_datos_con_id(data, "grafologia")
-        
         response = handle_grafologia_webhook(data)
         return jsonify(response)
 
     except Exception as e:
         print(f"Error en webhook_grafologia: {e}")
-        return jsonify({
-            "type": "speak",
-            "text": "Error interno del servidor"
-        }), 500
+        return jsonify({"type": "speak", "text": "Error interno del servidor"}), 500
 
 # ========================================
 # WEBHOOKS OTROS SERVICIOS (Mantenidos igual)
