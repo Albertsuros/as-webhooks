@@ -1,9 +1,19 @@
-FROM python:3.9
+FROM python:3.9-bullseye
 
-# Instalar dependencias del sistema para Playwright
+# Instalar dependencias manualmente para evitar conflictos
 RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libxss1 \
+    libasound2 \
+    fonts-liberation \
+    libappindicator3-1 \
+    xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -12,9 +22,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Instalar navegadores de Playwright
+# Instalar solo el navegador, sin dependencias automáticas
 RUN playwright install chromium
-RUN playwright install-deps chromium
 
 # Copiar todo el código
 COPY . .
