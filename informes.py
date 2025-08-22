@@ -6,7 +6,7 @@ Genera informes HTML y PDF para los 7 tipos de servicios IA
 import os
 import pytz
 from datetime import datetime
-# from weasyprint import HTML  # Temporalmente deshabilitado para Railway
+from playwright.sync_api import sync_playwright
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -1044,36 +1044,35 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         return None
 
 def convertir_html_a_pdf(archivo_html, archivo_pdf):
-    """Convertir HTML a PDF usando WeasyPrint"""
+    """Convertir HTML a PDF usando Playwright"""
     try:
-        # Intentar con WeasyPrint
-        HTML(filename=archivo_html).write_pdf(archivo_pdf)
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            
+            # Leer el archivo HTML
+            with open(archivo_html, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # Establecer el contenido HTML
+            page.set_content(html_content)
+            
+            # Generar PDF
+            page.pdf(
+                path=archivo_pdf,
+                format='A4',
+                margin={'top': '1cm', 'bottom': '1cm', 'left': '1cm', 'right': '1cm'},
+                print_background=True
+            )
+            
+            browser.close()
+            
         print(f"✅ PDF generado: {archivo_pdf}")
         return True
         
     except Exception as e:
-        print(f"❌ Error con WeasyPrint: {e}")
-        
-        # Alternativa con wkhtmltopdf si está disponible
-        try:
-            import subprocess
-            cmd = f'wkhtmltopdf "{archivo_html}" "{archivo_pdf}"'
-            subprocess.run(cmd, shell=True, check=True)
-            print(f"✅ PDF generado con wkhtmltopdf: {archivo_pdf}")
-            return True
-        except Exception as e2:
-            print(f"❌ Error con wkhtmltopdf: {e2}")
-            
-        # Si nada funciona, copiar HTML como fallback
-        try:
-            import shutil
-            archivo_fallback = archivo_pdf.replace('.pdf', '.html')
-            shutil.copy2(archivo_html, archivo_fallback)
-            print(f"⚠️ Fallback: Archivo HTML copiado como {archivo_fallback}")
-            return archivo_fallback
-        except Exception as e3:
-            print(f"❌ Error en fallback: {e3}")
-            return False
+        print(f"❌ Error con Playwright: {e}")
+        return False
 
 def enviar_informe_por_email(email_cliente, archivo_pdf, tipo_servicio, nombre_cliente="Cliente"):
     """Enviar informe por email"""

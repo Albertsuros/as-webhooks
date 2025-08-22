@@ -1,25 +1,8 @@
 [phases.setup]
-nixPkgs = [
-  "python39",
-  "cairo",
-  "pango",
-  "gdk-pixbuf", 
-  "fontconfig",
-  "glib",
-  "gobject-introspection",
-  "pkg-config",
-  "freetype",
-  "libffi",
-  "gtk3",
-  "gobject-introspection-dev"
-]
+nixPkgs = ["python39", "chromium"]
 
-[phases.build]
-dependsOn = ["setup"]
-cmds = ["pip install -r requirements.txt"]
+[phases.install]
+cmds = ["pip install -r requirements.txt", "playwright install chromium"]
 
 [start]
 cmd = "python main.py"
-
-[variables]
-PYTHONPATH = "/app"

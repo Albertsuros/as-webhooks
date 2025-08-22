@@ -49,7 +49,6 @@ import sqlite3
 import requests
 import gc
 import pytz
-from weasyprint import HTML
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
