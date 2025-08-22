@@ -28,8 +28,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar todo el código
 COPY . .
 
-# Exponer puerto (Railway usa PORT environment variable)
-EXPOSE 8000
+# Exponer puerto 5000 como en tu configuración
+EXPOSE 5000
 
-# Usar gunicorn como en tu configuración actual
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "main:app"]
+# Usar python main.py como tienes configurado
+CMD ["python", "main.py"]
