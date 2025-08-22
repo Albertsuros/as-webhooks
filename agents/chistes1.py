@@ -43,21 +43,11 @@ def completar_datos(session_id, mensaje):
     if email_match:
         datos["email"] = email_match.group()
 
-    # ✅ CORRECCIÓN 2: Detectar servicios chistes1
+    # Detectar servicios de entretenimiento
     servicio_detectado = None
     
-    if any(palabra in mensaje_lower for palabra in ["chistes", "chiste", "humor", "entretenimiento"]):
+    if any(palabra in mensaje_lower for palabra in ["chistes", "chiste", "humor", "entretenimiento", "risa", "gracioso"]):
         servicio_detectado = "Chistes y Entretenimiento"
-    elif "revolución solar" in mensaje_lower or "revolusion solar" in mensaje_lower:
-        servicio_detectado = "Chistes"
-    elif "sinastría" in mensaje_lower or "sinastria" in mensaje_lower or "compatibilidad" in mensaje_lower:
-        servicio_detectado = "Sinastría"
-    elif "tránsitos" in mensaje_lower or "transitos" in mensaje_lower:
-        servicio_detectado = "Tránsitos"
-    elif "progresiones" in mensaje_lower:
-        servicio_detectado = "Progresiones"
-    elif "astrología" in mensaje_lower or "astrologia" in mensaje_lower or "horóscopo" in mensaje_lower:
-        servicio_detectado = "Chistes1"  # Por defecto
     
     if servicio_detectado:
         datos["servicio"] = servicio_detectado
@@ -70,28 +60,22 @@ def enviar_a_make(datos):
     try:
         url = os.getenv("MAKE_WEBHOOK_CHISTES1")
         
-        # ✅ CORRECCIÓN 3: Debugging mejorado
         print(f"=== DEBUG ENVIAR_A_MAKE (CHISTES1) ===")
         print(f"URL desde .env: {url}")
         print(f"Datos a enviar: {datos}")
         
         if not url:
             print("❌ ERROR: No hay URL de Make configurada para MAKE_WEBHOOK_CHISTES1")
-            print("Verifica que MAKE_WEBHOOK_CHISTES1 esté en tu archivo .env")
             return False
             
         if not url.startswith(('http://', 'https://')):
             print(f"❌ ERROR: URL inválida - debe comenzar con http:// o https://")
             return False
         
-        # Agregar headers específicos
         headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'AS-Asesores-Chistes/1.0'
         }
-        
-        print(f"Enviando POST a: {url}")
-        print(f"Headers: {headers}")
         
         response = requests.post(
             url, 
@@ -102,7 +86,6 @@ def enviar_a_make(datos):
         
         print(f"✅ Respuesta de Make:")
         print(f"  Status Code: {response.status_code}")
-        print(f"  Headers: {dict(response.headers)}")
         print(f"  Contenido: {response.text}")
         
         if response.status_code == 200:
@@ -120,32 +103,59 @@ def enviar_a_make(datos):
         return False
     except Exception as e:
         print(f"❌ ERROR inesperado enviando a Make: {e}")
-        print(f"Tipo de error: {type(e).__name__}")
         return False
 
 def responder_ia(mensaje_usuario, datos_actuales=None):
     try:
         contexto = ""
         if datos_actuales:
-            for campo in ["nombre", "telefono", "email", "servicio"]:
-                if campo in datos_actuales:
-                    contexto += f"{campo.title()}: {datos_actuales[campo]}\n"
+            nombre = datos_actuales.get("nombre", "amigo")
+            contexto = f"El usuario se llama {nombre}. "
 
-        prompt = f"""Eres Pedro,el gracioso contador dechistes virtual de AS Asesores. Eres el mejor cuenta chistes en español con acento andaluz, o bien con acento gallego, tienes todos los chistes que existen en el mundo en internet y tienes mucha gracia para contarlos.., son chistes que entiende todo el mundo..
+        # Detectar tipo de chiste solicitado
+        mensaje_lower = mensaje_usuario.lower()
+        categoria_chiste = ""
+        
+        if any(palabra in mensaje_lower for palabra in ["verde", "picante", "adulto", "subido"]):
+            categoria_chiste = "chistes verdes divertidos"
+        elif any(palabra in mensaje_lower for palabra in ["niños", "infantil", "familia", "limpio"]):
+            categoria_chiste = "chistes para toda la familia"
+        elif any(palabra in mensaje_lower for palabra in ["trabajo", "oficina", "jefe"]):
+            categoria_chiste = "chistes de trabajo y oficina"
+        elif any(palabra in mensaje_lower for palabra in ["animal", "perro", "gato"]):
+            categoria_chiste = "chistes de animales"
+        elif any(palabra in mensaje_lower for palabra in ["médico", "doctor", "hospital"]):
+            categoria_chiste = "chistes de médicos"
+        elif any(palabra in mensaje_lower for palabra in ["comida", "restaurante", "cocina"]):
+            categoria_chiste = "chistes de comida"
+        else:
+            categoria_chiste = "chistes variados y divertidos"
 
-chistes1:"""
+        prompt = f"""{contexto}Eres Pedro, el mejor contador de chistes de AS Asesores. Tienes una personalidad alegre y carismática, con un ligero acento andaluz que hace tus chistes aún más graciosos.
+
+Tu especialidad son los {categoria_chiste}. Cuenta UN chiste muy bueno y divertido que haga reír mucho. El chiste debe ser:
+- Original y creativo
+- Fácil de entender
+- Apropiado para adultos españoles
+- Que genere risa real
+
+Después del chiste, pregunta de forma simpática si quiere otro chiste o algún tipo específico.
+
+Mensaje del usuario: "{mensaje_usuario}"
+
+Responde SOLO como Pedro el chistoso:"""
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=150,
-            temperature=0.7
+            max_tokens=200,
+            temperature=0.8
         )
         return response.choices[0].message.content.strip()
 
     except Exception as e:
         print(f"Error en responder_ia: {e}")
-        return "Disculpa, ha ocurrido un error. ¿Podrías repetir?"
+        return "¡Ay, amigo! Se me ha trabado la lengua. ¿Podrías repetir qué tipo de chiste quieres?"
 
 def handle_chistes1_webhook(data):
     try:
@@ -170,9 +180,9 @@ def handle_chistes1_webhook(data):
             
             if exito_envio:
                 sessions.pop(session_id, None)
-                return {"type": "speak", "text": "Gracias. Ya tengo toda la información. En breve recibirás tu interpretación astrológica."}
+                return {"type": "speak", "text": "¡Genial! Ya tengo toda tu información. Te contactaremos pronto para seguir riéndonos juntos. ¡Que tengas un día lleno de sonrisas!"}
             else:
-                return {"type": "speak", "text": "Gracias por la información. Estamos procesando tu solicitud Chistes y nos contactaremos contigo pronto."}
+                return {"type": "speak", "text": "Perfecto, ya tengo tus datos. Nos pondremos en contacto contigo pronto para más diversión y entretenimiento."}
         else:
             respuesta = responder_ia(mensaje_usuario, datos)
             return {"type": "speak", "text": respuesta}
@@ -181,4 +191,4 @@ def handle_chistes1_webhook(data):
         print(f"❌ Error en handle_chistes1_webhook: {e}")
         import traceback
         traceback.print_exc()
-        return {"type": "speak", "text": "Ha ocurrido un error. Inténtalo más tarde."}
+        return {"type": "speak", "text": "¡Uy! Se me ha ido el santo al cielo. ¿Puedes repetir?"}
