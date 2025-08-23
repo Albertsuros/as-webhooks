@@ -109,53 +109,56 @@ def responder_ia(mensaje_usuario, datos_actuales=None):
     try:
         contexto = ""
         if datos_actuales:
-            nombre = datos_actuales.get("nombre", "amigo")
-            contexto = f"El usuario se llama {nombre}. "
+            nombre = datos_actuales.get("nombre", "")
+            if nombre:
+                contexto = f"(El usuario se llama {nombre}) "
 
-        # Detectar tipo de chiste solicitado
+        # Detectar tipo de chiste específico si se menciona
         mensaje_lower = mensaje_usuario.lower()
-        categoria_chiste = ""
+        tipo_chiste = ""
         
-        if any(palabra in mensaje_lower for palabra in ["verde", "picante", "adulto", "subido"]):
-            categoria_chiste = "chistes verdes divertidos"
-        elif any(palabra in mensaje_lower for palabra in ["niños", "infantil", "familia", "limpio"]):
-            categoria_chiste = "chistes para toda la familia"
-        elif any(palabra in mensaje_lower for palabra in ["trabajo", "oficina", "jefe"]):
-            categoria_chiste = "chistes de trabajo y oficina"
-        elif any(palabra in mensaje_lower for palabra in ["animal", "perro", "gato"]):
-            categoria_chiste = "chistes de animales"
-        elif any(palabra in mensaje_lower for palabra in ["médico", "doctor", "hospital"]):
-            categoria_chiste = "chistes de médicos"
-        elif any(palabra in mensaje_lower for palabra in ["comida", "restaurante", "cocina"]):
-            categoria_chiste = "chistes de comida"
+        if any(palabra in mensaje_lower for palabra in ["verde", "picante", "adulto"]):
+            tipo_chiste = "un chiste verde divertido pero no ofensivo"
+        elif any(palabra in mensaje_lower for palabra in ["trabajo", "oficina"]):
+            tipo_chiste = "un chiste de trabajo"
+        elif any(palabra in mensaje_lower for palabra in ["inteligente", "listo"]):
+            tipo_chiste = "un chiste inteligente"
         else:
-            categoria_chiste = "chistes variados y divertidos"
+            tipo_chiste = "un chiste divertido y original"
 
-        prompt = f"""{contexto}Eres Pedro, el mejor contador de chistes de AS Asesores. Tienes una personalidad alegre y carismática, con un ligero acento andaluz que hace tus chistes aún más graciosos. NO REPITAS LOS MISM CHISTES TODO EL RATO.
+        prompt = f"""{contexto}Eres Pedro, un contador de chistes con personalidad alegre. 
 
-Tu especialidad son los {categoria_chiste}. Cuenta UN chiste muy bueno y divertido que haga reír mucho. El chiste debe ser:
-- Original y creativo
+Cuenta SOLO {tipo_chiste}. Responde únicamente con el chiste, sin saludos ni despedidas. No uses "jajaja", "jejeje" ni risas escritas. El chiste debe ser:
+- Corto (máximo 2-3 frases)
+- Original y divertido
 - Fácil de entender
-- Apropiado para adultos españoles
-- Que genere risa real
+- Apropiado para síntesis de voz
 
-Después del chiste, pregunta de forma simpática si quiere otro chiste o algún tipo específico.
+Mensaje: "{mensaje_usuario}"
 
-Mensaje del usuario: "{mensaje_usuario}"
-
-Responde SOLO como Pedro el chistoso:"""
+Responde solo con el chiste:"""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=200,
-            temperature=0.8
+            max_tokens=100,  # Más corto
+            temperature=0.9,  # Más creatividad
+            presence_penalty=0.8,  # Evita repetición
+            frequency_penalty=0.7   # Penaliza palabras repetidas
         )
-        return response.choices[0].message.content.strip()
+        
+        chiste = response.choices[0].message.content.strip()
+        
+        # Limpiar respuesta para TTS
+        chiste = chiste.replace("jajaja", "").replace("jejeje", "").replace("jiji", "")
+        chiste = chiste.replace("¡Ja, ja, ja!", "").replace("¡Je, je, je!", "")
+        chiste = chiste.strip()
+        
+        return chiste
 
     except Exception as e:
         print(f"Error en responder_ia: {e}")
-        return "¡Ay, amigo! Se me ha trabado la lengua. ¿Podrías repetir qué tipo de chiste quieres?"
+        return "¿Qué le dice un jardinero a otro? Nos vemos cuando podamos."
 
 def handle_chistes1_webhook(data):
     try:
