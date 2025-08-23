@@ -19,3 +19,4 @@ playwright==1.40.0
 cairocffi==1.6.1
 cffi==1.16.0
 pycparser==2.21
+Flask-CORS==4.0.0

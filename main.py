@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from flask import render_template_string
 from datetime import datetime, timedelta
 import datetime as dt
@@ -38,6 +39,7 @@ import time
 from informes import procesar_y_enviar_informe
 from pathlib import Path
 from app import app
+CORS(app, origins=["https://asasesores.com"])
 
 # ID del calendario AS Asesores
 CALENDAR_ID = 'b64595022e163fbb552d1d5202a590605d3dd66079c082dc4037513c2a5369e1@group.calendar.google.com'
