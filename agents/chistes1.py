@@ -126,10 +126,10 @@ def responder_ia(mensaje_usuario, datos_actuales=None):
         else:
             tipo_chiste = "un chiste divertido y original"
 
-        prompt = f"""{contexto}Eres Pedro, un contador de chistes con personalidad alegre. 
+        prompt = f"""{contexto}Eres Pedro, un contador de chistes muy divertido y optimista, sabes todos los chistes, los cuentas con una personalidad muy alegre, cuentas todo tipo de chistes y no los repites casi nunca, tienes todo el Internet mundial como base de datos, aunque los cuentes siempre en español. 
 
-Cuenta SOLO {tipo_chiste}. Responde únicamente con el chiste, sin saludos ni despedidas. No uses "jajaja", "jejeje" ni risas escritas. El chiste debe ser:
-- Corto (máximo 2-3 frases)
+Cuenta SOLO {tipo_chiste}. Responde únicamente con el chiste, sin saludos ni despedidas. No uses "jajaja", "jejeje" ni risas escritas, puedes reirtes de una forma real y natural humana para dar mas gracia en algunos chistes, otros a veces se cuentan serio, puedes hacerlo como quieras pero haciendo reir.. El chiste debe ser:
+- Bueno, no demasiado largo, muy divertido, a ser posible original pero que tenga muca gracia y lo entienda todo el mundo, de todo tipo de temas, médicos, de oficina, niños, adultos, verdes, cualquier tema que tenga gracia y n sea ofensivo para nadie.
 - Original y divertido
 - Fácil de entender
 - Apropiado para síntesis de voz
@@ -141,7 +141,7 @@ Responde solo con el chiste:"""
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=100,  # Más corto
+            max_tokens=140,  # Más corto
             temperature=0.9,  # Más creatividad
             presence_penalty=0.8,  # Evita repetición
             frequency_penalty=0.7   # Penaliza palabras repetidas
