@@ -5994,39 +5994,6 @@ def api_transfer_gotrunk_workaround():
     except Exception as e:
         print(f"❌ Error en workaround: {e}")
         return jsonify({"status": "error", "message": str(e)})
-
-# También modifica la función existente en veronica.py
-# Busca la línea que dice: def ejecutar_transferencia_telefonica():
-# Y REEMPLAZA todo el contenido de esa función por:
-
-def ejecutar_transferencia_telefonica():
-    """WORKAROUND: Notificar y terminar para transferencia manual"""
-    try:
-        print(f"🔄 WORKAROUND: Ejecutando transferencia manual")
-        
-        # Enviar notificación urgente
-        enviar_telegram_mejora(f"""
-🚨 <b>TRANSFERENCIA REQUERIDA</b>
-
-📞 <b>Cliente en:</b> +34930450975 (Verónica)
-🎯 <b>Solicita:</b> Hablar con Albert
-⏰ <b>Hora:</b> {datetime.now().strftime('%H:%M:%S')}
-
-🔥 <b>ACCIÓN:</b> Llama a +34930450985 YA
-💨 Cliente terminará llamada en 20 segundos
-        """)
-        
-        return {
-            "type": "end_call",
-            "message": "Te transfiero con Albert ahora. Te llamará en 30 segundos al mismo número."
-        }
-        
-    except Exception as e:
-        print(f"❌ Error en transferencia workaround: {e}")
-        return {
-            "type": "speak",
-            "text": "Un momento, te conecto con mi supervisor."
-        }
         
 @app.route('/test/llamada-saliente', methods=['GET', 'POST'])
 def test_llamada_saliente():
