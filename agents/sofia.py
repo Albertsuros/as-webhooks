@@ -109,14 +109,14 @@ def manejar_reconexion(sesion_activa, data):
         
         # Transferir directo al especialista
         especialistas = {
-            'carta_astral_ia': 'Astolog Carta Astral',
-            'revolucion_solar_ia': 'Astolog Rev. Solar', 
-            'sinastria_ia': 'Astrol Sinastría',
-            'astrologia_horaria_ia': 'Astologia Horaria',
-            'psico_coaching_ia': 'Psico_Coaching',
-            'lectura_manos_ia': 'Lectura Manos',
-            'lectura_facial_ia': 'Lectura Facial',
-            'grafologia_ia': 'Grafologia'
+            'carta_astral_ia': 'asst_78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',
+            'revolucion_solar_ia': 'asst_9513ec30-f231-4171-959c-26c8588d248e', 
+            'sinastria_ia': 'asst_9960b33c-db72-4ebd-ae3e-69ce6f7e6660',
+            'astrologia_horaria_ia': 'asst_d218cde4-d4e1-4943-8fd9-a1df9404ebd6',
+            'psico_coaching_ia': 'asst_63a0f9b9-c5d5-4df6-ba6f-52d700b51275',
+            'lectura_manos_ia': 'asst_8473d3ab-22a7-479c-ae34-427e992023de',
+            'lectura_facial_ia': 'asst_9cae2faa-2a8e-498b-b8f4-ab7af65bf734',
+            'grafologia_ia': 'asst_84c67029-8059-4066-a5ae-8532b99fd24c'
         }
         
         especialista = especialistas.get(sesion_activa['tipo_servicio'])
@@ -124,7 +124,7 @@ def manejar_reconexion(sesion_activa, data):
         if especialista:
             return {
                 "type": "transfer_call",
-                "transfer": {"type": "assistant", "assistantName": especialista},
+                "transfer": {"type": "assistant", "assistantId": especialista},
                 "data_extra": {
                     "sesion_activa": sesion_activa,
                     "reconexion_automatica": True
@@ -986,14 +986,14 @@ def handle_sofia_webhook(data):
             
             # TRANSFERIR DIRECTAMENTE AL ESPECIALISTA CON DATOS EXISTENTES
             especialistas = {
-                'carta_astral_ia': 'Astolog Carta Astral',
-                'revolucion_solar_ia': 'Astolog Rev. Solar', 
-                'sinastria_ia': 'Astrol Sinastría',
-                'astrologia_horaria_ia': 'Astologia Horaria',
-                'psico_coaching_ia': 'Psico_Coaching',
-                'lectura_manos_ia': 'Lectura Manos',
-                'lectura_facial_ia': 'Lectura Facial',
-                'grafologia_ia': 'Grafologia'
+                'carta_astral_ia': 'asst_78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',
+                'revolucion_solar_ia': 'asst_9513ec30-f231-4171-959c-26c8588d248e', 
+                'sinastria_ia': 'asst_9960b33c-db72-4ebd-ae3e-69ce6f7e6660',
+                'astrologia_horaria_ia': 'asst_d218cde4-d4e1-4943-8fd9-a1df9404ebd6',
+                'psico_coaching_ia': 'asst_63a0f9b9-c5d5-4df6-ba6f-52d700b51275',
+                'lectura_manos_ia': 'asst_8473d3ab-22a7-479c-ae34-427e992023de',
+                'lectura_facial_ia': 'asst_9cae2faa-2a8e-498b-b8f4-ab7af65bf734',
+                'grafologia_ia': 'asst_84c67029-8059-4066-a5ae-8532b99fd24c'
             }
             
             especialista = especialistas.get(sesion_activa['tipo_servicio'])
@@ -1003,7 +1003,7 @@ def handle_sofia_webhook(data):
                     "type": "transfer_call",
                     "transfer": {
                         "type": "assistant", 
-                        "assistantName": especialista
+                        "assistantId": especialista
                     },
                     "data_extra": {
                         "sesion_activa": sesion_activa,
@@ -1425,13 +1425,14 @@ def handle_sofia_webhook(data):
                 
                 # TRANSFERIR AL ESPECIALISTA
                 especialistas = {
-                    'carta_astral_ia': 'Astolog Carta Astral',
-                    'revolucion_solar_ia': 'Astolog Rev. Solar', 
-                    'sinastria_ia': 'Astrol Sinastría',
-                    'astrologia_horaria_ia': 'Astologia Horaria',
-                    'psico_coaching_ia': 'Psico_Coaching',
-                    'lectura_manos_ia': 'Lectura Manos',
-                    'lectura_facial_ia': 'Lectura Facial'
+                    'carta_astral_ia': 'asst_78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',
+                    'revolucion_solar_ia': 'asst_9513ec30-f231-4171-959c-26c8588d248e', 
+                    'sinastria_ia': 'asst_9960b33c-db72-4ebd-ae3e-69ce6f7e6660',
+                    'astrologia_horaria_ia': 'asst_d218cde4-d4e1-4943-8fd9-a1df9404ebd6',
+                    'psico_coaching_ia': 'asst_63a0f9b9-c5d5-4df6-ba6f-52d700b51275',
+                    'lectura_manos_ia': 'asst_8473d3ab-22a7-479c-ae34-427e992023de',
+                    'lectura_facial_ia': 'asst_9cae2faa-2a8e-498b-b8f4-ab7af65bf734',
+                    'grafologia_ia': 'asst_84c67029-8059-4066-a5ae-8532b99fd24c'
                 }
                 
                 # BUSCAR FOTOS PARA SERVICIOS QUE LAS NECESITAN
@@ -1480,7 +1481,7 @@ def handle_sofia_webhook(data):
                         "type": "transfer_call",
                         "transfer": {
                             "type": "assistant",
-                            "assistantName": especialista
+                            "assistantId": especialista
                         },
                         "data_extra": {
                             "codigo_servicio": contexto_sesion['codigo_servicio'],
