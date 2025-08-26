@@ -48,6 +48,7 @@ DURACIONES_SERVICIO = {
     'sinastria_ia': 30,
     'astrologia_horaria_ia': 15,
     'psico_coaching_ia': 45,
+        'grafologia_ia': 30,
     'lectura_manos_ia': 30,
     'lectura_facial_ia': 15,
     'astrologo_humano': 60,
@@ -57,8 +58,7 @@ DURACIONES_SERVICIO = {
     'revolucion_solar_ia_half': 25,
     'sinastria_ia_half': 15,
     'lectura_manos_ia_half': 15,
-    'psico_coaching_ia_half': 20,
-    'grafologia_ia': 30
+    'psico_coaching_ia_half': 20
 }
 
 def verificar_sesion_activa(telefono):
@@ -899,7 +899,7 @@ def calcular_tiempo_disponible(codigo_servicio, tipo_servicio):
             'revolucion_solar_ia': 25, 
             'sinastria_ia': 15,
             'lectura_manos_ia': 15,
-            'psico_coaching_ia': 22
+            'psico_coaching_ia': 20
         }
         return tiempos_medios[tipo_servicio], "medio"
     else:
