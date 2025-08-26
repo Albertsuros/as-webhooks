@@ -886,6 +886,26 @@ def responder_ia_contextual(mensaje, contexto, numero_telefono):
         print(f"Error en respuesta IA: {e}")
         return "¿En qué puedo ayudarte?"
 
+def calcular_tiempo_disponible(codigo_servicio, tipo_servicio):
+    """Calcular tiempo disponible según código y tipo de servicio"""
+    es_medio_tiempo = 'M' in codigo_servicio
+    
+    # SERVICIOS CON OPCIÓN MEDIO TIEMPO (solo 5)
+    servicios_medio_tiempo = ['carta_astral_ia', 'revolucion_solar_ia', 'sinastria_ia', 'lectura_manos_ia', 'psico_coaching_ia']
+    
+    if tipo_servicio in servicios_medio_tiempo and es_medio_tiempo:
+        tiempos_medios = {
+            'carta_astral_ia': 20,
+            'revolucion_solar_ia': 25, 
+            'sinastria_ia': 15,
+            'lectura_manos_ia': 15,
+            'psico_coaching_ia': 22
+        }
+        return tiempos_medios[tipo_servicio], "medio"
+    else:
+        # Tiempo completo según servicio
+        return DURACIONES_SERVICIO.get(tipo_servicio, 30), "completo"
+
 def handle_sofia_webhook(data):
     """Handler principal de Sofía - LIMPIO (sin interferir con WooCommerce)"""
     try:
@@ -1423,6 +1443,10 @@ def handle_sofia_webhook(data):
                         'datos_cliente': datos_natales
                     }
                 
+                # CALCULAR TIEMPO DISPONIBLE SEGÚN CÓDIGO
+                codigo_servicio = contexto_sesion['codigo_servicio']
+                tiempo_disponible, tipo_codigo = calcular_tiempo_disponible(codigo_servicio, contexto_sesion['tipo_servicio'])
+                
                 # TRANSFERIR AL ESPECIALISTA
                 especialistas = {
                     'carta_astral_ia': 'asst_78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',
@@ -1461,18 +1485,20 @@ def handle_sofia_webhook(data):
                 especialista = especialistas.get(contexto_sesion['tipo_servicio'])
                 
                 if especialista:
-                    # Mensaje de recordatorio según tipo de servicio
+                    # Mensaje de recordatorio según tipo de servicio Y TIEMPO
                     if contexto_sesion['tipo_servicio'] == 'carta_astral_ia':
-                        mensaje_final = "Perfecto. Te paso ahora con nuestra astróloga especialista. Recuerda que tienes 40 minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono, y también puedes pedir revolución solar gratis. Un momento, por favor."
+                        if tipo_codigo == "medio":
+                            mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga especialista. Recuerda que tienes {tiempo_disponible} minutos de sesión (código medio). Un momento, por favor."
+                        else:
+                            mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga especialista. Recuerda que tienes {tiempo_disponible} minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono, y también puedes pedir revolución solar gratis. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] == 'revolucion_solar_ia':
-                        mensaje_final = "Perfecto. Te paso ahora con nuestra astróloga especialista en revolución solar. Recuerda que tienes 50 minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono. Un momento, por favor."
+                        mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga especialista en revolución solar. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] in ['sinastria_ia', 'lectura_manos_ia']:
-                        duracion = DURACIONES_SERVICIO.get(contexto_sesion['tipo_servicio'], 30)
-                        mensaje_final = f"Perfecto. Te paso ahora con nuestro especialista. Recuerda que tienes {duracion} minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono. Un momento, por favor."
+                        mensaje_final = f"Perfecto. Te paso ahora con nuestro especialista. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] == 'psico_coaching_ia':
-                        mensaje_final = "Perfecto. Te paso ahora con nuestro coach. Recuerda que tienes 45 minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono. Un momento, por favor."
+                        mensaje_final = f"Perfecto. Te paso ahora con nuestro coach. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
                     else:
-                        mensaje_final = "Perfecto. Te paso ahora con nuestro especialista. Un momento, por favor."
+                        mensaje_final = f"Perfecto. Te paso ahora con nuestro especialista. Tienes {tiempo_disponible} minutos de sesión. Un momento, por favor."
                     
                     # Limpiar sesión temporal
                     sessions.pop(session_id, None)
@@ -1481,10 +1507,13 @@ def handle_sofia_webhook(data):
                         "type": "transfer_call",
                         "transfer": {
                             "type": "assistant",
-                            "assistantId": especialista
+                            "assistantId": especialista,
+                            "message": f"Cliente con código {tipo_codigo}. Tiempo disponible: {tiempo_disponible} minutos. Código: {codigo_servicio}"
                         },
                         "data_extra": {
-                            "codigo_servicio": contexto_sesion['codigo_servicio'],
+                            "codigo_servicio": codigo_servicio,
+                            "tipo_codigo": tipo_codigo,
+                            "tiempo_disponible": tiempo_disponible,
                             "datos_interpretacion": datos_interpretacion,
                             "session_id": session_id,
                             "numero_telefono": numero_telefono,
