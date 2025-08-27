@@ -6,8 +6,8 @@ AGENTES = {
     # === AS ASESORES - VERÓNICA Y TRANSFERENCIAS ===
     'veronica': 'ID_DE_VERONICA',
     
-    'vendedor_1': '6e9b95a9-8862-4939-9ab2-88e9b23c4ca4',  # Juan Vendedor
-    'vendedor_2': '65ae8980-6786-4272-8424-b040b6940a40',  # María Comercial  
+    'vendedor_1': '6e9b95a9-8862-4939-9ab2-88e9b23c4ca4',  # Albert Vendedor
+    'vendedor_2': '65ae8980-6786-4272-8424-b040b6940a40',  # Juan Comercial  
     'vendedor_3': 'a4d83ab5-869d-45b7-9e8b-fddb99a39b65',  # Carlos Ventas
     'soporte': '2da38d9d-9ff8-499f-8241-b1c955ebac39',     # Alex Soporte
     
@@ -31,8 +31,8 @@ def get_agent_id(nombre_agente):
 # Función para obtener nombre legible  
 def get_agent_name(nombre_agente):
     nombres_legibles = {
-        'vendedor_1': 'Juan (Vendedor Senior)',
-        'vendedor_2': 'María (Comercial)',
+        'vendedor_1': 'Albert (Vendedor Senior)',
+        'vendedor_2': 'Juan (Comercial)',
         'vendedor_3': 'Carlos (Ventas)',
         'soporte': 'Alex (Soporte Técnico)',
         'carta_astral': 'Marco (Astrólogo Carta Astral)',
