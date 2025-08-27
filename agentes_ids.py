@@ -16,14 +16,14 @@ AGENTES = {
     'sofia': '0bfe7461-69d5-4077-99b8-2e02c76b5287',
 
     # Asesores (nombres reales en VAPI)
-    'rosa': 'asst_78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',     # Antes "Astrologa Cartastral"
-    'luna': 'asst_9513ec30-f231-4171-959c-26c8588d248e',      # Antes "Astrologa Revolsolar"
-    'olga': 'asst_9960b33c-db72-4ebd-ae3e-69ce6f7e6660',     # Antes "Astrologa Sinastria"
-    'oscar': 'asst_d218cde4-d4e1-4943-8fd9-a1df9404ebd6', # Antes "Astrologa Astrolhoraria"
-    'marta': 'asst_63a0f9b9-c5d5-4df6-ba6f-52d700b51275',    # Antes "Psico Coaching"
-    'paloma': 'asst_8473d3ab-22a7-479c-ae34-427e992023de',   # Antes "Lectura Manos"
-    'iris': 'asst_9cae2faa-2a8e-498b-b8f4-ab7af65bf734',     # Antes "Lectura Facial"
-    'roman': 'asst_84c67029-8059-4066-a5ae-8532b99fd24c'     # Antes "Grafólogo"
+    'rosa': '78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',     # Antes "Astrologa Cartastral"
+    'luna': '9513ec30-f231-4171-959c-26c8588d248e',      # Antes "Astrologa Revolsolar"
+    'olga': '9960b33c-db72-4ebd-ae3e-69ce6f7e6660',     # Antes "Astrologa Sinastria"
+    'oscar': 'd218cde4-d4e1-4943-8fd9-a1df9404ebd6', # Antes "Astrologa Astrolhoraria"
+    'marta': '63a0f9b9-c5d5-4df6-ba6f-52d700b51275',    # Antes "Psico Coaching"
+    'paloma': '8473d3ab-22a7-479c-ae34-427e992023de',   # Antes "Lectura Manos"
+    'iris': '9cae2faa-2a8e-498b-b8f4-ab7af65bf734',     # Antes "Lectura Facial"
+    'roman': '84c67029-8059-4066-a5ae-8532b99fd24c'     # Antes "Grafólogo"
 }
 
 ESPECIALIDADES = {
