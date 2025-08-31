@@ -109,14 +109,14 @@ def manejar_reconexion(sesion_activa, data):
         
         # Transferir directo al especialista
         especialistas = {
-            'carta_astral_ia': 'asst_78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',
-            'revolucion_solar_ia': 'asst_9513ec30-f231-4171-959c-26c8588d248e', 
-            'sinastria_ia': 'asst_9960b33c-db72-4ebd-ae3e-69ce6f7e6660',
-            'astrologia_horaria_ia': 'asst_d218cde4-d4e1-4943-8fd9-a1df9404ebd6',
-            'psico_coaching_ia': 'asst_63a0f9b9-c5d5-4df6-ba6f-52d700b51275',
-            'lectura_manos_ia': 'asst_8473d3ab-22a7-479c-ae34-427e992023de',
-            'lectura_facial_ia': 'asst_9cae2faa-2a8e-498b-b8f4-ab7af65bf734',
-            'grafologia_ia': 'asst_84c67029-8059-4066-a5ae-8532b99fd24c'
+            'carta_astral_ia': 'Rosa',
+            'revolucion_solar_ia': 'Luna', 
+            'sinastria_ia': 'Olga',
+            'astrologia_horaria_ia': 'Oscar',
+            'psico_coaching_ia': 'Marta',
+            'lectura_manos_ia': 'Paloma',
+            'lectura_facial_ia': 'Iris',
+            'grafologia_ia': 'Román'
         }
         
         especialista = especialistas.get(sesion_activa['tipo_servicio'])
@@ -1006,24 +1006,24 @@ def handle_sofia_webhook(data):
             
             # TRANSFERIR DIRECTAMENTE AL ESPECIALISTA CON DATOS EXISTENTES
             especialistas = {
-                'carta_astral_ia': 'asst_78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',
-                'revolucion_solar_ia': 'asst_9513ec30-f231-4171-959c-26c8588d248e', 
-                'sinastria_ia': 'asst_9960b33c-db72-4ebd-ae3e-69ce6f7e6660',
-                'astrologia_horaria_ia': 'asst_d218cde4-d4e1-4943-8fd9-a1df9404ebd6',
-                'psico_coaching_ia': 'asst_63a0f9b9-c5d5-4df6-ba6f-52d700b51275',
-                'lectura_manos_ia': 'asst_8473d3ab-22a7-479c-ae34-427e992023de',
-                'lectura_facial_ia': 'asst_9cae2faa-2a8e-498b-b8f4-ab7af65bf734',
-                'grafologia_ia': 'asst_84c67029-8059-4066-a5ae-8532b99fd24c'
+                'carta_astral_ia': 'Rosa',
+                'revolucion_solar_ia': 'Luna', 
+                'sinastria_ia': 'Olga',
+                'astrologia_horaria_ia': 'Oscar',
+                'psico_coaching_ia': 'Marta',
+                'lectura_manos_ia': 'Paloma',
+                'lectura_facial_ia': 'Iris',
+                'grafologia_ia': 'Román'
             }
             
             especialista = especialistas.get(sesion_activa['tipo_servicio'])
             
             if especialista:
                 return {
-                    "type": "transfer_call",
-                    "transfer": {
-                        "type": "assistant", 
-                        "assistantId": especialista
+                    "type": "function_call",
+                    "function": {
+                        "name": "Sofi_transfers", 
+                        "arguments": {"destino": especialista}
                     },
                     "data_extra": {
                         "sesion_activa": sesion_activa,
@@ -1488,15 +1488,15 @@ def handle_sofia_webhook(data):
                     # Mensaje de recordatorio según tipo de servicio Y TIEMPO
                     if contexto_sesion['tipo_servicio'] == 'carta_astral_ia':
                         if tipo_codigo == "medio":
-                            mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga especialista. Recuerda que tienes {tiempo_disponible} minutos de sesión (código medio). Un momento, por favor."
+                            mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga Rosa. Recuerda que tienes {tiempo_disponible} minutos de sesión (código medio). Un momento, por favor."
                         else:
-                            mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga especialista. Recuerda que tienes {tiempo_disponible} minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono, y también puedes pedir revolución solar gratis. Un momento, por favor."
+                            mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga Rosa. Recuerda que tienes {tiempo_disponible} minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono, y también puedes pedir revolución solar gratis. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] == 'revolucion_solar_ia':
-                        mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga especialista en revolución solar. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
+                        mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga Luna en revolución solar. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] in ['sinastria_ia', 'lectura_manos_ia']:
                         mensaje_final = f"Perfecto. Te paso ahora con nuestro especialista. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] == 'psico_coaching_ia':
-                        mensaje_final = f"Perfecto. Te paso ahora con nuestro coach. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
+                        mensaje_final = f"Perfecto. Te paso ahora con nuestra coach Marta. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
                     else:
                         mensaje_final = f"Perfecto. Te paso ahora con nuestro especialista. Tienes {tiempo_disponible} minutos de sesión. Un momento, por favor."
                     
@@ -1504,10 +1504,10 @@ def handle_sofia_webhook(data):
                     sessions.pop(session_id, None)
                     
                     return {
-                        "type": "transfer_call",
-                        "transfer": {
-                            "type": "assistant",
-                            "assistantId": especialista,
+                        "type": "function_call",
+                        "function": {
+                            "name": "Sofi_transfers",
+                            "arguments": {"destino": especialista}
                             "message": f"Cliente con código {tipo_codigo}. Tiempo disponible: {tiempo_disponible} minutos. Código: {codigo_servicio}"
                         },
                         "data_extra": {
