@@ -1508,6 +1508,7 @@ def handle_sofia_webhook(data):
                         "function": {
                             "name": "Sofi_transfers",
                             "arguments": {"destino": especialista}
+                            },
                             "message": f"Cliente con código {tipo_codigo}. Tiempo disponible: {tiempo_disponible} minutos. Código: {codigo_servicio}"
                         },
                         "data_extra": {
