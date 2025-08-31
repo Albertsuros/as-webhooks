@@ -123,8 +123,8 @@ def manejar_reconexion(sesion_activa, data):
         
         if especialista:
             return {
-                "type": "transfer_call",
-                "transfer": {"type": "assistant", "assistantId": especialista},
+                "type": "function_call",
+                "function": {"type": "assistant", "assistantId": especialista},
                 "data_extra": {
                     "sesion_activa": sesion_activa,
                     "reconexion_automatica": True
