@@ -1504,24 +1504,9 @@ def handle_sofia_webhook(data):
                     sessions.pop(session_id, None)
                     
                     return {
-                        "type": "function_call",
-                        "function": {
-                            "name": "Sofi_transfers",
-                            "arguments": {"destino": especialista}
-                            },
-                            "message": f"Cliente con código {tipo_codigo}. Tiempo disponible: {tiempo_disponible} minutos. Código: {codigo_servicio}"
-                        },
-                        "data_extra": {
-                            "codigo_servicio": codigo_servicio,
-                            "tipo_codigo": tipo_codigo,
-                            "tiempo_disponible": tiempo_disponible,
-                            "datos_interpretacion": datos_interpretacion,
-                            "session_id": session_id,
-                            "numero_telefono": numero_telefono,
-                            "sesion_db_id": sesion_id_db if numero_telefono else None
-                        },
-                        "speak_first": mensaje_final
-                    }
+                        "type": "speak", 
+                        "text": mensaje_final
+}
                 else:
                     return {"type": "speak", "text": "Servicio configurado correctamente. En breve te contactaremos."}
             else:
