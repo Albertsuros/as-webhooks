@@ -12,21 +12,32 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 sessions = {}
 
 def ejecutar_transferencia_telefonica():
-    """Ejecutar transferencia directa al número personal"""
+    """WORKAROUND: Notificar y terminar para transferencia manual"""
     try:
-        print(f"🔄 Ejecutando transferencia directa a número personal")
+        print(f"🔄 WORKAROUND: Ejecutando transferencia manual")
+        
+        # Enviar notificación urgente
+        enviar_telegram_mejora(f"""
+🚨 <b>TRANSFERENCIA REQUERIDA</b>
+
+📞 <b>Cliente en:</b> +34930450975 (Verónica)
+🎯 <b>Solicita:</b> Hablar con Albert
+⏰ <b>Hora:</b> {datetime.now().strftime('%H:%M:%S')}
+
+🔥 <b>ACCIÓN:</b> Llama a +34930450985 YA
+💨 Cliente terminará llamada en 20 segundos
+        """)
         
         return {
-            "type": "transfer", 
-            "to": "+34616000211",
-            "message": "Te transfiero con el responsable. Un momento por favor."
+            "type": "end_call",
+            "message": "Te transfiero con Albert ahora. Te llamará en 30 segundos al mismo número."
         }
         
     except Exception as e:
-        print(f"❌ Error en transferencia: {e}")
+        print(f"❌ Error en transferencia workaround: {e}")
         return {
             "type": "speak",
-            "text": "Lo siento, no pude transferir la llamada. Inténtalo de nuevo."
+            "text": "Un momento, te conecto con mi supervisor."
         }
 
 def handle_veronica_webhook(data):
@@ -51,24 +62,6 @@ def handle_veronica_webhook(data):
         if not user_text or len(user_text.strip()) < 3:
             print("⚠️ Request sin contenido real")
             return {"status": "ok"}
-        
-        # ✅ AQUÍ CONTINÚA TU LÓGICA ORIGINAL
-        print(f"📞 MENSAJE: '{user_text}'")
-        
-        # TRANSFERENCIA = Notificar + Colgar
-        if any(palabra in user_text.lower() for palabra in [
-            'comercial', 'pásame', 'transfiere', 'transferir', 'albert'
-        ]):
-            print("📲 TRANSFERENCIA SOLICITADA")
-            
-            # Enviar notificación inmediata
-            enviar_telegram_mejora(f"""
-🚨 <b>LLAMADA URGENTE</b>
-📞 <b>Cliente solicita transferencia</b>
-💬 <b>Dice:</b> "{user_text}"
-📲 <b>LLAMA YA A: +34930450985</b>
-⏰ <b>Hora:</b> {datetime.now().strftime('%H:%M')}
-            """)
             
             # Terminar llamada para que puedas llamar tú
             return {
