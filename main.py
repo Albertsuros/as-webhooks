@@ -6404,8 +6404,11 @@ def debug_env():
 def retell_endpoint(agent_name):
     try:
         data = request.json
+        print(f"=== RETELL DEBUG ===")
+        print(f"Agent: {agent_name}")
+        print(f"Data: {data}")
+        
         user_message = data.get('message', '')
-        session_id = data.get('session_id', 'default')
         
         if agent_name == 'veronica':
             from veronica import responder_ia
@@ -6416,38 +6419,14 @@ def retell_endpoint(agent_name):
         else:
             response_text = "Agente no encontrado"
         
-        return {
+        response = {
             "response": response_text,
             "end_call": False
         }
-    except Exception as e:
-        print(f"Error en endpoint Retell: {e}")
-        return {
-            "response": "Disculpa, hay un problema técnico", 
-            "end_call": False
-        }
+        print(f"Enviando respuesta: {response}")
         
-@app.route('/webhook/<agent_name>/retell', methods=['POST'])
-def retell_endpoint(agent_name):
-    try:
-        data = request.json
-        print(f"=== RETELL DEBUG ===")
-        print(f"Data: {data}")
+        return response, 200, {'Content-Type': 'application/json'}
         
-        user_message = data.get('message', '')
-        
-        if agent_name == 'veronica':
-            from veronica import responder_ia
-            response_text = responder_ia(user_message)
-            
-            response = {
-                "response": response_text,
-                "end_call": False
-            }
-            print(f"Enviando respuesta: {response}")
-            
-            return response, 200, {'Content-Type': 'application/json'}
-            
     except Exception as e:
         print(f"ERROR: {e}")
         return {
