@@ -6400,7 +6400,7 @@ def debug_env():
 # ENDPOINT RETELL AI - CUSTOM LLM
 # ========================================
 
-@app.route('/retell-llm/<agent_name>', methods=['POST'])
+@app.route('/webhook/<agent_name>/retell', methods=['POST'])
 def retell_llm_endpoint(agent_name):
     try:
         data = request.json
