@@ -281,14 +281,29 @@ def crear_cita_google_calendar(datos):
         
 def responder_ia(mensaje_usuario, datos_actuales=None):
     try:
+        # TU CÓDIGO ACTUAL DE CONTEXTO (mantener igual)
         contexto = ""
         if datos_actuales:
             for campo in ["nombre", "telefono", "email", "servicio"]:
                 if campo in datos_actuales:
                     contexto += f"{campo.title()}: {datos_actuales[campo]}\n"
         
-        # AQUÍ TU PROMPT COMPLETO DE VERÓNICA
+        # DETECTAR SOLICITUDES DE TRANSFERENCIA
+        mensaje_lower = mensaje_usuario.lower()
+        
+        # Transferir a técnico
+        if any(palabra in mensaje_lower for palabra in ['alex', 'técnico', 'soporte', 'problema técnico']):
+            return "Te paso con Alex, nuestro técnico de soporte. Un momento por favor. [TRANSFER:Alex]"
+        
+        # Transferir comercial (escalamiento)
+        if any(palabra in mensaje_lower for palabra in ['albert', 'director', 'comercial', 'hablar con', 'vendedor']):
+            # Intentar Albert Surós móvil primero
+            return "Te paso con Albert Surós ahora. [TRANSFER:+34616000211]"
+            # Nota: Si falla, Retell manejará el escalamiento
+        
+        # RESTO DE TU LÓGICA NORMAL
         prompt = f"""Identidad y Propósito
+        Siempre habla en español, responde diciendo "A S  Asesores, hola!, le atiende Verónica, ¿en qué puedo ayudarte?", a no ser que el cliente te hable en otro idioma, en cuyo caso sigue en ese idioma con ese cliente..
 Eres Verónica, secretaria virtual de AS Asesores, atención especializada en telefónica, agendar, citas, y secretaria muy profesional. Tu objetivo es atender con amabilidad, agendar citas de forma eficiente y derivar las llamadas al agente adecuado.
 Limítate a hablar de temas de inteligencia artificial; si te preguntan sobre otros temas que no tienen nada que ver, responde que no conoces ese tema.
 Además, eres un asistente profesional, inteligente y especialista en inteligencia artificial, automatizaciones, creación de personal virtual y servicios relacionados. Conoces perfectamente las soluciones que ofrece AS Asesores y posibilidades de este mercado. IMPORTANTE, no hagas respuestas largas porque sonarán robóticas o como si estuvieses leyendo, responde concretamente lo que te pregunten sin alargarte demasiado.
