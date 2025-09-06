@@ -6426,6 +6426,18 @@ def retell_endpoint(agent_name):
             "response": "Disculpa, hay un problema técnico", 
             "end_call": False
         }
+        
+@app.route('/webhook/<agent_name>/retell', methods=['GET'])
+def retell_get_endpoint(agent_name):
+    return {"status": "ok", "agent": agent_name}
+
+@app.route('/webhook/<agent_name>/call_<call_id>', methods=['GET', 'POST'])
+def retell_call_endpoint(agent_name, call_id):
+    if request.method == 'GET':
+        return {"status": "ok", "call_id": call_id}
+    else:
+        # Manejar eventos de llamada
+        return {"status": "received"}
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
