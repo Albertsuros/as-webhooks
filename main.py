@@ -6395,58 +6395,6 @@ def debug_env():
         "tiene_url": bool(os.getenv("DOLIBARR_URL")),
         "tiene_key": bool(os.getenv("DOLIBARR_API_KEY"))
     })
-    
-# ========================================
-# ENDPOINT RETELL AI - CUSTOM LLM
-# ========================================
-
-@app.route('/webhook/<agent_name>/retell', methods=['POST'])
-def retell_endpoint(agent_name):
-    try:
-        data = request.json
-        print(f"=== RETELL DEBUG ===")
-        print(f"Agent: {agent_name}")
-        print(f"Data: {data}")
-        
-        user_message = data.get('message', '')
-        
-        if agent_name == 'veronica':
-            from veronica import responder_ia
-            response_text = responder_ia(user_message)
-        elif agent_name == 'sofia':
-            from sofia import responder_ia  
-            response_text = responder_ia(user_message)
-        else:
-            response_text = "Agente no encontrado"
-        
-        response = {
-            "response": response_text,
-            "end_call": False
-        }
-        print(f"Enviando respuesta: {response}")
-        
-        return response, 200, {'Content-Type': 'application/json'}
-        
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return {
-            "response": "Disculpa, hay un problema técnico", 
-            "end_call": False
-        }, 200, {'Content-Type': 'application/json'}
-        
-@app.route('/webhook/<agent_name>/call_<call_id>', methods=['GET', 'POST'])
-def retell_call_endpoint(agent_name, call_id):
-    return {"status": "ok", "call_id": call_id}
-    
-@app.route('/webhook/<agent_name>/retell/call_<call_id>', methods=['GET', 'POST'])
-def retell_call_management(agent_name, call_id):
-    if request.method == 'GET':
-        return {"status": "ok", "call_id": call_id, "agent": agent_name}
-    else:
-        # POST para eventos de llamada
-        data = request.get_json() or {}
-        print(f"📞 Evento de llamada {call_id}: {data}")
-        return {"status": "received"}
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
