@@ -874,68 +874,65 @@ def webhook_fin_sesion():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-@app.route("/webhook/vendedor1", methods=["POST"])
+@app.route("/webhook/vendedor1", methods=["GET", "POST"])
 def webhook_vendedor1():
+    if request.method == "GET":
+        return {"status": "ok", "message": "Vendedor1 webhook ready"}
+    
     try:
         if not request.is_json:
             return jsonify({"error": "Content-Type debe ser application/json"}), 400
-
+        
         data = request.get_json()
-
         if not data:
             return jsonify({"error": "No se recibieron datos JSON"}), 400
-
+            
         response = handle_vendedor1_webhook(data)
         return jsonify(response)
-
+        
     except Exception as e:
         print(f"Error en webhook_vendedor1: {e}")
-        return jsonify({
-            "type": "speak",
-            "text": "Error interno del servidor"
-        }), 500
+        return jsonify({"type": "speak", "text": "Error interno del servidor"}), 500
 
-@app.route("/webhook/vendedor2", methods=["POST"])
-def webhook_vendedor2():
+@app.route("/webhook/vendedor2", methods=["GET", "POST"])
+def webhook_vendedor1():
+    if request.method == "GET":
+        return {"status": "ok", "message": "Vendedor2 webhook ready"}
+    
     try:
         if not request.is_json:
             return jsonify({"error": "Content-Type debe ser application/json"}), 400
-
+        
         data = request.get_json()
-
         if not data:
             return jsonify({"error": "No se recibieron datos JSON"}), 400
-
-        response = handle_vendedor2_webhook(data)
+            
+        response = handle_vendedor1_webhook(data)
         return jsonify(response)
-
+        
     except Exception as e:
         print(f"Error en webhook_vendedor2: {e}")
-        return jsonify({
-            "type": "speak",
-            "text": "Error interno del servidor"
-        }), 500
+        return jsonify({"type": "speak", "text": "Error interno del servidor"}), 500
 
-@app.route("/webhook/vendedor3", methods=["POST"])
-def webhook_vendedor3():
+@app.route("/webhook/vendedor3", methods=["GET", "POST"])
+def webhook_vendedor1():
+    if request.method == "GET":
+        return {"status": "ok", "message": "Vendedor3 webhook ready"}
+    
     try:
         if not request.is_json:
             return jsonify({"error": "Content-Type debe ser application/json"}), 400
-
+        
         data = request.get_json()
-
         if not data:
             return jsonify({"error": "No se recibieron datos JSON"}), 400
-
+            
         response = handle_vendedor3_webhook(data)
         return jsonify(response)
-
+        
     except Exception as e:
-        print(f"Error en webhook_vendedor3: {e}")
-        return jsonify({
-            "type": "speak",
-            "text": "Error interno del servidor"
-        }), 500
+        print(f"Error en webhook_vendedor1: {e}")
+        return jsonify({"type": "speak", "text": "Error interno del servidor"}), 500
 
 @app.route("/webhook/tecnico_soporte", methods=["POST"])
 def webhook_tecnico_soporte():
