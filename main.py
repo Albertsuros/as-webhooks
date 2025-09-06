@@ -6395,6 +6395,37 @@ def debug_env():
         "tiene_url": bool(os.getenv("DOLIBARR_URL")),
         "tiene_key": bool(os.getenv("DOLIBARR_API_KEY"))
     })
+    
+# ========================================
+# ENDPOINT RETELL AI - CUSTOM LLM
+# ========================================
+
+@app.route('/retell-llm/<agent_name>', methods=['POST'])
+def retell_llm_endpoint(agent_name):
+    try:
+        data = request.json
+        user_message = data.get('message', '')
+        session_id = data.get('session_id', 'default')
+        
+        if agent_name == 'veronica':
+            from veronica import responder_ia
+            response_text = responder_ia(user_message)
+        elif agent_name == 'sofia':
+            from sofia import responder_ia  
+            response_text = responder_ia(user_message)
+        else:
+            response_text = "Agente no encontrado"
+        
+        return {
+            "response": response_text,
+            "end_call": False
+        }
+    except Exception as e:
+        print(f"Error en endpoint Retell: {e}")
+        return {
+            "response": "Disculpa, hay un problema técnico", 
+            "end_call": False
+        }
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
