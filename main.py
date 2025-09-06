@@ -6427,17 +6427,33 @@ def retell_endpoint(agent_name):
             "end_call": False
         }
         
-@app.route('/webhook/<agent_name>/retell', methods=['GET'])
-def retell_get_endpoint(agent_name):
-    return {"status": "ok", "agent": agent_name}
-
-@app.route('/webhook/<agent_name>/call_<call_id>', methods=['GET', 'POST'])
-def retell_call_endpoint(agent_name, call_id):
-    if request.method == 'GET':
-        return {"status": "ok", "call_id": call_id}
-    else:
-        # Manejar eventos de llamada
-        return {"status": "received"}
+@app.route('/webhook/<agent_name>/retell', methods=['POST'])
+def retell_endpoint(agent_name):
+    try:
+        data = request.json
+        print(f"=== RETELL DEBUG ===")
+        print(f"Data: {data}")
+        
+        user_message = data.get('message', '')
+        
+        if agent_name == 'veronica':
+            from veronica import responder_ia
+            response_text = responder_ia(user_message)
+            
+            response = {
+                "response": response_text,
+                "end_call": False
+            }
+            print(f"Enviando respuesta: {response}")
+            
+            return response, 200, {'Content-Type': 'application/json'}
+            
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return {
+            "response": "Disculpa, hay un problema técnico", 
+            "end_call": False
+        }, 200, {'Content-Type': 'application/json'}
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
