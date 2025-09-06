@@ -244,6 +244,7 @@ def crear_cita_google_calendar(datos):
         print(f"❌ Error en crear_cita_google_calendar: {e}")
         
 def responder_ia(mensaje_usuario, datos_actuales=None):
+    print(f"DEBUG: Llamada a responder_ia con: {mensaje_usuario}")
     try:
         # TU CÓDIGO ACTUAL DE CONTEXTO (mantener igual)
         contexto = ""
