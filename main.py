@@ -6401,7 +6401,7 @@ def debug_env():
 # ========================================
 
 @app.route('/webhook/<agent_name>/retell', methods=['POST'])
-def retell_llm_endpoint(agent_name):
+def retell_endpoint(agent_name):
     try:
         data = request.json
         user_message = data.get('message', '')
