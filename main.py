@@ -891,7 +891,7 @@ def webhook_vendedor1():
         return jsonify(response)
         
     except Exception as e:
-        print(f"Error en webhook_vendedor1: {e}")
+        print(f"Error en webhook_vendedor2: {e}")
         return jsonify({"type": "speak", "text": "Error interno del servidor"}), 500
 
 @app.route("/webhook/vendedor2", methods=["GET", "POST"])
