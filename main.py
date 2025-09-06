@@ -891,11 +891,11 @@ def webhook_vendedor1():
         return jsonify(response)
         
     except Exception as e:
-        print(f"Error en webhook_vendedor2: {e}")
+        print(f"Error en webhook_vendedor1: {e}")
         return jsonify({"type": "speak", "text": "Error interno del servidor"}), 500
 
 @app.route("/webhook/vendedor2", methods=["GET", "POST"])
-def webhook_vendedor1():
+def webhook_vendedor2():
     if request.method == "GET":
         return {"status": "ok", "message": "Vendedor2 webhook ready"}
     
@@ -907,7 +907,7 @@ def webhook_vendedor1():
         if not data:
             return jsonify({"error": "No se recibieron datos JSON"}), 400
             
-        response = handle_vendedor1_webhook(data)
+        response = handle_vendedor2_webhook(data)
         return jsonify(response)
         
     except Exception as e:
@@ -915,7 +915,7 @@ def webhook_vendedor1():
         return jsonify({"type": "speak", "text": "Error interno del servidor"}), 500
 
 @app.route("/webhook/vendedor3", methods=["GET", "POST"])
-def webhook_vendedor1():
+def webhook_vendedor3():
     if request.method == "GET":
         return {"status": "ok", "message": "Vendedor3 webhook ready"}
     
@@ -931,7 +931,7 @@ def webhook_vendedor1():
         return jsonify(response)
         
     except Exception as e:
-        print(f"Error en webhook_vendedor1: {e}")
+        print(f"Error en webhook_vendedor3: {e}")
         return jsonify({"type": "speak", "text": "Error interno del servidor"}), 500
 
 @app.route("/webhook/tecnico_soporte", methods=["POST"])
