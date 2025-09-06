@@ -6433,6 +6433,10 @@ def retell_endpoint(agent_name):
             "response": "Disculpa, hay un problema técnico", 
             "end_call": False
         }, 200, {'Content-Type': 'application/json'}
+        
+@app.route('/webhook/<agent_name>/call_<call_id>', methods=['GET', 'POST'])
+def retell_call_endpoint(agent_name, call_id):
+    return {"status": "ok", "call_id": call_id}
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
