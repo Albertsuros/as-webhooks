@@ -1099,7 +1099,7 @@ def handle_sofia_webhook(data):
                     if exito:
                         # Limpiar sesión
                         sessions.pop(session_id, None)
-                            enviar_telegram_mejora(f"""
+                        enviar_telegram_mejora(f"""
                     🔮 <b>NUEVA CITA - AS CARTASTRAL</b>
 
                     👤 <b>Cliente:</b> {confirmacion['cliente']}
