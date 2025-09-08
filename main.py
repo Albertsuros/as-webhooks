@@ -6395,6 +6395,21 @@ def debug_env():
         "tiene_url": bool(os.getenv("DOLIBARR_URL")),
         "tiene_key": bool(os.getenv("DOLIBARR_API_KEY"))
     })
+    
+@app.route('/api/test_booking', methods=['POST'])
+def test_booking():
+    try:
+        data = request.get_json()
+        return jsonify({
+            "success": True,
+            "message": "Test successful",
+            "received_data": data
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
