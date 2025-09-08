@@ -6410,6 +6410,52 @@ def test_booking():
             "success": False,
             "error": str(e)
         })
+        
+@app.route('/api/save_lead', methods=['POST'])
+def api_save_lead():
+    try:
+        data = request.get_json()
+        
+        # Detectar si es ticket técnico
+        agente = data.get('agente', '').lower()
+        es_tecnico = 'alex' in agente or 'técnico' in agente or 'soporte' in agente
+        
+        # Guardar en base de datos
+        lead_guardado = guardar_lead_cliente(data)
+        
+        # Personalizar notificación según tipo
+        if es_tecnico:
+            emoji_tipo = "🔧"
+            tipo_registro = "TICKET TÉCNICO"
+        else:
+            emoji_tipo = "🎯" 
+            tipo_registro = "LEAD COMERCIAL"
+        
+        enviar_telegram_mejora(f"""
+{emoji_tipo} <b>NUEVO {tipo_registro}</b>
+
+👤 <b>Cliente:</b> {data.get('nombre_cliente', 'Sin nombre')}
+🏢 <b>Empresa:</b> {data.get('empresa', 'Sin empresa')}
+📞 <b>Teléfono:</b> {data.get('telefono', 'Sin teléfono')}
+📧 <b>Email:</b> {data.get('email', 'Sin email')}
+📝 <b>Notas:</b> {data.get('notas', 'Sin notas')}
+👨‍💼 <b>Agente:</b> {data.get('agente', 'Sin especificar')}
+
+✅ <b>Estado:</b> Registrado - {"Seguimiento técnico" if es_tecnico else "Seguimiento comercial"}
+        """)
+        
+        return jsonify({
+            "success": True,
+            "message": "Datos guardados correctamente",
+            "lead_id": lead_guardado,
+            "tipo": "ticket_tecnico" if es_tecnico else "lead_comercial"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
