@@ -52,8 +52,6 @@ def handle_veronica_webhook(data):
         
         if completos:
             print(f"✅ DATOS: {datos}")
-            # Solo enviar a Make por ahora
-            enviar_a_make(datos)
             return {"type": "speak", "text": "Perfecto. Te contactaremos pronto."}
         else:
             return {"type": "speak", "text": "¿Puedes darme tu nombre y teléfono?"}
@@ -61,18 +59,6 @@ def handle_veronica_webhook(data):
     except Exception as e:
         print(f"❌ Error: {e}")
         return {"status": "ok"}  # ✅ Evitar loops en errores
-
-def enviar_a_make(datos):
-    try:
-        url = os.getenv("MAKE_WEBHOOK_VERONICA")
-        if url:
-            response = requests.post(url, json=datos, timeout=10)
-            print(f"Enviado a Make (Verónica): {response.status_code}")
-            print(f"Datos enviados: {datos}")
-        else:
-            print("No hay URL de Make configurada para Verónica")
-    except Exception as e:
-        print(f"Error enviando a Make: {e}")
         
 def enviar_telegram_mejora(mensaje):
     """Enviar notificación por Telegram"""

@@ -1099,6 +1099,20 @@ def handle_sofia_webhook(data):
                     if exito:
                         # Limpiar sesión
                         sessions.pop(session_id, None)
+                            enviar_telegram_mejora(f"""
+                    🔮 <b>NUEVA CITA - AS CARTASTRAL</b>
+
+                    👤 <b>Cliente:</b> {confirmacion['cliente']}
+                    📧 <b>Email:</b> {confirmacion['email']}
+                    📞 <b>Teléfono:</b> {confirmacion['telefono']}
+                    🔢 <b>Código:</b> {confirmacion['codigo_reserva']}
+                    🎯 <b>Servicio:</b> {confirmacion['servicio']}
+                    📅 <b>Fecha:</b> {confirmacion['fecha']}
+                    ⏰ <b>Horario:</b> {confirmacion['horario']}
+
+                    ✅ <b>Estado:</b> Confirmada automáticamente
+                    🏢 <b>Empresa:</b> AS Cartastral
+                        """)
                         
                         return {"type": "speak", "text": f"¡Perfecto! Tu cita con {confirmacion['servicio']} está confirmada para {confirmacion['fecha']} a las {confirmacion['horario']}. Código de reserva: {confirmacion['codigo_reserva']}. Te enviaremos un recordatorio por email a {datos_cita['email']}. ¡Hasta entonces!"}
                     else:
