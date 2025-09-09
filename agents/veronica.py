@@ -42,13 +42,13 @@ def handle_veronica_webhook(data):
             
         # DETECTAR TRANSFERENCIAS A ALBERT - REFER VOIPSTUDIO
         if any(palabra in user_text.lower() for palabra in [
-            'albert', 'director', 'jefe', 'hablar contigo', 'transferir', 'pasar con'
+            'albert surós', 'director', 'jefe', 'responsable', 'transferir'
         ]):
             enviar_telegram_mejora(f"""
         📞 TRANSFERENCIA REFER A ALBERT
         💬 Mensaje: {user_text}
         ⏰ Hora: {datetime.now().strftime('%H:%M')}
-        🧪 Usando VoípStudio: +34951840805
+        🧪 Transferencia directa sin VoípStudio
             """)
             
             return {
