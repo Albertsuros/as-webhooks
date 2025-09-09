@@ -53,7 +53,7 @@ def handle_veronica_webhook(data):
             
             return {
                 "type": "transfer",
-                "target": "sip:+34951840805@5t4n6j0wnrl.sip.livekit.cloud"
+                "target": "Pedro"  # Nombre del agente en Retell
             }
         
         # AGENDAR CITA SIMPLE
