@@ -7,7 +7,11 @@ from datetime import datetime
 # from grafologia.routes import grafologia_bp
 from flask import redirect, url_for
 
+# ← NUEVA LÍNEA: Importar el blueprint de empresas
+from routes_empresas import empresas_bp
+
 app = Flask(__name__)
+app.register_blueprint(empresas_bp, url_prefix='/api')
 # app.register_blueprint(grafologia_bp, url_prefix="/grafologia")
 # Aceptar rutas con y sin barra final
 app.url_map.strict_slashes = False
