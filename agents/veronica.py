@@ -53,7 +53,7 @@ def handle_veronica_webhook(data):
             
             return {
                 "type": "transfer",
-                "target": "Pedro"  # Nombre del agente en Retell
+                "target": "+34616000211"  # Tu móvil directo
             }
         
         # AGENDAR CITA SIMPLE
