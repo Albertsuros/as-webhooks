@@ -189,6 +189,21 @@ def ver_carta_especifica(archivo):
         )
     except Exception as e:
         return render_template("error.html", mensaje=f"Error cargando carta: {str(e)}")
+        
+@app.route('/webhook/retell_callback', methods=['POST'])
+def webhook_retell_callback():
+    try:
+        data = request.get_json()
+        call_status = data.get('call_status')
+        call_id = data.get('call_id')
+        empresa_id = data.get('metadata', {}).get('empresa_id')
+        
+        if call_status == 'ended' and empresa_id:
+            print(f"Llamada terminada para empresa {empresa_id}")
+            
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
