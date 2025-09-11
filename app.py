@@ -189,6 +189,80 @@ def ver_carta_especifica(archivo):
         )
     except Exception as e:
         return render_template("error.html", mensaje=f"Error cargando carta: {str(e)}")
+        
+@app.route("/")
+def home():
+    """Mostrar todos los endpoints disponibles"""
+    endpoints = {
+        # Endpoints originales (astrología)
+        "/admin": "GET - Panel de administración",
+        "/calendario": "GET - Calendario de citas",
+        "/health": "GET - Verificación de estado",
+        "/limpieza/estado": "GET - Estado del sistema de limpieza",
+        "/limpieza/manual": "POST - Ejecutar limpieza manual",
+        "/informe": "GET - Generar informe astrológico",
+        "/api/cartas": "GET - Listar cartas astrales",
+        "/carta/<archivo>": "GET - Ver carta específica",
+        
+        # Webhooks originales
+        "/webhook/astrologa_astrolhoraria": "POST - Webhook Astróloga Horaria",
+        "/webhook/astrologa_cartastral": "POST - Webhook Astróloga Carta Astral",
+        "/webhook/astrologa_revolsolar": "POST - Webhook Astróloga Revolución Solar",
+        "/webhook/astrologa_sinastria": "POST - Webhook Astróloga Sinastría",
+        "/webhook/busca_empresas1": "POST - Webhook Búsqueda Empresas 1",
+        "/webhook/busca_empresas2": "POST - Webhook Búsqueda Empresas 2",
+        "/webhook/busca_empresas3": "POST - Webhook Búsqueda Empresas 3",
+        "/webhook/chistes1": "POST - Webhook chistes1",
+        "/webhook/grafologia": "POST - Webhook Grafología",
+        "/webhook/lectura_facial": "POST - Webhook Lectura Facial",
+        "/webhook/lectura_manos": "POST - Webhook Lectura de Manos",
+        "/webhook/psico_coaching": "POST - Webhook Psicología y Coaching",
+        "/webhook/redes_sociales1": "POST - Webhook Redes Sociales 1",
+        "/webhook/redes_sociales2": "POST - Webhook Redes Sociales 2",
+        "/webhook/redes_sociales3": "POST - Webhook Redes Sociales 3",
+        "/webhook/redes_sociales4": "POST - Webhook Redes Sociales 4",
+        "/webhook/redes_sociales5": "POST - Webhook Redes Sociales 5",
+        "/webhook/redes_sociales6": "POST - Webhook Redes Sociales 6",
+        "/webhook/redes_sociales7": "POST - Webhook Redes Sociales 7",
+        "/webhook/sofia": "POST - Webhook de Sofía",
+        "/webhook/tecnico_soporte": "POST - Webhook Técnico Soporte",
+        "/webhook/vendedor1": "POST - Webhook de Vendedor 1",
+        "/webhook/vendedor2": "POST - Webhook de Vendedor 2",
+        "/webhook/vendedor3": "POST - Webhook de Vendedor 3",
+        "/webhook/veronica": "POST - Webhook de Verónica",
+        "/webhook/woocommerce": "POST - Webhook de WooCommerce",
+        
+        # NUEVOS ENDPOINTS - Sistema de Captadores
+        "/api/captador1/SECTOR/UBICACION": "GET - Captador 1 buscar empresas",
+        "/api/captador2/SECTOR/UBICACION": "GET - Captador 2 buscar empresas",
+        "/api/captador3/SECTOR/UBICACION": "GET - Captador 3 buscar empresas",
+        "/api/asignar_vendedor/VENDEDOR/CANTIDAD": "GET - Asignar empresas a vendedor",
+        "/api/excel_todas": "GET - Exportar todas las empresas (Excel)",
+        "/api/excel_pendientes": "GET - Exportar empresas pendientes (Excel)",
+        "/api/excel_vendedor/VENDEDOR": "GET - Exportar empresas de vendedor (Excel)",
+        "/api/vendedor_siguiente/VENDEDOR": "GET - Siguiente empresa para vendedor",
+        "/api/vendedor_resultado/ID/RESULTADO": "GET - Marcar resultado de llamada",
+        "/api/resumen": "GET - Resumen del sistema de empresas"
+    }
+    
+    return jsonify({
+        "message": "Servidor de agentes funcionando correctamente",
+        "endpoints": endpoints,
+        "ejemplos_captadores": {
+            "activar_captador_1": "GET /api/captador1/restaurantes/barcelona",
+            "activar_captador_2": "GET /api/captador2/clinicas/madrid",
+            "activar_captador_3": "GET /api/captador3/talleres/valencia",
+            "asignar_a_albert": "GET /api/asignar_vendedor/albert/20",
+            "siguiente_empresa_juan": "GET /api/vendedor_siguiente/juan",
+            "marcar_contactada": "GET /api/vendedor_resultado/123/contactada"
+        },
+        "sectores_ejemplo": [
+            "restaurantes", "clinicas", "talleres", "peluquerias", "gimnasios",
+            "farmacias", "opticas", "veterinarios", "panaderias", "floristerias",
+            "papelerias", "librerias", "consultoras", "academias", "autoescuelas",
+            "inmobiliarias", "seguros", "abogados", "dentistas", "fisioterapeutas"
+        ]
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
