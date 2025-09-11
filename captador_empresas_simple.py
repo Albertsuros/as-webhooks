@@ -5,7 +5,7 @@ import time
 import csv
 import io
 from datetime import datetime
-from flask import Blueprint, jsonify, make_response
+from flask import Blueprint, jsonify, make_response, request
 
 # Blueprint simple
 captador_bp = Blueprint('captador', __name__)
