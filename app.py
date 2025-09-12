@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, make_response
 import os
 import json
 import glob
+import subprocess
 from datetime import datetime
 # from weasyprint import HTML as weasyHTML
 # from grafologia.routes import grafologia_bp
@@ -213,11 +214,25 @@ def retell_llamada():
         to_number = data.get('to_number') 
         agent_id = data.get('agent_id')
         
-        # Por ahora simular la llamada
+        # Usar curl desde Python
+        cmd = [
+            'curl', '-X', 'POST', 
+            'https://api.retellai.com/v2/register-phone-call',
+            '-H', 'Authorization: Bearer key_714d5a5aa52c32258065da200b70',
+            '-H', 'Content-Type: application/json',
+            '-d', json.dumps({
+                "agent_id": agent_id,
+                "from_number": from_number, 
+                "to_number": to_number
+            })
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
         return jsonify({
             "status": "success",
-            "message": f"Llamada simulada de {from_number} a {to_number} con agente {agent_id}",
-            "call_id": "call_simulado_123"
+            "retell_response": result.stdout,
+            "message": f"Llamada real iniciada a {to_number}"
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
