@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, make_response
 import os
 import json
 import glob
+import requests
 import subprocess
 from datetime import datetime
 # from weasyprint import HTML as weasyHTML
@@ -209,31 +210,42 @@ def webhook_retell_callback():
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
     try:
-        data = request.get_json()
+        data = request.get_json(force=True) or {}
+        agent_id = str(data.get('agent_id') or "").strip()
+        to_number = str(data.get('to_number') or "").strip()
         from_number = data.get('from_number')
-        to_number = data.get('to_number') 
-        agent_id = data.get('agent_id')
-        
-        # Usar curl desde Python
-        cmd = [
-            'curl', '-X', 'POST', 
-            'https://api.retellai.com/v2/register-phone-call',
-            '-H', 'Authorization: Bearer key_714d5a5aa52c32258065da200b70',
-            '-H', 'Content-Type: application/json',
-            '-d', json.dumps({
-                "agent_id": agent_id,
-                "from_number": from_number, 
-                "to_number": to_number
-            })
-        ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        
+
+        # Normalizar tipos
+        if from_number is not None:
+            from_number = str(from_number).strip()
+            if not from_number:
+                from_number = None
+
+        if not agent_id or not to_number:
+            return jsonify({"error": "agent_id y to_number son obligatorios"}), 400
+
+        payload = {"agent_id": agent_id, "to_number": to_number}
+        if from_number:
+            payload["from_number"] = from_number
+
+        headers = {
+            "Authorization": f"Bearer {os.getenv('RETELL_API_KEY')}",
+            "Content-Type": "application/json",
+        }
+        url = "https://api.retellai.com/v2/register-phone-call"
+
+        r = requests.post(url, headers=headers, json=payload, timeout=20)
+
+        try:
+            rb = r.json()
+        except ValueError:
+            rb = {"raw": r.text}
+
         return jsonify({
-            "status": "success",
-            "retell_response": result.stdout,
-            "message": f"Llamada real iniciada a {to_number}"
-        })
+            "forwarded_payload": payload,
+            "status_code": r.status_code,
+            "retell_response": rb
+        }), r.status_code
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
