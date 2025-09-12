@@ -211,19 +211,36 @@ def webhook_retell_callback():
 def retell_llamada():
     try:
         data = request.get_json()
-        print(f"Datos recibidos: {data}")  # LOG
+        from_number = data.get('from_number')
+        to_number = data.get('to_number') 
+        agent_id = data.get('agent_id')
         
-        # ... curl code ...
+        print(f"Datos recibidos: {data}")
+        
+        # Comando curl completo
+        cmd = [
+            'curl', '-X', 'POST', 
+            'https://api.retellai.com/v2/register-phone-call',
+            '-H', 'Authorization: Bearer key_714d5a5aa52c32258065da200b70',
+            '-H', 'Content-Type: application/json',
+            '-d', json.dumps({
+                "agent_id": agent_id,
+                "from_number": from_number, 
+                "to_number": to_number
+            })
+        ]
         
         result = subprocess.run(cmd, capture_output=True, text=True)
-        print(f"Curl stdout: {result.stdout}")  # LOG
-        print(f"Curl stderr: {result.stderr}")  # LOG
+        print(f"Curl stdout: {result.stdout}")
+        print(f"Curl stderr: {result.stderr}")
         
         return jsonify({
             "status": "success",
             "retell_response": result.stdout,
             "curl_error": result.stderr
         })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
