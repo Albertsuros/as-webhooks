@@ -211,22 +211,21 @@ def webhook_retell_callback():
 def retell_llamada():
     try:
         data = request.get_json(force=True) or {}
-        agent_id = str(data.get('agent_id') or "").strip()
-        to_number = str(data.get('to_number') or "").strip()
-        from_number = data.get('from_number')
+        agent_id    = str(data.get('agent_id') or "").strip()
+        to_number   = str(data.get('to_number') or "").strip()
+        from_number = str(data.get('from_number') or "").strip()
 
-        # Normalizar tipos
-        if from_number is not None:
-            from_number = str(from_number).strip()
-            if not from_number:
-                from_number = None
+        # Validación mínima
+        if not agent_id or not to_number or not from_number:
+            return jsonify({"error": "agent_id, to_number y from_number son obligatorios"}), 400
+        if not to_number.startswith('+') or not from_number.startswith('+'):
+            return jsonify({"error": "Números en formato E.164 (+349...)"}), 400
 
-        if not agent_id or not to_number:
-            return jsonify({"error": "agent_id y to_number son obligatorios"}), 400
-
-        payload = {"agent_id": agent_id, "to_number": to_number}
-        if from_number:
-            payload["from_number"] = from_number
+        payload = {
+            "agent_id": agent_id,
+            "from_number": from_number,
+            "to_number": to_number
+        }
 
         headers = {
             "Authorization": f"Bearer {os.getenv('key_714d5a5aa52c32258065da200b70')}",
@@ -235,7 +234,6 @@ def retell_llamada():
         url = os.getenv("RETELL_OUTBOUND_URL", "https://api.retellai.com/v2/create-phone-call")
 
         r = requests.post(url, headers=headers, json=payload, timeout=20)
-
         try:
             rb = r.json()
         except ValueError:
