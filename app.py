@@ -210,42 +210,20 @@ def webhook_retell_callback():
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
     try:
-        data = request.get_json(force=True) or {}
-        agent_id    = str(data.get('agent_id') or "").strip()
-        to_number   = str(data.get('to_number') or "").strip()
-        from_number = str(data.get('from_number') or "").strip()
-
-        # Validación mínima
-        if not agent_id or not to_number or not from_number:
-            return jsonify({"error": "agent_id, to_number y from_number son obligatorios"}), 400
-        if not to_number.startswith('+') or not from_number.startswith('+'):
-            return jsonify({"error": "Números en formato E.164 (+349...)"}), 400
-
-        payload = {
-            "agent_id": agent_id,
-            "from_number": from_number,
-            "to_number": to_number
-        }
-
-        headers = {
-            "Authorization": f"Bearer {os.getenv('key_714d5a5aa52c32258065da200b70')}",
-            "Content-Type": "application/json",
-        }
-        url = os.getenv("RETELL_OUTBOUND_URL", "https://api.retellai.com/v2/create-phone-call")
-
-        r = requests.post(url, headers=headers, json=payload, timeout=20)
-        try:
-            rb = r.json()
-        except ValueError:
-            rb = {"raw": r.text}
-
+        data = request.get_json()
+        print(f"Datos recibidos: {data}")  # LOG
+        
+        # ... curl code ...
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        print(f"Curl stdout: {result.stdout}")  # LOG
+        print(f"Curl stderr: {result.stderr}")  # LOG
+        
         return jsonify({
-            "forwarded_payload": payload,
-            "status_code": r.status_code,
-            "retell_response": rb
-        }), r.status_code
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            "status": "success",
+            "retell_response": result.stdout,
+            "curl_error": result.stderr
+        })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
