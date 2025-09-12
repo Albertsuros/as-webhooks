@@ -204,6 +204,23 @@ def webhook_retell_callback():
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
+@app.route('/api/retell_llamada', methods=['POST'])
+def retell_llamada():
+    try:
+        data = request.get_json()
+        from_number = data.get('from_number')
+        to_number = data.get('to_number') 
+        agent_id = data.get('agent_id')
+        
+        # Por ahora simular la llamada
+        return jsonify({
+            "status": "success",
+            "message": f"Llamada simulada de {from_number} a {to_number} con agente {agent_id}",
+            "call_id": "call_simulado_123"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
