@@ -229,7 +229,7 @@ def retell_llamada():
             payload["from_number"] = from_number
 
         headers = {
-            "Authorization": f"Bearer {os.getenv('RETELL_API_KEY')}",
+            "Authorization": f"Bearer {os.getenv('key_714d5a5aa52c32258065da200b70')}",
             "Content-Type": "application/json",
         }
         url = "https://api.retellai.com/v2/register-phone-call"
