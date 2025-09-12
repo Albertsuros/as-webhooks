@@ -232,7 +232,7 @@ def retell_llamada():
             "Authorization": f"Bearer {os.getenv('key_714d5a5aa52c32258065da200b70')}",
             "Content-Type": "application/json",
         }
-        url = "https://api.retellai.com/v2/register-phone-call"
+        url = os.getenv("RETELL_OUTBOUND_URL", "https://api.retellai.com/v2/calls")
 
         r = requests.post(url, headers=headers, json=payload, timeout=20)
 
