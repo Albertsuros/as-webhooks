@@ -4,6 +4,7 @@ import json
 import glob
 import requests
 import subprocess
+from retell import Retell
 from datetime import datetime
 # from weasyprint import HTML as weasyHTML
 # from grafologia.routes import grafologia_bp
@@ -211,36 +212,27 @@ def webhook_retell_callback():
 def retell_llamada():
     try:
         data = request.get_json()
-        from_number = data.get('from_number')
-        to_number = data.get('to_number') 
-        agent_id = data.get('agent_id')
         
-        print(f"Datos recibidos: {data}")
+        retell_client = Retell(api_key=os.getenv('RETELL_API_KEY'))
         
-        # Comando curl completo
-        cmd = [
-            'curl', '-X', 'POST', 
-            'https://api.retellai.com/v2/register-phone-call',
-            '-H', 'Authorization: Bearer key_714d5a5aa52c32258065da200b70',
-            '-H', 'Content-Type: application/json',
-            '-d', json.dumps({
-                "agent_id": agent_id,
-                "from_number": from_number, 
-                "to_number": to_number
-            })
-        ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        print(f"Curl stdout: {result.stdout}")
-        print(f"Curl stderr: {result.stderr}")
+        response = retell_client.call.create_phone_call(
+            from_number=data.get('from_number'),
+            to_number=data.get('to_number'),
+            agent_id=data.get('agent_id')
+        )
         
         return jsonify({
-            "status": "success",
-            "retell_response": result.stdout,
-            "curl_error": result.stderr
+            "status": "success", 
+            "call_id": response.call_id,
+            "call_status": response.call_status,
+            "agent_id": response.agent_id
         })
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "error": str(e),
+            "type": "retell_sdk_error"
+        }), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
