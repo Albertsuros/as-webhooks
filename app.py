@@ -211,24 +211,35 @@ def webhook_retell_callback():
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
     try:
+        print("=== INICIO FUNCION RETELL ===")
+        
         data = request.get_json()
+        print(f"Datos recibidos: {data}")
         
-        retell_client = Retell(api_key=os.getenv('RETELL_API_KEY'))
+        api_key = os.getenv('RETELL_API_KEY')
+        print(f"API Key encontrada: {'Sí' if api_key else 'NO'}")
         
+        print("Inicializando cliente Retell...")
+        retell_client = Retell(api_key=api_key)
+        print("Cliente inicializado correctamente")
+        
+        print("Creando llamada...")
         response = retell_client.call.create_phone_call(
             from_number=data.get('from_number'),
             to_number=data.get('to_number'),
             agent_id=data.get('agent_id')
         )
+        print(f"Respuesta recibida: {response}")
         
         return jsonify({
             "status": "success", 
             "call_id": response.call_id,
-            "call_status": response.call_status,
-            "agent_id": response.agent_id
+            "call_status": response.call_status
         })
         
     except Exception as e:
+        print(f"ERROR: {str(e)}")
+        print(f"TIPO ERROR: {type(e)}")
         return jsonify({
             "error": str(e),
             "type": "retell_sdk_error"
