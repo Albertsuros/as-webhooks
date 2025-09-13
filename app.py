@@ -226,42 +226,31 @@ def test_imports():
         
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
+    print("=== FUNCIÓN RETELL_LLAMADA INICIANDO ===")
+    return jsonify({"status": "función ejecutándose"}), 200
+    
+@app.route('/api/test_retell_step', methods=['POST'])
+def test_retell_step():
     try:
-        print("=== INICIO FUNCION RETELL COMPLETA ===")
+        print("=== PASO 1: Función ejecutándose ===")
         
         data = request.get_json()
-        print(f"Datos recibidos: {data}")
+        print(f"=== PASO 2: Datos: {data} ===")
         
         from retell import Retell
+        print("=== PASO 3: Import OK ===")
+        
         api_key = os.getenv('RETELL_API_KEY')
-        print(f"API Key encontrada: Sí")
+        print(f"=== PASO 4: API Key OK ===")
         
-        print("Inicializando cliente Retell...")
         retell_client = Retell(api_key=api_key)
-        print("Cliente inicializado correctamente")
+        print("=== PASO 5: Cliente inicializado ===")
         
-        print("Creando llamada...")
-        response = retell_client.call.create_phone_call(
-            from_number=data.get('from_number'),
-            to_number=data.get('to_number'),
-            agent_id=data.get('agent_id')
-        )
-        print(f"Respuesta recibida: {response}")
-        
-        return jsonify({
-            "status": "success", 
-            "call_id": response.call_id,
-            "call_status": response.call_status,
-            "agent_id": response.agent_id
-        })
+        return jsonify({"test": "Todos los pasos OK"})
         
     except Exception as e:
-        print(f"ERROR DETALLADO: {str(e)}")
-        print(f"TIPO ERROR: {type(e).__name__}")
-        return jsonify({
-            "error": str(e),
-            "error_type": type(e).__name__
-        }), 500
+        print(f"=== ERROR en paso: {str(e)} ===")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
