@@ -208,42 +208,30 @@ def webhook_retell_callback():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
         
+@app.route('/api/test_imports', methods=['GET'])
+def test_imports():
+    try:
+        print("Testing imports...")
+        from retell import Retell
+        print("Retell import: OK")
+        
+        import os
+        api_key = os.getenv('RETELL_API_KEY')
+        print(f"API Key: {'Encontrada' if api_key else 'NO ENCONTRADA'}")
+        
+        return jsonify({"imports": "OK", "api_key_found": bool(api_key)})
+    except Exception as e:
+        print(f"ERROR en imports: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+        
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
     try:
-        print("=== INICIO FUNCION RETELL ===")
-        
-        data = request.get_json()
-        print(f"Datos recibidos: {data}")
-        
-        api_key = os.getenv('RETELL_API_KEY')
-        print(f"API Key encontrada: {'Sí' if api_key else 'NO'}")
-        
-        print("Inicializando cliente Retell...")
-        retell_client = Retell(api_key=api_key)
-        print("Cliente inicializado correctamente")
-        
-        print("Creando llamada...")
-        response = retell_client.call.create_phone_call(
-            from_number=data.get('from_number'),
-            to_number=data.get('to_number'),
-            agent_id=data.get('agent_id')
-        )
-        print(f"Respuesta recibida: {response}")
-        
-        return jsonify({
-            "status": "success", 
-            "call_id": response.call_id,
-            "call_status": response.call_status
-        })
-        
+        print("=== INICIO SIMPLE ===")
+        return jsonify({"status": "test_ok"})
     except Exception as e:
-        print(f"ERROR: {str(e)}")
-        print(f"TIPO ERROR: {type(e)}")
-        return jsonify({
-            "error": str(e),
-            "type": "retell_sdk_error"
-        }), 500
+        print(f"ERROR BASICO: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
