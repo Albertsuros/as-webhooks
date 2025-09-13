@@ -227,11 +227,41 @@ def test_imports():
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
     try:
-        print("=== INICIO SIMPLE ===")
-        return jsonify({"status": "test_ok"})
+        print("=== INICIO FUNCION RETELL COMPLETA ===")
+        
+        data = request.get_json()
+        print(f"Datos recibidos: {data}")
+        
+        from retell import Retell
+        api_key = os.getenv('RETELL_API_KEY')
+        print(f"API Key encontrada: Sí")
+        
+        print("Inicializando cliente Retell...")
+        retell_client = Retell(api_key=api_key)
+        print("Cliente inicializado correctamente")
+        
+        print("Creando llamada...")
+        response = retell_client.call.create_phone_call(
+            from_number=data.get('from_number'),
+            to_number=data.get('to_number'),
+            agent_id=data.get('agent_id')
+        )
+        print(f"Respuesta recibida: {response}")
+        
+        return jsonify({
+            "status": "success", 
+            "call_id": response.call_id,
+            "call_status": response.call_status,
+            "agent_id": response.agent_id
+        })
+        
     except Exception as e:
-        print(f"ERROR BASICO: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        print(f"ERROR DETALLADO: {str(e)}")
+        print(f"TIPO ERROR: {type(e).__name__}")
+        return jsonify({
+            "error": str(e),
+            "error_type": type(e).__name__
+        }), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
