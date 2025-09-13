@@ -6456,6 +6456,92 @@ def api_save_lead():
             "success": False,
             "error": str(e)
         })
+        
+def guardar_lead_cliente(data):
+    """Guardar lead de cliente en base de datos"""
+    try:
+        conn = sqlite3.connect("clientes_leads.db") 
+        cur = conn.cursor()
+        
+        # Crear tabla si no existe
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS leads_clientes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agente TEXT,
+            empresa TEXT,
+            telefono TEXT,
+            email TEXT,
+            nombre_cliente TEXT,
+            notas TEXT,
+            fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            estado TEXT DEFAULT 'pendiente'
+        )
+        """)
+        
+        # Insertar lead
+        cur.execute("""
+        INSERT INTO leads_clientes 
+        (agente, empresa, telefono, email, nombre_cliente, notas)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            data.get('agente', 'Verónica'),
+            data.get('empresa', ''),
+            data.get('telefono', ''),
+            data.get('email', ''),
+            data.get('nombre_cliente', ''),
+            data.get('notas', '')
+        ))
+        
+        lead_id = cur.lastrowid
+        conn.commit()
+        conn.close()
+        
+        print(f"✅ Lead guardado con ID: {lead_id}")
+        return lead_id
+        
+    except Exception as e:
+        print(f"❌ Error guardando lead: {e}")
+        return None
+        
+@app.route('/test/save_lead')
+def test_save_lead_form():
+    """Formulario para probar save_lead"""
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head><title>Test Save Lead</title></head>
+    <body style="font-family: Arial; max-width: 600px; margin: 50px auto;">
+        <h2>🧪 Test Save Lead</h2>
+        <div id="result"></div>
+        <button onclick="testSaveLead()">Probar Save Lead</button>
+        
+        <script>
+        function testSaveLead() {
+            const data = {
+                agente: "Verónica",
+                empresa: "Test Company",
+                telefono: "666777888", 
+                email: "test@test.com",
+                nombre_cliente: "Juan Pérez",
+                notas: "Cliente interesado en servicios"
+            };
+            
+            fetch('/api/save_lead', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('result').innerHTML = 
+                    '<div style="background: ' + (result.success ? '#d4edda' : '#f8d7da') + '; padding: 15px; margin: 10px 0; border-radius: 5px;">' +
+                    (result.success ? '✅' : '❌') + ' ' + (result.message || result.error) + '</div>';
+            });
+        }
+        </script>
+    </body>
+    </html>
+    '''
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
