@@ -229,21 +229,17 @@ def retell_llamada():
     try:
         data = request.get_json()
         
-        # Paso 1: Importar SDK
         from retell import Retell
         api_key = os.getenv('RETELL_API_KEY')
         
-        # Paso 2: Inicializar cliente
         retell_client = Retell(api_key=api_key)
         
-        # Paso 3: Crear llamada
         response = retell_client.call.create_phone_call(
             from_number=data.get('from_number'),
             to_number=data.get('to_number'),
             agent_id=data.get('agent_id')
         )
         
-        # Paso 4: Retornar respuesta exitosa
         return jsonify({
             "status": "success",
             "call_id": response.call_id,
@@ -281,11 +277,6 @@ def test_retell_step():
     except Exception as e:
         print(f"=== ERROR en paso: {str(e)} ===")
         return jsonify({"error": str(e)}), 500
-
-# ... resto del código ...
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
