@@ -61,6 +61,23 @@ DURACIONES_SERVICIO = {
     'psico_coaching_ia_half': 20
 }
 
+def manejar_save_lead_sofia(data):
+    """save_lead SOLO para recados/contactos - NO reservas"""
+    # Marcar claramente que es contacto general
+    data['agente'] = 'Sofia - Contacto General'
+    data['notas'] = f"RECADO/CONTACTO: {data.get('notas', '')}"
+    
+    import requests
+    try:
+        response = requests.post(
+            'https://as-webhooks-production.up.railway.app/api/save_lead',
+            json=data,
+            timeout=10
+        )
+        return response.json()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 def verificar_sesion_activa(telefono):
     """Verificar si hay sesión cortada recientemente (últimos 5 minutos)"""
     try:

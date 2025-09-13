@@ -9,6 +9,23 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 sessions = {}
 
+def manejar_save_lead_tecnico(data):
+    """Personalizar save_lead para Técnico"""
+    # Marcar como ticket técnico
+    data['agente'] = 'Alex - Soporte Técnico'
+    data['notas'] = f"TICKET TÉCNICO: {data.get('notas', '')}"
+    
+    import requests
+    try:
+        response = requests.post(
+            'https://as-webhooks-production.up.railway.app/api/save_lead',
+            json=data,
+            timeout=10
+        )
+        return response.json()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 def completar_datos(session_id, mensaje):
     if session_id not in sessions:
         sessions[session_id] = {}

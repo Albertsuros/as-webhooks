@@ -9,6 +9,24 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 sessions = {}
 
+def manejar_save_lead_vendedor1(data):
+    """Personalizar save_lead para Vendedor 1"""
+    # Añadir información específica del vendedor
+    data['agente'] = 'Vendedor 1 - Comercial'
+    data['notas'] = f"Lead comercial: {data.get('notas', '')}"
+    
+    # Llamar al endpoint principal
+    import requests
+    try:
+        response = requests.post(
+            'https://as-webhooks-production.up.railway.app/api/save_lead',
+            json=data,
+            timeout=10
+        )
+        return response.json()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 def completar_datos(session_id, mensaje):
     if session_id not in sessions:
         sessions[session_id] = {}
