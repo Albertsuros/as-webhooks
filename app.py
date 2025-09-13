@@ -226,11 +226,6 @@ def test_imports():
         
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
-    print("=== FUNCIÓN RETELL_LLAMADA INICIANDO ===")
-    return jsonify({"status": "función ejecutándose"}), 200
-    
-@app.route('/api/retell_llamada', methods=['POST'])
-def retell_llamada():
     try:
         data = request.get_json()
         
@@ -263,6 +258,34 @@ def retell_llamada():
             "error_type": type(e).__name__,
             "message": "Error en SDK de Retell"
         }), 500
+
+@app.route('/api/test_retell_step', methods=['POST'])
+def test_retell_step():
+    try:
+        print("=== PASO 1: Función ejecutándose ===")
+        
+        data = request.get_json()
+        print(f"=== PASO 2: Datos: {data} ===")
+        
+        from retell import Retell
+        print("=== PASO 3: Import OK ===")
+        
+        api_key = os.getenv('RETELL_API_KEY')
+        print(f"=== PASO 4: API Key OK ===")
+        
+        retell_client = Retell(api_key=api_key)
+        print("=== PASO 5: Cliente inicializado ===")
+        
+        return jsonify({"test": "Todos los pasos OK"})
+        
+    except Exception as e:
+        print(f"=== ERROR en paso: {str(e)} ===")
+        return jsonify({"error": str(e)}), 500
+
+# ... resto del código ...
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
