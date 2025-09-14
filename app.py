@@ -229,7 +229,9 @@ def retell_llamada():
     try:
         data = request.get_json()
         from retell import Retell
-        return jsonify({"test": "import OK", "data": data}), 200
+        api_key = os.getenv('RETELL_API_KEY')
+        retell_client = Retell(api_key=api_key)
+        return jsonify({"test": "cliente OK", "data": data}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
