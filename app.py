@@ -232,7 +232,6 @@ def retell_llamada():
         api_key = os.getenv('RETELL_API_KEY')
         retell_client = Retell(api_key=api_key)
         
-        # Hacer la llamada real
         response = retell_client.call.create_phone_call(
             from_number=data.get('from_number'),
             to_number=data.get('to_number'),
@@ -242,16 +241,15 @@ def retell_llamada():
         return jsonify({
             "status": "success",
             "call_id": response.call_id,
-            "call_status": response.call_status,
-            "method": "SDK oficial"
-        }), 200
+            "call_status": response.call_status
+        })
         
     except Exception as e:
+        print(f"ERROR SDK: {str(e)}")
         return jsonify({
-            "status": "error", 
-            "error": str(e),
-            "error_type": type(e).__name__
-        }), 500
+            "error_message": str(e),
+            "error_details": repr(e)
+        }), 200  # Cambiado a 200 para ver el error en Make
 
 @app.route('/api/test_retell_step', methods=['POST'])
 def test_retell_step():
