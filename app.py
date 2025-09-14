@@ -226,7 +226,8 @@ def test_imports():
         
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
-    return jsonify({"test": "función básica funciona"}), 200
+    data = request.get_json()
+    return jsonify({"test": "datos recibidos", "data": data}), 200
 
 @app.route('/api/test_retell_step', methods=['POST'])
 def test_retell_step():
