@@ -226,8 +226,12 @@ def test_imports():
         
 @app.route('/api/retell_llamada', methods=['POST'])
 def retell_llamada():
-    data = request.get_json()
-    return jsonify({"test": "datos recibidos", "data": data}), 200
+    try:
+        data = request.get_json()
+        from retell import Retell
+        return jsonify({"test": "import OK", "data": data}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/test_retell_step', methods=['POST'])
 def test_retell_step():
