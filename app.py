@@ -114,6 +114,7 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
     """
     Nueva función para llamadas automatizadas via Zadarma-Retell
     """
+    print(f"=== INICIANDO LLAMADA ZADARMA: {telefono} - {vendedor} ===")
     if not ZADARMA_PHONE_NUMBER_ID:
         return {"success": False, "error": "Zadarma no configurado aún"}
     
@@ -410,26 +411,31 @@ def llamada_vendedor():
     try:
         data = request.json
         print(f"=== DEBUG: Datos recibidos: {data} ===")
-        telefono = data.get('telefono')
-        empresa = data.get('empresa')
-        vendedor = data.get('vendedor')
-        print(f"=== DEBUG: telefono={telefono}, empresa={empresa}, vendedor={vendedor} ===")
         
-        # Verificar si la función retell_llamada_zadarma existe
-        resultado = retell_llamada_zadarma(telefono, empresa, vendedor)
-        print(f"=== DEBUG: Resultado llamada: {resultado} ===")
         telefono = data.get('telefono')
         empresa = data.get('empresa')
         vendedor = data.get('vendedor')
+        
+        # Mapear nombres de Make a nombres reales
+        mapeo_vendedores = {
+            'vendedor 1': 'Albert',
+            'vendedor 2': 'Juan', 
+            'vendedor 3': 'Carlos'
+        }
+        vendedor_real = mapeo_vendedores.get(vendedor, vendedor)
+        
+        print(f"=== DEBUG: telefono={telefono}, empresa={empresa}, vendedor={vendedor} -> {vendedor_real} ===")
         
         # Usar Zadarma-Retell para vendedores
-        if vendedor in ['Albert', 'Juan', 'Carlos']:
-            resultado = retell_llamada_zadarma(telefono, empresa, vendedor)
+        if vendedor_real in ['Albert', 'Juan', 'Carlos']:
+            resultado = retell_llamada_zadarma(telefono, empresa, vendedor_real)
+            print(f"=== DEBUG: Resultado llamada: {resultado} ===")
             return jsonify(resultado)
         else:
-            return jsonify({"error": "Vendedor no válido"})
+            return jsonify({"error": f"Vendedor no válido: {vendedor} -> {vendedor_real}"})
             
     except Exception as e:
+        print(f"=== ERROR: {str(e)} ===")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
