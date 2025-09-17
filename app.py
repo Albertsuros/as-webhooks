@@ -397,6 +397,15 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
 def llamada_vendedor():
     try:
         data = request.json
+        print(f"=== DEBUG: Datos recibidos: {data} ===")
+        telefono = data.get('telefono')
+        empresa = data.get('empresa')
+        vendedor = data.get('vendedor')
+        print(f"=== DEBUG: telefono={telefono}, empresa={empresa}, vendedor={vendedor} ===")
+        
+        # Verificar si la función retell_llamada_zadarma existe
+        resultado = retell_llamada_zadarma(telefono, empresa, vendedor)
+        print(f"=== DEBUG: Resultado llamada: {resultado} ===")
         telefono = data.get('telefono')
         empresa = data.get('empresa')
         vendedor = data.get('vendedor')
