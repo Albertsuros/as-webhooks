@@ -341,7 +341,7 @@ def test_zadarma_config():
     try:
         return jsonify({
             "RETELL_API_KEY": "Configurada" if RETELL_API_KEY else "Falta",
-            "ZADARMA_PHONE_NUMBER_ID": ZADARMA_PHONE_NUMBER_ID,
+            "ZADARMA_PHONE_NUMBER_ID": +34936941520,
             "AGENT_IDS": AGENT_IDS,
             "funcion_exists": callable(globals().get('retell_llamada_zadarma'))
         })
