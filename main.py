@@ -6683,6 +6683,26 @@ def llamada_vendedor():
     except Exception as e:
         print(f"=== ERROR: {str(e)} ===")
         return jsonify({"error": str(e)}), 500
+        
+def guardar_cliente_potencial(data):
+    """Guardar cliente potencial desde emails y otros agentes"""
+    try:
+        return guardar_lead_cliente(data)
+    except Exception as e:
+        print(f"Error guardando cliente potencial: {e}")
+        return None
+        
+@app.route('/api/test_zadarma_main', methods=['GET'])
+def test_zadarma_main():
+    try:
+        return jsonify({
+            "archivo": "main.py",
+            "RETELL_API_KEY": "Configurada" if 'RETELL_API_KEY' in globals() else "Falta",
+            "funcion_zadarma": callable(globals().get('retell_llamada_zadarma')),
+            "endpoint_exists": "/api/llamada_vendedor" in [rule.rule for rule in app.url_map.iter_rules()]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
