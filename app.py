@@ -336,6 +336,18 @@ def test_retell_step():
 def test_simple():
     return "FUNCIONA"
     
+@app.route('/api/test_zadarma_config', methods=['GET'])
+def test_zadarma_config():
+    try:
+        return jsonify({
+            "RETELL_API_KEY": "Configurada" if RETELL_API_KEY else "Falta",
+            "ZADARMA_PHONE_NUMBER_ID": ZADARMA_PHONE_NUMBER_ID,
+            "AGENT_IDS": AGENT_IDS,
+            "funcion_exists": callable(globals().get('retell_llamada_zadarma'))
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
 @app.route('/api/debug_phone_numbers', methods=['GET'])
 def debug_phone_numbers():
     try:
