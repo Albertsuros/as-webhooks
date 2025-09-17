@@ -6728,6 +6728,15 @@ def test_llamada_forzada():
     resultado = retell_llamada_zadarma("+34932192110", "Test Empresa", "Albert")
     print(f"=== RESULTADO TEST: {resultado} ===")
     return jsonify(resultado)
+    
+@app.route('/api/debug_zadarma_config', methods=['GET'])
+def debug_zadarma_config():
+    return jsonify({
+        "ZADARMA_PHONE_NUMBER_ID": ZADARMA_PHONE_NUMBER_ID,
+        "tipo": type(ZADARMA_PHONE_NUMBER_ID).__name__,
+        "es_vacio": not ZADARMA_PHONE_NUMBER_ID,
+        "longitud": len(str(ZADARMA_PHONE_NUMBER_ID))
+    })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
