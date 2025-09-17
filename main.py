@@ -801,7 +801,7 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
         return {"success": False, "error": "Zadarma no configurado aún"}
     
     headers = {
-        'Authorization': f'Bearer {RETELL_API_KEY}',
+        'Authorization': f'Bearer {key_714d5a5aa52c32258065da200b70}',
         'Content-Type': 'application/json'
     }
     
