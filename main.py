@@ -6703,6 +6703,31 @@ def test_zadarma_main():
         })
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+@app.route('/admin/leads')
+def ver_leads():
+    try:
+        conn = sqlite3.connect("clientes_leads.db")
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM leads_clientes ORDER BY fecha_registro DESC LIMIT 20")
+        leads = cur.fetchall()
+        conn.close()
+        
+        html = "<h2>Leads de Clientes</h2><table border='1'>"
+        html += "<tr><th>ID</th><th>Agente</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Empresa</th><th>Notas</th><th>Fecha</th></tr>"
+        for lead in leads:
+            html += f"<tr><td>{lead[0]}</td><td>{lead[1]}</td><td>{lead[5]}</td><td>{lead[3]}</td><td>{lead[4]}</td><td>{lead[2]}</td><td>{lead[6]}</td><td>{lead[7]}</td></tr>"
+        html += "</table>"
+        return html
+    except Exception as e:
+        return f"Error: {str(e)}"
+        
+@app.route('/api/test_llamada_forzada', methods=['GET'])
+def test_llamada_forzada():
+    print("=== TEST FORZADO INICIADO ===")
+    resultado = retell_llamada_zadarma("+34932192110", "Test Empresa", "Albert")
+    print(f"=== RESULTADO TEST: {resultado} ===")
+    return jsonify(resultado)
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
