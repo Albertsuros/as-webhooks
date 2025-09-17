@@ -393,21 +393,21 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
     except Exception as e:
         return {"success": False, "error": f"Excepción: {str(e)}"}
         
-@app.route('/vendedores-zadarma', methods=['POST'])
-def vendedores_zadarma():
-    """Nueva ruta específica para vendedores con Zadarma"""
+@app.route('/api/llamada_vendedor', methods=['POST'])
+def llamada_vendedor():
     try:
         data = request.json
         telefono = data.get('telefono')
         empresa = data.get('empresa')
         vendedor = data.get('vendedor')
         
-        if not all([telefono, empresa, vendedor]):
-            return jsonify({"error": "Faltan parámetros"}), 400
-        
-        resultado = retell_llamada_zadarma(telefono, empresa, vendedor)
-        return jsonify(resultado)
-        
+        # Usar Zadarma-Retell para vendedores
+        if vendedor in ['Albert', 'Juan', 'Carlos']:
+            resultado = retell_llamada_zadarma(telefono, empresa, vendedor)
+            return jsonify(resultado)
+        else:
+            return jsonify({"error": "Vendedor no válido"})
+            
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
