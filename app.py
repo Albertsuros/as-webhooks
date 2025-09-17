@@ -13,6 +13,17 @@ from flask import redirect, url_for
 # ← LÍNEA CAMBIADA: Cambiar de routes_empresas a captador_empresas_simple
 from captador_empresas_simple import captador_bp
 
+# Configuración Zadarma-Retell
+RETELL_API_KEY = os.environ.get('RETELL_API_KEY', 'key_714d5a5aa52c32258065da200b70')
+ZADARMA_PHONE_NUMBER_ID = os.environ.get('+34936941520', '')
+
+# Agent IDs de vendedores
+AGENT_IDS = {
+    'Albert': 'agent_f81a7da78a5ee87c667872153d',
+    'Juan': 'agent_dddba811832aba40131c6a0f4e', 
+    'Carlos': 'agent_80f7849e15b2f72d0aaf64989d'
+}
+
 app = Flask(__name__)
 # ← LÍNEA CAMBIADA: Cambiar de empresas_bp a captador_bp
 app.register_blueprint(captador_bp, url_prefix='/api')
@@ -98,6 +109,53 @@ def convertir_formato_datos(carta_data):
         "points": points,
         "angles": angles
     }
+    
+def retell_llamada_zadarma(telefono, empresa, vendedor):
+    """
+    Nueva función para llamadas automatizadas via Zadarma-Retell
+    """
+    if not ZADARMA_PHONE_NUMBER_ID:
+        return {"success": False, "error": "Zadarma no configurado aún"}
+    
+    headers = {
+        'Authorization': f'Bearer {RETELL_API_KEY}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        "phone_number": telefono,
+        "agent_id": AGENT_IDS.get(vendedor, AGENT_IDS['Albert']),
+        "phone_number_id": ZADARMA_PHONE_NUMBER_ID,
+        "retell_llm_dynamic_variables": {
+            "empresa": empresa,
+            "vendedor": vendedor,
+            "telefono": telefono,
+            "origen": "automatizacion_vendedores"
+        }
+    }
+    
+    try:
+        response = requests.post(
+            'https://api.retellai.com/v2/call',
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 201:
+            return {
+                "success": True,
+                "call_id": response.json().get("call_id"),
+                "message": f"Llamada iniciada: {vendedor} → {telefono}"
+            }
+        else:
+            return {
+                "success": False,
+                "error": f"Error Retell: {response.status_code} - {response.text}"
+            }
+            
+    except Exception as e:
+        return {"success": False, "error": f"Excepción: {str(e)}"}
 
 @app.route("/informe")
 def generar_informe():
@@ -277,6 +335,63 @@ def test_retell_step():
 @app.route('/api/test_simple', methods=['GET'])
 def test_simple():
     return "FUNCIONA"
+    
+@app.route('/api/debug_phone_numbers', methods=['GET'])
+def debug_phone_numbers():
+    try:
+        from retell import Retell
+        retell_client = Retell(api_key=os.getenv('RETELL_API_KEY'))
+        numbers = retell_client.phone_number.list()
+        return jsonify(numbers)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
+def retell_llamada_zadarma(telefono, empresa, vendedor):
+    """
+    Nueva función para llamadas automatizadas via Zadarma-Retell
+    """
+    if not ZADARMA_PHONE_NUMBER_ID:
+        return {"success": False, "error": "Zadarma no configurado aún"}
+    
+    headers = {
+        'Authorization': f'Bearer {key_714d5a5aa52c32258065da200b70}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        "phone_number": telefono,
+        "agent_id": AGENT_IDS.get(vendedor, AGENT_IDS['Albert']),
+        "phone_number_id": +34936941520,
+        "retell_llm_dynamic_variables": {
+            "empresa": empresa,
+            "vendedor": vendedor,
+            "telefono": telefono,
+            "origen": "automatizacion_vendedores"
+        }
+    }
+    
+    try:
+        response = requests.post(
+            'https://api.retellai.com/v2/call',
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 201:
+            return {
+                "success": True,
+                "call_id": response.json().get("call_id"),
+                "message": f"Llamada iniciada: {vendedor} → {telefono}"
+            }
+        else:
+            return {
+                "success": False,
+                "error": f"Error Retell: {response.status_code} - {response.text}"
+            }
+            
+    except Exception as e:
+        return {"success": False, "error": f"Excepción: {str(e)}"}
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
