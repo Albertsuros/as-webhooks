@@ -6361,7 +6361,7 @@ def test_save_lead_form():
     </html>
     '''
     
-@app.route('/api/llamada_vendedor', methods=['POST'])
+@app.route('/api/llamada_vendedor_main', methods=['POST'])
 def llamada_vendedor():
     try:
         data = request.json
