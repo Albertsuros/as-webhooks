@@ -805,9 +805,10 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
     }
     
     payload = {
-        "from_number": ZADARMA_PHONE_NUMBER_ID,    # ← Cambio clave
-        "to_number": telefono,                     # ← Cambio clave  
         "agent_id": AGENT_IDS.get(vendedor, AGENT_IDS['Albert']),
+        "from_number": ZADARMA_PHONE_NUMBER_ID,
+        "to_number": telefono,
+        "direction": "outbound",  # ← Añadir este campo
         "retell_llm_dynamic_variables": {
             "empresa": empresa,
             "vendedor": vendedor,
@@ -818,7 +819,7 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
     
     try:
         response = requests.post(
-            'https://api.retellai.com/v1/phone-calls',
+            'https://api.retellai.com/register-phone-call',
             headers=headers,
             json=payload,
             timeout=30
