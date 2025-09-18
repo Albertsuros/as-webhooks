@@ -6393,6 +6393,31 @@ def llamada_vendedor():
         print(f"=== ERROR: {str(e)} ===")
         return jsonify({"error": str(e)}), 500
         
+@app.route('/api/vendedor_siguiente/<vendedor>', methods=['GET'])
+def api_vendedor_siguiente(vendedor):
+    """Endpoint para Make.com - obtener siguiente vendedor"""
+    try:
+        # Mapeo simple de vendedores
+        vendedores_map = {
+            'albert': 'vendedor 1',
+            'juan': 'vendedor 2', 
+            'carlos': 'vendedor 3',
+            'vendedor 1': 'vendedor 1',
+            'vendedor 2': 'vendedor 2',
+            'vendedor 3': 'vendedor 3'
+        }
+        
+        vendedor_normalizado = vendedores_map.get(vendedor.lower(), 'vendedor 1')
+        
+        return jsonify({
+            "vendedor_input": vendedor,
+            "vendedor_seleccionado": vendedor_normalizado,
+            "status": "ok"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "error"})
+        
 def guardar_cliente_potencial(data):
     """Guardar cliente potencial desde emails y otros agentes"""
     try:
