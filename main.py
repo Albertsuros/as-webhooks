@@ -6054,46 +6054,6 @@ def api_transfer_gotrunk_workaround():
         print(f"❌ Error en workaround: {e}")
         return jsonify({"status": "error", "message": str(e)})
         
-@app.route('/test/estado-vapi')
-def test_estado_vapi():
-    """Verificar configuración básica de VAPI"""
-    try:
-        # Verificar variables de entorno
-        variables_vapi = {
-            "VAPI_API_KEY": os.getenv("VAPI_API_KEY", "❌ No configurada"),
-            "VAPI_PHONE_ID": os.getenv("VAPI_PHONE_ID", "❌ No configurada"), 
-            "VAPI_SOFIA_ID": os.getenv("VAPI_SOFIA_ID", "❌ No configurada")
-        }
-        
-        # Test de conectividad básica con VAPI API
-        if os.getenv("VAPI_API_KEY"):
-            try:
-                headers = {"Authorization": f"Bearer {os.getenv('VAPI_API_KEY')}"}
-                response = requests.get("https://api.vapi.ai/phone-number", headers=headers, timeout=10)
-                api_status = f"✅ {response.status_code}" if response.status_code == 200 else f"❌ {response.status_code}"
-            except Exception as e:
-                api_status = f"❌ Error: {str(e)}"
-        else:
-            api_status = "❌ Sin API Key"
-        
-        return jsonify({
-            "status": "info",
-            "message": "Estado de configuración VAPI",
-            "variables": variables_vapi,
-            "api_connectivity": api_status,
-            "next_steps": [
-                "1. Configurar variables de entorno VAPI",
-                "2. Probar llamada saliente",
-                "3. Comparar con transferencias"
-            ]
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        })
-        
 @app.route('/api/test-dolibarr')
 def test_dolibarr_connection():
     """Test de conexión con Dolibarr - MODO LOCAL FORZADO"""
