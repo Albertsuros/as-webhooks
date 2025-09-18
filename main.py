@@ -818,7 +818,7 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
     
     try:
         response = requests.post(
-            'https://api.retellai.com/create-phone-call',
+            'https://api.retellai.com/v1/phone-calls',
             headers=headers,
             json=payload,
             timeout=30
