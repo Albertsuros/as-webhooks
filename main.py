@@ -40,6 +40,13 @@ from informes import procesar_y_enviar_informe
 from pathlib import Path
 from app import app
 CORS(app, origins=["https://asasesores.com"])
+try:
+    from retell import Retell
+    RETELL_SDK_AVAILABLE = True
+    print("✅ Retell SDK disponible")
+except ImportError:
+    RETELL_SDK_AVAILABLE = False
+    print("⚠️ Retell SDK no disponible - usando HTTP directo")
 
 # ID del calendario AS Asesores
 CALENDAR_ID = 'b64595022e163fbb552d1d5202a590605d3dd66079c082dc4037513c2a5369e1@group.calendar.google.com'
@@ -819,7 +826,7 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
     
     try:
         response = requests.post(
-            'https://api.retellai.com/register-phone-call',
+            'https://api.retellai.com/v2/register-phone-call',
             headers=headers,
             json=payload,
             timeout=30
@@ -916,6 +923,10 @@ def webhook_veronica():
     except Exception as e:
         print(f"Error en webhook_veronica: {e}")
         return jsonify({"status": "ok"})  # NUNCA devolver error 500
+        
+@app.route("/webhook/veronica/retell", methods=["GET", "POST"])
+def webhook_veronica_retell():
+    return webhook_veronica()
         
 @app.route('/webhook/fin_sesion', methods=['POST'])
 def webhook_fin_sesion():
