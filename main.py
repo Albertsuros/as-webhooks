@@ -805,9 +805,10 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
     }
     
     payload = {
-        "phone_number": telefono,
+        "to_number": telefono,              # ← Cambiar "phone_number" por "to_number"
+        "from_number": ZADARMA_PHONE_NUMBER_ID,  # ← Añadir esta línea
         "agent_id": AGENT_IDS.get(vendedor, AGENT_IDS['Albert']),
-        "phone_number_id": ZADARMA_PHONE_NUMBER_ID,  # ✅ Usa variable correcta
+        "phone_number_id": ZADARMA_PHONE_NUMBER_ID,
         "retell_llm_dynamic_variables": {
             "empresa": empresa,
             "vendedor": vendedor,
@@ -818,7 +819,7 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
     
     try:
         response = requests.post(
-            'https://api.retellai.com/create-phone-call',
+            'https://api.retellai.com/call',
             headers=headers,
             json=payload,
             timeout=30
@@ -6053,221 +6054,6 @@ def api_transfer_gotrunk_workaround():
         print(f"❌ Error en workaround: {e}")
         return jsonify({"status": "error", "message": str(e)})
         
-@app.route('/test/llamada-saliente', methods=['GET', 'POST'])
-def test_llamada_saliente():
-    """Test de llamada saliente desde VAPI a través de GoTrunk"""
-    try:
-        import requests
-        import os
-        
-        # Configuración VAPI
-        VAPI_API_KEY = os.getenv("VAPI_API_KEY")  # Necesitas añadir esta variable
-        VAPI_PHONE_ID = os.getenv("VAPI_PHONE_ID")  # ID del número +34930450985
-        VAPI_ASSISTANT_ID = os.getenv("VAPI_SOFIA_ID")  # ID del asistente Sofia
-        
-        if not all([VAPI_API_KEY, VAPI_PHONE_ID, VAPI_ASSISTANT_ID]):
-            return jsonify({
-                "status": "error",
-                "message": "Faltan variables de entorno VAPI",
-                "required": ["VAPI_API_KEY", "VAPI_PHONE_ID", "VAPI_SOFIA_ID"]
-            })
-        
-        # Datos de la llamada de prueba
-        if request.method == 'GET':
-            # Mostrar formulario de test
-            return render_template_string(FORM_TEST_LLAMADA)
-        
-        # POST: Ejecutar llamada
-        data = request.get_json() or {}
-        numero_destino = data.get('numero', '+34616000211')  # Tu móvil por defecto
-        
-        # Payload para VAPI API
-        payload = {
-            "phoneNumberId": VAPI_PHONE_ID,
-            "customer": {
-                "number": numero_destino
-            },
-            "assistantId": VAPI_ASSISTANT_ID,
-            "assistantOverrides": {
-                "firstMessage": "Hola, esta es una llamada de prueba desde VAPI a través de GoTrunk. ¿Me escuchas bien?"
-            }
-        }
-        
-        # Headers para VAPI
-        headers = {
-            "Authorization": f"Bearer {VAPI_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        print(f"🧪 TEST: Llamando a {numero_destino} desde VAPI...")
-        
-        # Hacer llamada a VAPI API
-        response = requests.post(
-            "https://api.vapi.ai/call",
-            json=payload,
-            headers=headers,
-            timeout=30
-        )
-        
-        print(f"📡 Respuesta VAPI: {response.status_code}")
-        print(f"📄 Contenido: {response.text}")
-        
-        if response.status_code == 201:
-            # Llamada iniciada correctamente
-            call_data = response.json()
-            call_id = call_data.get('id', 'unknown')
-            
-            # Notificar por Telegram
-            enviar_telegram_mejora(f"""
-🧪 <b>TEST LLAMADA SALIENTE VAPI</b>
-
-📞 <b>Destino:</b> {numero_destino}
-🆔 <b>Call ID:</b> {call_id}
-⏰ <b>Hora:</b> {datetime.now().strftime('%H:%M:%S')}
-
-✅ <b>Estado:</b> Llamada iniciada correctamente
-🔍 <b>Test:</b> Verificar si suena y hay audio
-            """)
-            
-            return jsonify({
-                "status": "success",
-                "message": f"✅ Llamada iniciada a {numero_destino}",
-                "call_id": call_id,
-                "debug": "Revisa tu móvil - debería sonar en 5-10 segundos"
-            })
-            
-        else:
-            # Error en la llamada
-            error_detail = response.text
-            
-            enviar_telegram_mejora(f"""
-❌ <b>ERROR TEST LLAMADA VAPI</b>
-
-📞 <b>Destino:</b> {numero_destino}
-🔴 <b>Status:</b> {response.status_code}
-📄 <b>Error:</b> {error_detail[:200]}
-
-🔍 <b>Diagnóstico:</b> Problema con GoTrunk + VAPI
-            """)
-            
-            return jsonify({
-                "status": "error",
-                "message": f"❌ Error iniciando llamada: {response.status_code}",
-                "detail": error_detail,
-                "possible_cause": "Problema de configuración GoTrunk + VAPI"
-            }), response.status_code
-            
-    except Exception as e:
-        print(f"❌ Error en test llamada: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        return jsonify({
-            "status": "error",
-            "message": f"❌ Excepción: {str(e)}",
-            "type": type(e).__name__
-        }), 500
-
-# Formulario HTML para el test
-FORM_TEST_LLAMADA = '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>🧪 Test Llamada Saliente VAPI</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-        .container { background: #f9f9f9; padding: 30px; border-radius: 10px; }
-        h1 { color: #007bff; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .alert { padding: 15px; margin: 15px 0; border-radius: 5px; }
-        .alert-info { background: #d1ecf1; color: #0c5460; }
-        .alert-warning { background: #fff3cd; color: #856404; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🧪 Test Llamada Saliente VAPI</h1>
-        
-        <div class="alert alert-info">
-            <strong>ℹ️ Objetivo:</strong> Verificar si VAPI puede hacer llamadas salientes a través de GoTrunk (no transferencias).
-        </div>
-        
-        <div class="alert alert-warning">
-            <strong>⚠️ Importante:</strong> Ten tu móvil preparado - debería sonar en 5-10 segundos después de hacer clic.
-        </div>
-        
-        <div id="result"></div>
-        
-        <form onsubmit="testLlamada(event)">
-            <div class="form-group">
-                <label for="numero">📞 Número de destino:</label>
-                <input type="tel" id="numero" value="+34616000211" required>
-                <small>Formato: +34XXXXXXXXX</small>
-            </div>
-            
-            <button type="submit">📞 Iniciar Llamada de Prueba</button>
-        </form>
-        
-        <h3>🔍 Qué verificar:</h3>
-        <ul>
-            <li>✅ <strong>Suena el teléfono:</strong> VAPI + GoTrunk funciona</li>
-            <li>✅ <strong>Audio claro:</strong> Conexión OK</li>
-            <li>✅ <strong>Sofia responde:</strong> Asistente funciona</li>
-            <li>❌ <strong>No suena:</strong> Problema GoTrunk + VAPI</li>
-            <li>❌ <strong>No hay audio:</strong> Problema de codec/RTP</li>
-        </ul>
-    </div>
-
-    <script>
-        function testLlamada(event) {
-            event.preventDefault();
-            
-            const numero = document.getElementById('numero').value;
-            const resultDiv = document.getElementById('result');
-            
-            resultDiv.innerHTML = '<div class="alert alert-info">🔄 Iniciando llamada de prueba...</div>';
-            
-            fetch('/test/llamada-saliente', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ numero: numero })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    resultDiv.innerHTML = `
-                        <div class="alert alert-success" style="background: #d4edda; color: #155724;">
-                            ✅ ${data.message}<br>
-                            🆔 Call ID: ${data.call_id}<br>
-                            📱 ${data.debug}
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `
-                        <div class="alert alert-error" style="background: #f8d7da; color: #721c24;">
-                            ❌ ${data.message}<br>
-                            📄 ${data.detail || ''}
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                resultDiv.innerHTML = `
-                    <div class="alert alert-error" style="background: #f8d7da; color: #721c24;">
-                        ❌ Error de conexión: ${error.message}
-                    </div>
-                `;
-            });
-        }
-    </script>
-</body>
-</html>
-'''
-
 @app.route('/test/estado-vapi')
 def test_estado_vapi():
     """Verificar configuración básica de VAPI"""
