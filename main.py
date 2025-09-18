@@ -44,11 +44,11 @@ CORS(app, origins=["https://asasesores.com"])
 # ID del calendario AS Asesores
 CALENDAR_ID = 'b64595022e163fbb552d1d5202a590605d3dd66079c082dc4037513c2a5369e1@group.calendar.google.com'
 
-# Configuración Zadarma-Retell
+# Configuración Zadarma-Retell (CORREGIDO)
 RETELL_API_KEY = os.environ.get('RETELL_API_KEY', 'key_714d5a5aa52c32258065da200b70')
-ZADARMA_PHONE_NUMBER_ID = os.environ.get('+34936941520', '')
+ZADARMA_PHONE_NUMBER_ID = os.environ.get('ZADARMA_PHONE_NUMBER_ID', '+34936941520')  # ✅ CORREGIDO
 
-# Agent IDs de vendedores
+# Agent IDs de vendedores (YA CORRECTOS)
 AGENT_IDS = {
     'Albert': 'agent_f81a7da78a5ee87c667872153d',
     'Juan': 'agent_dddba811832aba40131c6a0f4e', 
@@ -793,22 +793,21 @@ def obtener_horarios_disponibles(tipo_servicio, fecha_solicitada):
         return []
 
 def retell_llamada_zadarma(telefono, empresa, vendedor):
-    """
-    Nueva función para llamadas automatizadas via Zadarma-Retell
-    """
+    """Nueva función para llamadas automatizadas via Zadarma-Retell - CORREGIDA"""
     print(f"=== INICIANDO LLAMADA ZADARMA: {telefono} - {vendedor} ===")
+    
     if not ZADARMA_PHONE_NUMBER_ID:
         return {"success": False, "error": "Zadarma no configurado aún"}
     
     headers = {
-        'Authorization': f'Bearer {key_714d5a5aa52c32258065da200b70}',
+        'Authorization': f'Bearer {RETELL_API_KEY}',  # ✅ Usa variable correcta
         'Content-Type': 'application/json'
     }
     
     payload = {
         "phone_number": telefono,
         "agent_id": AGENT_IDS.get(vendedor, AGENT_IDS['Albert']),
-        "phone_number_id": +34936941520,
+        "phone_number_id": ZADARMA_PHONE_NUMBER_ID,  # ✅ Usa variable correcta
         "retell_llm_dynamic_variables": {
             "empresa": empresa,
             "vendedor": vendedor,
@@ -816,53 +815,6 @@ def retell_llamada_zadarma(telefono, empresa, vendedor):
             "origen": "automatizacion_vendedores"
         }
     }
-    
-    try:
-        response = requests.post(
-            'https://api.retellai.com/v2/call',
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
-        
-        if response.status_code == 201:
-            return {
-                "success": True,
-                "call_id": response.json().get("call_id"),
-                "message": f"Llamada iniciada: {vendedor} → {telefono}"
-            }
-        else:
-            return {
-                "success": False,
-                "error": f"Error Retell: {response.status_code} - {response.text}"
-            }
-            
-    except Exception as e:
-        return {"success": False, "error": f"Excepción: {str(e)}"}
-        
-def retell_llamada_zadarma(telefono, empresa, vendedor):
-    """Nueva función para llamadas automatizadas via Zadarma-Retell"""
-    if not ZADARMA_PHONE_NUMBER_ID:
-        return {"success": False, "error": "Zadarma no configurado aún"}
-    
-    headers = {
-        'Authorization': f'Bearer {RETELL_API_KEY}',
-        'Content-Type': 'application/json'
-    }
-    
-    payload = {
-        "phone_number": telefono,
-        "agent_id": AGENT_IDS.get(vendedor, AGENT_IDS['Albert']),
-        "phone_number_id": +34936941520,
-        "retell_llm_dynamic_variables": {
-            "empresa": empresa,
-            "vendedor": vendedor,
-            "telefono": telefono,
-            "origen": "automatizacion_vendedores"
-        }
-    }
-    
-    print(f"=== INICIANDO LLAMADA ZADARMA: {telefono} - {vendedor} ===")
     
     try:
         response = requests.post(
