@@ -6446,6 +6446,24 @@ def debug_zadarma_config():
         "es_vacio": not ZADARMA_PHONE_NUMBER_ID,
         "longitud": len(str(ZADARMA_PHONE_NUMBER_ID))
     })
+    
+@app.route('/api/debug_make', methods=['GET', 'POST'])
+def debug_make():
+    try:
+        print(f"=== DEBUG MAKE: {request.method} ===")
+        print(f"=== Headers: {dict(request.headers)} ===")
+        print(f"=== Body: {request.get_data()} ===")
+        print(f"=== JSON: {request.get_json() if request.is_json else 'No JSON'} ===")
+        
+        return jsonify({
+            "received": True,
+            "method": request.method,
+            "headers": dict(request.headers),
+            "json_data": request.get_json() if request.is_json else None,
+            "raw_data": str(request.get_data())
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
