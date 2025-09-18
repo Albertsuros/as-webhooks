@@ -6361,7 +6361,7 @@ def test_save_lead_form():
     </html>
     '''
     
-@app.route('/api/llamada_vendedor_main', methods=['POST'])
+@app.route('/test_llamada_directa', methods=['POST'])
 def llamada_vendedor():
     # LOGS BÁSICOS - DEBEN APARECER SÍ O SÍ
     print("="*50)
