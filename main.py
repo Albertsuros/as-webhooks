@@ -6363,38 +6363,33 @@ def test_save_lead_form():
     
 @app.route('/api/llamada_vendedor_main', methods=['POST'])
 def llamada_vendedor():
+    # LOGS BÁSICOS - DEBEN APARECER SÍ O SÍ
+    print("="*50)
+    print("FUNCIÓN LLAMADA_VENDEDOR EJECUTADA")
+    print("="*50)
+    
     try:
+        print("PASO 1: Obteniendo datos JSON...")
         data = request.json
-        print(f"=== DEBUG LLAMADA_VENDEDOR: Datos recibidos: {data} ===")
+        print(f"DATOS RECIBIDOS: {data}")
         
+        print("PASO 2: Extrayendo variables...")
         telefono = data.get('telefono')
-        empresa = data.get('empresa')
+        empresa = data.get('empresa') 
         vendedor = data.get('vendedor')
+        print(f"TELÉFONO: {telefono}")
+        print(f"EMPRESA: {empresa}")
+        print(f"VENDEDOR: {vendedor}")
         
-        print(f"=== DEBUG: telefono={telefono}, empresa={empresa}, vendedor={vendedor} ===")
+        print("PASO 3: Llamando a retell_llamada_zadarma...")
+        resultado = retell_llamada_zadarma(telefono, empresa, vendedor)
+        print(f"RESULTADO: {resultado}")
         
-        # Mapear nombres de Make a nombres reales
-        mapeo_vendedores = {
-            'vendedor 1': 'Albert',
-            'vendedor 2': 'Juan', 
-            'vendedor 3': 'Carlos',
-            'albert': 'Albert',
-            'juan': 'Juan',
-            'carlos': 'Carlos'
-        }
-        vendedor_real = mapeo_vendedores.get(vendedor.lower(), vendedor)
-        
-        print(f"=== DEBUG: vendedor mapeado: {vendedor} -> {vendedor_real} ===")
-        
-        # AQUÍ está el problema - verificar si llama a la función
-        print(f"=== DEBUG: Llamando a retell_llamada_zadarma... ===")
-        resultado = retell_llamada_zadarma(telefono, empresa, vendedor_real)
-        print(f"=== DEBUG: Resultado de retell_llamada_zadarma: {resultado} ===")
-        
+        print("PASO 4: Devolviendo respuesta...")
         return jsonify(resultado)
         
     except Exception as e:
-        print(f"=== ERROR EN LLAMADA_VENDEDOR: {str(e)} ===")
+        print(f"ERROR CRÍTICO: {e}")
         return jsonify({"error": str(e)}), 500
         
 @app.route('/api/vendedor_siguiente/<vendedor>', methods=['GET'])
