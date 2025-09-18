@@ -6365,32 +6365,36 @@ def test_save_lead_form():
 def llamada_vendedor():
     try:
         data = request.json
-        print(f"=== DEBUG: Datos recibidos: {data} ===")
+        print(f"=== DEBUG LLAMADA_VENDEDOR: Datos recibidos: {data} ===")
         
         telefono = data.get('telefono')
         empresa = data.get('empresa')
         vendedor = data.get('vendedor')
         
+        print(f"=== DEBUG: telefono={telefono}, empresa={empresa}, vendedor={vendedor} ===")
+        
         # Mapear nombres de Make a nombres reales
         mapeo_vendedores = {
             'vendedor 1': 'Albert',
             'vendedor 2': 'Juan', 
-            'vendedor 3': 'Carlos'
+            'vendedor 3': 'Carlos',
+            'albert': 'Albert',
+            'juan': 'Juan',
+            'carlos': 'Carlos'
         }
-        vendedor_real = mapeo_vendedores.get(vendedor, vendedor)
+        vendedor_real = mapeo_vendedores.get(vendedor.lower(), vendedor)
         
-        print(f"=== DEBUG: telefono={telefono}, empresa={empresa}, vendedor={vendedor} -> {vendedor_real} ===")
+        print(f"=== DEBUG: vendedor mapeado: {vendedor} -> {vendedor_real} ===")
         
-        # Usar Zadarma-Retell para vendedores
-        if vendedor_real in ['Albert', 'Juan', 'Carlos']:
-            resultado = retell_llamada_zadarma(telefono, empresa, vendedor_real)
-            print(f"=== DEBUG: Resultado llamada: {resultado} ===")
-            return jsonify(resultado)
-        else:
-            return jsonify({"error": f"Vendedor no válido: {vendedor} -> {vendedor_real}"})
-            
+        # AQUÍ está el problema - verificar si llama a la función
+        print(f"=== DEBUG: Llamando a retell_llamada_zadarma... ===")
+        resultado = retell_llamada_zadarma(telefono, empresa, vendedor_real)
+        print(f"=== DEBUG: Resultado de retell_llamada_zadarma: {resultado} ===")
+        
+        return jsonify(resultado)
+        
     except Exception as e:
-        print(f"=== ERROR: {str(e)} ===")
+        print(f"=== ERROR EN LLAMADA_VENDEDOR: {str(e)} ===")
         return jsonify({"error": str(e)}), 500
         
 @app.route('/api/vendedor_siguiente/<vendedor>', methods=['GET'])
