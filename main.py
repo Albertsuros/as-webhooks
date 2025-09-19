@@ -6226,7 +6226,7 @@ def debug_env():
         "tiene_key": bool(os.getenv("DOLIBARR_API_KEY"))
     })
     
-@app.route('/api/test_booking', methods=['POST'])
+@app.route('/api/test_booking', methods=['GET', 'POST'])
 def test_booking():
     try:
         data = request.get_json()
