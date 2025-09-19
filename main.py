@@ -6233,6 +6233,11 @@ def test_booking():
 def api_save_lead():
     try:
         data = request.get_json()
+        # 🔧 FIX: Extraer datos del lugar correcto
+        if 'args' in data and isinstance(data['args'], dict):
+            data = data['args']  # Los datos están dentro de 'args'
+        
+        print(f"🔍 DEBUG api_save_lead - Datos finales: {data}")
         
         print(f"🔍 DEBUG api_save_lead - Datos recibidos: {data}")
         
