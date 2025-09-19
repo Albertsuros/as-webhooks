@@ -6233,55 +6233,61 @@ def test_booking():
 def api_save_lead():
     try:
         data = request.get_json()
-        # 🔧 FIX: Extraer datos del lugar correcto
-        if 'args' in data and isinstance(data['args'], dict):
-            data = data['args']  # Los datos están dentro de 'args'
         
-        print(f"🔍 DEBUG api_save_lead - Datos finales: {data}")
+        print(f"🔍 DEBUG api_save_lead - Datos originales: {data}")
         
+        # 🔧 FIX MÁS ESPECÍFICO: Solo para function calls de agentes
+        if 'name' in data and data.get('name') == 'save_lead' and 'args' in data:
+            # Es un function call, extraer datos de args
+            datos_reales = data['args']
+        else:
+            # Es POST directo, usar datos como están
+            datos_reales = data
+        
+        print(f"🔍 DEBUG api_save_lead - Datos procesados: {datos_reales}")
         print(f"🔍 DEBUG api_save_lead - Datos recibidos: {data}")
         
         # 🔧 FIX: NORMALIZAR CLAVES DE DATOS PARA COMPATIBILIDAD
         # Los agentes envían datos con diferentes nombres de claves
         nombre_cliente = (
-            data.get('nombre_cliente') or 
-            data.get('nombre') or 
-            data.get('client_name') or 
+            datos_reales.get('nombre_cliente') or 
+            datos_reales.get('nombre') or 
+            datos_reales.get('client_name') or 
             'Sin nombre'
         )
-        
+
         telefono = (
-            data.get('telefono') or 
-            data.get('phone') or 
-            data.get('numero_telefono') or 
+            datos_reales.get('telefono') or 
+            datos_reales.get('phone') or 
+            datos_reales.get('numero_telefono') or 
             'Sin teléfono'
         )
-        
+
         email = (
-            data.get('email') or 
-            data.get('correo') or 
-            data.get('mail') or 
+            datos_reales.get('email') or 
+            datos_reales.get('correo') or 
+            datos_reales.get('mail') or 
             'Sin email'
         )
-        
+
         empresa = (
-            data.get('empresa') or 
-            data.get('company') or 
-            data.get('compania') or 
+            datos_reales.get('empresa') or 
+            datos_reales.get('company') or 
+            datos_reales.get('compania') or 
             'Sin empresa'
         )
-        
+
         notas = (
-            data.get('notas') or 
-            data.get('notes') or 
-            data.get('mensaje') or 
-            data.get('consulta') or 
+            datos_reales.get('notas') or 
+            datos_reales.get('notes') or 
+            datos_reales.get('mensaje') or 
+            datos_reales.get('consulta') or 
             'Sin notas'
         )
-        
+
         agente = (
-            data.get('agente') or 
-            data.get('agent') or 
+            datos_reales.get('agente') or 
+            datos_reales.get('agent') or 
             'Sin especificar'
         )
         
