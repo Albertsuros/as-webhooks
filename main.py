@@ -6234,12 +6234,74 @@ def api_save_lead():
     try:
         data = request.get_json()
         
+        print(f"🔍 DEBUG api_save_lead - Datos recibidos: {data}")
+        
+        # 🔧 FIX: NORMALIZAR CLAVES DE DATOS PARA COMPATIBILIDAD
+        # Los agentes envían datos con diferentes nombres de claves
+        nombre_cliente = (
+            data.get('nombre_cliente') or 
+            data.get('nombre') or 
+            data.get('client_name') or 
+            'Sin nombre'
+        )
+        
+        telefono = (
+            data.get('telefono') or 
+            data.get('phone') or 
+            data.get('numero_telefono') or 
+            'Sin teléfono'
+        )
+        
+        email = (
+            data.get('email') or 
+            data.get('correo') or 
+            data.get('mail') or 
+            'Sin email'
+        )
+        
+        empresa = (
+            data.get('empresa') or 
+            data.get('company') or 
+            data.get('compania') or 
+            'Sin empresa'
+        )
+        
+        notas = (
+            data.get('notas') or 
+            data.get('notes') or 
+            data.get('mensaje') or 
+            data.get('consulta') or 
+            'Sin notas'
+        )
+        
+        agente = (
+            data.get('agente') or 
+            data.get('agent') or 
+            'Sin especificar'
+        )
+        
+        print(f"🔍 DEBUG api_save_lead - Datos normalizados:")
+        print(f"  - Nombre: '{nombre_cliente}'")
+        print(f"  - Teléfono: '{telefono}'")  
+        print(f"  - Email: '{email}'")
+        print(f"  - Empresa: '{empresa}'")
+        print(f"  - Agente: '{agente}'")
+        
         # Detectar si es ticket técnico
-        agente = data.get('agente', '').lower()
-        es_tecnico = 'alex' in agente or 'técnico' in agente or 'soporte' in agente
+        es_tecnico = 'alex' in agente.lower() or 'técnico' in agente.lower() or 'soporte' in agente.lower()
+        
+        # Crear objeto normalizado para guardar en BD
+        datos_normalizados = {
+            'agente': agente,
+            'empresa': empresa,
+            'telefono': telefono,
+            'email': email,
+            'nombre_cliente': nombre_cliente,  # ← Para BD usa nombre_cliente
+            'notas': notas
+        }
         
         # Guardar en base de datos
-        lead_guardado = guardar_lead_cliente(data)
+        lead_guardado = guardar_lead_cliente(datos_normalizados)
         
         # Personalizar notificación según tipo
         if es_tecnico:
@@ -6249,31 +6311,114 @@ def api_save_lead():
             emoji_tipo = "🎯" 
             tipo_registro = "LEAD COMERCIAL"
         
-        enviar_telegram_mejora(f"""
+        # 🔧 FIX: USAR VARIABLES NORMALIZADAS EN LUGAR DE data.get()
+        mensaje_telegram = f"""
 {emoji_tipo} <b>NUEVO {tipo_registro}</b>
 
-👤 <b>Cliente:</b> {data.get('nombre_cliente', 'Sin nombre')}
-🏢 <b>Empresa:</b> {data.get('empresa', 'Sin empresa')}
-📞 <b>Teléfono:</b> {data.get('telefono', 'Sin teléfono')}
-📧 <b>Email:</b> {data.get('email', 'Sin email')}
-📝 <b>Notas:</b> {data.get('notas', 'Sin notas')}
-👨‍💼 <b>Agente:</b> {data.get('agente', 'Sin especificar')}
+👤 <b>Cliente:</b> {nombre_cliente}
+🏢 <b>Empresa:</b> {empresa}
+📞 <b>Teléfono:</b> {telefono}
+📧 <b>Email:</b> {email}
+📝 <b>Notas:</b> {notas}
+👨‍💼 <b>Agente:</b> {agente}
 
 ✅ <b>Estado:</b> Registrado - {"Seguimiento técnico" if es_tecnico else "Seguimiento comercial"}
-        """)
+        """.strip()
+        
+        print(f"🔍 DEBUG api_save_lead - Enviando a Telegram:")
+        print(f"📱 Mensaje: {mensaje_telegram}")
+        
+        # Enviar notificación
+        resultado_telegram = enviar_telegram_mejora(mensaje_telegram)
+        print(f"🔍 DEBUG api_save_lead - Resultado Telegram: {resultado_telegram}")
         
         return jsonify({
             "success": True,
             "message": "Datos guardados correctamente",
             "lead_id": lead_guardado,
-            "tipo": "ticket_tecnico" if es_tecnico else "lead_comercial"
+            "tipo": "ticket_tecnico" if es_tecnico else "lead_comercial",
+            "telegram_enviado": resultado_telegram,
+            "datos_procesados": {
+                "nombre": nombre_cliente,
+                "telefono": telefono,
+                "email": email
+            }
         })
         
     except Exception as e:
+        print(f"❌ ERROR CRÍTICO en api_save_lead: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "success": False,
             "error": str(e)
         })
+
+# OPCIONAL: Función para testear el fix
+@app.route('/test/save_lead_fix', methods=['GET', 'POST'])
+def test_save_lead_fix():
+    """Probar el fix con diferentes formatos de datos"""
+    
+    if request.method == 'GET':
+        return '''
+        <h2>🔧 Test Fix Save Lead</h2>
+        <button onclick="testFormato1()">Test Formato 1 (nombre)</button>
+        <button onclick="testFormato2()">Test Formato 2 (nombre_cliente)</button>
+        <button onclick="testFormato3()">Test Formato 3 (mixto)</button>
+        <div id="resultado"></div>
+        
+        <script>
+        function testFormato1() {
+            testConDatos({
+                agente: "Verónica",
+                nombre: "Juan García",  // ← nombre (no nombre_cliente)
+                telefono: "666123456",
+                email: "juan@test.com",
+                notas: "Cliente interesado"
+            });
+        }
+        
+        function testFormato2() {
+            testConDatos({
+                agente: "Sofia", 
+                nombre_cliente: "María López",  // ← nombre_cliente
+                phone: "677888999",             // ← phone (no telefono)
+                correo: "maria@test.com",       // ← correo (no email)
+                empresa: "Test Company"
+            });
+        }
+        
+        function testFormato3() {
+            testConDatos({
+                agent: "Vendedor 1",           // ← agent (no agente)
+                client_name: "Pedro Martín",   // ← client_name
+                telefono: "655444333",
+                mail: "pedro@empresa.com",     // ← mail (no email)
+                consulta: "Necesita información"  // ← consulta (no notas)
+            });
+        }
+        
+        function testConDatos(datos) {
+            fetch('/api/save_lead', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(datos)
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('resultado').innerHTML = 
+                    '<div style="background: ' + (result.success ? '#d4edda' : '#f8d7da') + '; padding: 15px; margin: 10px 0; border-radius: 5px;">' +
+                    '<h4>' + (result.success ? '✅ ÉXITO' : '❌ ERROR') + '</h4>' +
+                    '<p>Telegram enviado: ' + result.telegram_enviado + '</p>' +
+                    '<p>Datos procesados: ' + JSON.stringify(result.datos_procesados) + '</p>' +
+                    '</div>';
+            });
+        }
+        </script>
+        '''
+        
+    # Si es POST, procesar como save_lead normal
+    return api_save_lead()
         
 def guardar_lead_cliente(data):
     """Guardar lead de cliente en base de datos"""
