@@ -3896,8 +3896,24 @@ def api_config_servicios_mejorada():
 def api_agendar_cita_mejorada():
     """Nueva API para agendar citas - CON LÓGICA EMPRESARIAL CORRECTA"""
     try:
-        data = request.get_json()
-        print(f"🔍 DEBUG Agendar cita: {data}")
+        data_original = request.get_json()  # Solo UNA vez
+        print(f"🔍 DEBUG Agendar cita: {data_original}")
+
+        data = data_original.copy()  # Hacer copia
+
+        # FIX RETELL: Extraer datos de args si es function call  
+        if 'args' in data and 'name' in data:
+            data = data['args']
+
+        # FIX: Detectar agente desde datos originales
+        if 'call' in data_original and 'agent_name' in data_original['call']:
+            agent_name = data_original['call']['agent_name']
+    if 'agente' not in data:
+        data['agente'] = agent_name
+        if 'call' in data_original and 'agent_name' in data_original['call']:
+            agent_name = data_original['call']['agent_name']
+            if 'agente' not in data:
+                data['agente'] = agent_name
         
         # Mapeo de servicios nuevos a tipos de BD existentes
         mapeo_servicios = {
