@@ -6238,6 +6238,13 @@ def api_save_lead():
         if 'args' in data and 'name' in data:
             data = data['args']
         
+        # 🔧 FIX: Detectar agente desde datos originales de Retell
+        data_original = request.get_json()
+        if 'call' in data_original and 'agent_name' in data_original['call']:
+            agent_name = data_original['call']['agent_name']
+            data['agente'] = agent_name
+            print(f"🔍 DEBUG - Agente detectado: {agent_name}")
+        
         print(f"🔍 DEBUG api_save_lead - Datos recibidos: {data}")
         
         # 🔧 NORMALIZAR CLAVES DE DATOS PARA COMPATIBILIDAD
