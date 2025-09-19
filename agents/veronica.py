@@ -11,140 +11,70 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 sessions = {}
 
-def completar_datos(session_id, mensaje):
-    """Extraer datos del cliente desde el mensaje de voz"""
-    try:
-        if session_id not in sessions:
-            sessions[session_id] = {
-                'nombre': '',
-                'telefono': '',
-                'email': '',
-                'empresa': '',
-                'notas': ''
-            }
-        
-        datos = sessions[session_id]
-        mensaje_lower = mensaje.lower()
-        
-        # Detectar nombre
-        if "me llamo" in mensaje_lower or "soy" in mensaje_lower:
-            if "me llamo" in mensaje_lower:
-                partes = mensaje_lower.split("me llamo")
-                if len(partes) > 1:
-                    nombre = partes[1].strip().split()[0]
-                    if nombre:
-                        datos["nombre"] = nombre.title()
-            elif "soy" in mensaje_lower:
-                partes = mensaje_lower.split("soy")
-                if len(partes) > 1:
-                    nombre = partes[1].strip().split()[0]
-                    if nombre:
-                        datos["nombre"] = nombre.title()
-        
-        # Detectar teléfono (9 dígitos mínimo)
-        telefono_match = re.search(r'\b[6-9]\d{8}\b', mensaje)
-        if telefono_match:
-            datos["telefono"] = telefono_match.group()
-        
-        # Detectar email
-        email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', mensaje)
-        if email_match:
-            datos["email"] = email_match.group()
-        
-        # Detectar empresa
-        empresa_patterns = [
-            r'(?:empresa|compañía|trabajo en)\s+([^,\.]+)',
-            r'(?:de la empresa|en)\s+([A-Z][a-zA-Z\s]+)'
-        ]
-        for pattern in empresa_patterns:
-            empresa_match = re.search(pattern, mensaje, re.IGNORECASE)
-            if empresa_match:
-                datos["empresa"] = empresa_match.group(1).strip()
-                break
-        
-        # Agregar notas adicionales
-        if not any(datos.values()):  # Si no se capturó nada específico
-            datos["notas"] += f" {mensaje}"
-        
-        # Debug
-        print(f"🔍 DEBUG Verónica - Mensaje: {mensaje}")
-        print(f"🔍 DEBUG Verónica - Datos extraídos: {datos}")
-        
-        # Verificar si están completos (al menos nombre Y teléfono)
-        completos = bool(datos["nombre"] and datos["telefono"])
-        
-        sessions[session_id] = datos
-        return datos, completos
-        
-    except Exception as e:
-        print(f"❌ Error completar_datos Verónica: {e}")
-        return sessions.get(session_id, {}), False
-
 def handle_veronica_webhook(data):
     try:
-        # Fix anti-loop
+        # ✅ FIX ANTI-LOOP - AÑADIDO
         if not data or not isinstance(data, dict):
             return {"status": "ok"}
         
         user_text = data.get('text', '').strip()
         session_id = data.get("session_id")
         
-        # Healthcheck
+        # SI NO HAY MENSAJE Y NO HAY SESSION, ES HEALTHCHECK
         if not user_text and not session_id:
-            print("🥽 HEALTHCHECK detectado - respondiendo silenciosamente")
+            print("🏥 HEALTHCHECK detectado - respondiendo silenciosamente")
             return {"status": "ok"}
         
+        # SI MÉTODO NO ES POST, ES VALIDACIÓN
         if request.method != 'POST':
             return {"status": "ok", "message": "Veronica webhook ready"}
         
+        # SOLO CONTINUAR SI HAY CONTENIDO REAL
         if not user_text or len(user_text.strip()) < 3:
             print("⚠️ Request sin contenido real")
             return {"status": "ok"}
+            
+            # Terminar llamada para que puedas llamar tú
+            return {
+                "type": "end_call",
+                "message": "Te voy a transferir ahora. Albert te llamará en 30 segundos al mismo número."
+            }
+            
+        # DETECTAR TRANSFERENCIAS A ALBERT - REFER VOIPSTUDIO
+        if any(palabra in user_text.lower() for palabra in [
+            'albert surós', 'director', 'jefe', 'responsable', 'transferir'
+        ]):
+            enviar_telegram_mejora(f"""
+        📞 TRANSFERENCIA REFER A ALBERT
+        💬 Mensaje: {user_text}
+        ⏰ Hora: {datetime.now().strftime('%H:%M')}
+        🧪 Transferencia directa sin VoípStudio
+            """)
+            
+            return {
+                "type": "transfer",
+                "target": "+34616000211"  # Tu móvil directo
+            }
         
-        print(f"=== VERÓNICA WEBHOOK ===")
-        print(f"Session ID: {session_id}")
-        print(f"Mensaje: {user_text}")
-        # DEBUG ADICIONAL
-        print(f"🔍 DEBUG - Función ejecutada correctamente")
-        print(f"🔍 DEBUG - Session ID: {session_id}")
-        print(f"🔍 DEBUG - Texto limpio: '{mensaje_usuario}'")
+        # AGENDAR CITA SIMPLE
+        if any(palabra in user_text.lower() for palabra in [
+            'cita', 'hora', 'agendar', 'reunión', 'llamar'
+        ]):
+            return {"type": "speak", "text": "Perfecto. Te llamaremos mañana entre las 10:00 y 11:00. ¿Te parece bien?"}
         
-        # Completar datos del cliente
+        # Datos normales - MUY SIMPLE
+        session_id = data.get("session_id", "default")
         datos, completos = completar_datos(session_id, user_text)
         
         if completos:
-            print(f"✅ DATOS COMPLETOS: {datos}")
-            
-            # Enviar notificación Telegram con datos
-            mensaje_telegram = f"""
-🤖 <b>NUEVA CONSULTA - AS ASESORES</b>
-
-👤 <b>Cliente:</b> {datos.get('nombre', 'Sin nombre')}
-🏢 <b>Empresa:</b> {datos.get('empresa', 'Sin empresa')}
-📞 <b>Teléfono:</b> {datos.get('telefono', 'Sin teléfono')}
-📧 <b>Email:</b> {datos.get('email', 'Sin email')}
-📝 <b>Notas:</b> {datos.get('notas', 'Sin notas')}
-
-👩‍💼 <b>Agente:</b> Verónica
-⏰ <b>Hora:</b> {datetime.now().strftime('%H:%M:%S')}
-✅ <b>Estado:</b> Registrado para seguimiento
-            """.strip()
-            
-            enviar_telegram_mejora(mensaje_telegram)
-            
-            return {"type": "speak", "text": "Perfecto. He registrado todos tus datos. Te contactaremos pronto para ayudarte."}
+            print(f"✅ DATOS: {datos}")
+            return {"type": "speak", "text": "Perfecto. Te contactaremos pronto."}
         else:
-            # Pedir más datos
-            if not datos.get('nombre'):
-                return {"type": "speak", "text": "¿Puedes decirme tu nombre, por favor?"}
-            elif not datos.get('telefono'):
-                return {"type": "speak", "text": "¿Cuál es tu número de teléfono de contacto?"}
-            else:
-                return {"type": "speak", "text": "¿Hay algo más que quieras añadir sobre tu consulta?"}
+            return {"type": "speak", "text": "¿Puedes darme tu nombre y teléfono?"}
 
     except Exception as e:
-        print(f"❌ Error en handle_veronica_webhook: {e}")
-        return {"status": "ok"}
+        print(f"❌ Error: {e}")
+        return {"status": "ok"}  # ✅ Evitar loops en errores
         
 def enviar_telegram_mejora(mensaje):
     """Enviar notificación por Telegram"""

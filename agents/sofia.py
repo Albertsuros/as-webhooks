@@ -1515,31 +1515,6 @@ def handle_sofia_webhook(data):
                 
                 especialista = especialistas.get(contexto_sesion['tipo_servicio'])
                 
-                # ENVIAR NOTIFICACIÓN TELEGRAM CON DATOS DEL CLIENTE
-                if numero_telefono and datos_natales.get('email'):
-                    try:
-                        mensaje_telegram = f"""
-🔮 <b>NUEVA SESIÓN - AS CARTASTRAL</b>
-
-👤 <b>Cliente:</b> {datos_natales.get('nombre', 'Sin nombre')}
-📧 <b>Email:</b> {datos_natales.get('email', 'Sin email')}
-📞 <b>Teléfono:</b> {numero_telefono}
-🎯 <b>Servicio:</b> {obtener_nombre_servicio_legible(contexto_sesion['tipo_servicio'])}
-📢 <b>Código:</b> {contexto_sesion.get('codigo_servicio', 'Sin código')}
-
-📅 <b>Fecha nacimiento:</b> {datos_natales.get('fecha_nacimiento', 'Sin fecha')}
-⏰ <b>Hora nacimiento:</b> {datos_natales.get('hora_nacimiento', 'Sin hora')}
-🌍 <b>Lugar:</b> {datos_natales.get('lugar_nacimiento', 'Sin lugar')}
-
-✅ <b>Estado:</b> Sesión iniciada
-🤖 <b>Agente:</b> Sofía - AS Cartastral
-                        """.strip()
-                        
-                        enviar_telegram_mejora(mensaje_telegram)
-                        print(f"✅ Notificación enviada para sesión: {contexto_sesion.get('codigo_servicio')}")
-                    except Exception as tel_error:
-                        print(f"⚠️ Error enviando notificación: {tel_error}")
-                
                 if especialista:
                     # Mensaje de recordatorio según tipo de servicio Y TIEMPO
                     if contexto_sesion['tipo_servicio'] == 'carta_astral_ia':
