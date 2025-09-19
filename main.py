@@ -6240,54 +6240,47 @@ def api_save_lead():
         
         print(f"🔍 DEBUG api_save_lead - Datos recibidos: {data}")
         
-        # Detectar si es ticket técnico
-        agente = data.get('agente', '').lower()
-        es_tecnico = 'alex' in agente or 'técnico' in agente or 'soporte' in agente
-        
-        # Guardar en base de datos
-        lead_guardado = guardar_lead_cliente(data)
-        
-        # 🔧 FIX: NORMALIZAR CLAVES DE DATOS PARA COMPATIBILIDAD
+        # 🔧 NORMALIZAR CLAVES DE DATOS PARA COMPATIBILIDAD
         # Los agentes envían datos con diferentes nombres de claves
         nombre_cliente = (
-            datos_reales.get('nombre_cliente') or 
-            datos_reales.get('nombre') or 
-            datos_reales.get('client_name') or 
+            data.get('nombre_cliente') or 
+            data.get('nombre') or 
+            data.get('client_name') or 
             'Sin nombre'
         )
 
         telefono = (
-            datos_reales.get('telefono') or 
-            datos_reales.get('phone') or 
-            datos_reales.get('numero_telefono') or 
+            data.get('telefono') or 
+            data.get('phone') or 
+            data.get('numero_telefono') or 
             'Sin teléfono'
         )
 
         email = (
-            datos_reales.get('email') or 
-            datos_reales.get('correo') or 
-            datos_reales.get('mail') or 
+            data.get('email') or 
+            data.get('correo') or 
+            data.get('mail') or 
             'Sin email'
         )
 
         empresa = (
-            datos_reales.get('empresa') or 
-            datos_reales.get('company') or 
-            datos_reales.get('compania') or 
+            data.get('empresa') or 
+            data.get('company') or 
+            data.get('compania') or 
             'Sin empresa'
         )
 
         notas = (
-            datos_reales.get('notas') or 
-            datos_reales.get('notes') or 
-            datos_reales.get('mensaje') or 
-            datos_reales.get('consulta') or 
+            data.get('notas') or 
+            data.get('notes') or 
+            data.get('mensaje') or 
+            data.get('consulta') or 
             'Sin notas'
         )
 
         agente = (
-            datos_reales.get('agente') or 
-            datos_reales.get('agent') or 
+            data.get('agente') or 
+            data.get('agent') or 
             'Sin especificar'
         )
         
@@ -6307,7 +6300,7 @@ def api_save_lead():
             'empresa': empresa,
             'telefono': telefono,
             'email': email,
-            'nombre_cliente': nombre_cliente,  # ← Para BD usa nombre_cliente
+            'nombre_cliente': nombre_cliente,
             'notas': notas
         }
         
@@ -6322,7 +6315,7 @@ def api_save_lead():
             emoji_tipo = "🎯" 
             tipo_registro = "LEAD COMERCIAL"
         
-        # 🔧 FIX: USAR VARIABLES NORMALIZADAS EN LUGAR DE data.get()
+        # Construir mensaje Telegram con variables normalizadas
         mensaje_telegram = f"""
 {emoji_tipo} <b>NUEVO {tipo_registro}</b>
 
