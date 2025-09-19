@@ -6236,13 +6236,16 @@ def api_save_lead():
         
         # 🔧 FIX RETELL: Extraer datos de args si es function call  
         if 'args' in data and 'name' in data:
-            data = data['args']  # Mover datos al nivel principal
+            data = data['args']
+        
+        print(f"🔍 DEBUG api_save_lead - Datos recibidos: {data}")
         
         # Detectar si es ticket técnico
         agente = data.get('agente', '').lower()
+        es_tecnico = 'alex' in agente or 'técnico' in agente or 'soporte' in agente
         
-        print(f"🔍 DEBUG api_save_lead - Datos procesados: {datos_reales}")
-        print(f"🔍 DEBUG api_save_lead - Datos recibidos: {data}")
+        # Guardar en base de datos
+        lead_guardado = guardar_lead_cliente(data)
         
         # 🔧 FIX: NORMALIZAR CLAVES DE DATOS PARA COMPATIBILIDAD
         # Los agentes envían datos con diferentes nombres de claves
