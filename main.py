@@ -6234,15 +6234,8 @@ def api_save_lead():
     try:
         data = request.get_json()
         
-        print(f"🔍 DEBUG api_save_lead - Datos originales: {data}")
-        
-        # 🔧 FIX MÁS ESPECÍFICO: Solo para function calls de agentes
-        if 'name' in data and data.get('name') == 'save_lead' and 'args' in data:
-            # Es un function call, extraer datos de args
-            datos_reales = data['args']
-        else:
-            # Es POST directo, usar datos como están
-            datos_reales = data
+        # Detectar si es ticket técnico
+        agente = data.get('agente', '').lower()
         
         print(f"🔍 DEBUG api_save_lead - Datos procesados: {datos_reales}")
         print(f"🔍 DEBUG api_save_lead - Datos recibidos: {data}")
