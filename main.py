@@ -6234,6 +6234,10 @@ def api_save_lead():
     try:
         data = request.get_json()
         
+        # 🔧 FIX RETELL: Extraer datos de args si es function call  
+        if 'args' in data and 'name' in data:
+            data = data['args']  # Mover datos al nivel principal
+        
         # Detectar si es ticket técnico
         agente = data.get('agente', '').lower()
         
