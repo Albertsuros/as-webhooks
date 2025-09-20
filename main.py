@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask import render_template_string
+from flask import send_file
 from datetime import datetime, timedelta
 import datetime as dt
 import json
@@ -6662,6 +6663,384 @@ def debug_make():
         })
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+# ========================================
+# ENDPOINTS PARA PROBAR PDFs - AÑADIR A main.py
+# ========================================
+
+@app.route('/test/generar_pdfs_todas_especialidades')
+def generar_pdfs_todas_especialidades():
+    """Generar PDFs de prueba para todas las especialidades"""
+    try:
+        from informes import procesar_y_enviar_informe
+        
+        especialidades = [
+            'carta_astral_ia',
+            'revolucion_solar_ia', 
+            'sinastria_ia',
+            'astrologia_horaria_ia',
+            'lectura_manos_ia',
+            'lectura_facial_ia',
+            'psico_coaching_ia',
+            'grafologia_ia'
+        ]
+        
+        resultados = []
+        
+        for especialidad in especialidades:
+            try:
+                # Datos de prueba para cada especialidad
+                datos_cliente = {
+                    'nombre': 'Cliente Prueba',
+                    'email': 'test@prueba.com',
+                    'codigo_servicio': f'TEST_{especialidad.upper()}',
+                    'fecha_nacimiento': '15/07/1985',
+                    'hora_nacimiento': '10:30',
+                    'lugar_nacimiento': 'Madrid, España'
+                }
+                
+                # Generar sin enviar email (modificaremos la función)
+                archivo_pdf = generar_solo_pdf(datos_cliente, especialidad)
+                
+                if archivo_pdf:
+                    resultados.append({
+                        'especialidad': especialidad,
+                        'status': 'success',
+                        'archivo': archivo_pdf,
+                        'download_url': f'/test/descargar_pdf/{os.path.basename(archivo_pdf)}'
+                    })
+                else:
+                    resultados.append({
+                        'especialidad': especialidad,
+                        'status': 'error',
+                        'mensaje': 'Error generando PDF'
+                    })
+                    
+            except Exception as e:
+                resultados.append({
+                    'especialidad': especialidad,
+                    'status': 'error',
+                    'mensaje': str(e)
+                })
+        
+        return jsonify({
+            'status': 'completed',
+            'total_especialidades': len(especialidades),
+            'resultados': resultados,
+            'instrucciones': 'Usa las download_url para descargar cada PDF'
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'mensaje': str(e)}), 500
+
+def generar_solo_pdf(datos_cliente, tipo_servicio):
+    """Generar solo PDF sin enviar email"""
+    try:
+        from informes import generar_informe_html, convertir_html_a_pdf, generar_nombre_archivo_unico
+        import os
+        
+        print(f"📄 Generando PDF para {tipo_servicio}")
+        
+        # Generar HTML
+        archivo_html = generar_informe_html(datos_cliente, tipo_servicio, {}, "Resumen de prueba para testing")
+        
+        if not archivo_html:
+            print("❌ Error generando HTML")
+            return None
+        
+        # Generar PDF
+        nombre_base = generar_nombre_archivo_unico(tipo_servicio, datos_cliente.get('codigo_servicio', ''))
+        archivo_pdf = f"informes/{nombre_base}.pdf"
+        
+        # Crear directorio si no existe
+        os.makedirs('informes', exist_ok=True)
+        
+        exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+        
+        if exito_pdf:
+            print(f"✅ PDF generado: {archivo_pdf}")
+            return archivo_pdf
+        else:
+            print("❌ Error generando PDF")
+            return None
+        
+    except Exception as e:
+        print(f"❌ Error en generar_solo_pdf: {e}")
+        return None
+
+@app.route('/test/generar_pdf_especialidad/<especialidad>')
+def generar_pdf_especialidad(especialidad):
+    """Generar PDF de una especialidad específica"""
+    try:
+        # Validar especialidad
+        especialidades_validas = [
+            'carta_astral_ia', 'revolucion_solar_ia', 'sinastria_ia',
+            'astrologia_horaria_ia', 'lectura_manos_ia', 'lectura_facial_ia',
+            'psico_coaching_ia', 'grafologia_ia'
+        ]
+        
+        if especialidad not in especialidades_validas:
+            return jsonify({
+                'status': 'error',
+                'mensaje': f'Especialidad no válida. Opciones: {especialidades_validas}'
+            }), 400
+        
+        # Datos de prueba
+        datos_cliente = {
+            'nombre': 'Cliente Prueba',
+            'email': 'test@prueba.com',
+            'codigo_servicio': f'TEST_{especialidad.upper()}',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        archivo_pdf = generar_solo_pdf(datos_cliente, especialidad)
+        
+        if archivo_pdf:
+            return jsonify({
+                'status': 'success',
+                'especialidad': especialidad,
+                'archivo': archivo_pdf,
+                'download_url': f'/test/descargar_pdf/{os.path.basename(archivo_pdf)}',
+                'mensaje': f'PDF de {especialidad} generado correctamente'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'mensaje': f'Error generando PDF para {especialidad}'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({'status': 'error', 'mensaje': str(e)}), 500
+
+@app.route('/test/descargar_pdf/<nombre_archivo>')
+def descargar_pdf(nombre_archivo):
+    """Descargar PDF generado"""
+    try:
+        ruta_pdf = f"informes/{nombre_archivo}"
+        
+        if not os.path.exists(ruta_pdf):
+            return jsonify({'error': 'Archivo no encontrado'}), 404
+        
+        return send_file(
+            ruta_pdf,
+            as_attachment=True,
+            download_name=nombre_archivo,
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/test/listar_pdfs')
+def listar_pdfs():
+    """Listar todos los PDFs generados"""
+    try:
+        import glob
+        
+        # Buscar todos los PDFs en la carpeta informes
+        pdfs = glob.glob('informes/*.pdf')
+        
+        lista_pdfs = []
+        for pdf in pdfs:
+            nombre_archivo = os.path.basename(pdf)
+            stats = os.stat(pdf)
+            
+            lista_pdfs.append({
+                'nombre': nombre_archivo,
+                'tamaño_mb': round(stats.st_size / (1024*1024), 2),
+                'fecha_creacion': datetime.fromtimestamp(stats.st_ctime).strftime('%Y-%m-%d %H:%M:%S'),
+                'download_url': f'/test/descargar_pdf/{nombre_archivo}'
+            })
+        
+        return jsonify({
+            'total_pdfs': len(lista_pdfs),
+            'pdfs': lista_pdfs,
+            'instruccion': 'Usa download_url para descargar cada PDF'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/test/panel_pdfs')
+def panel_pdfs():
+    """Panel web para generar y descargar PDFs"""
+    html = '''
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Test PDFs - AS Cartastral</title>
+    <style>
+        body { font-family: Arial; max-width: 1200px; margin: 20px auto; padding: 20px; }
+        .especialidad { border: 1px solid #ddd; margin: 10px; padding: 15px; border-radius: 5px; }
+        .btn { padding: 8px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-generar { background: #007bff; color: white; }
+        .btn-descargar { background: #28a745; color: white; }
+        .btn-todas { background: #6f42c1; color: white; }
+        .resultado { margin-top: 10px; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Panel de Test - Informes PDF AS Cartastral</h1>
+    
+    <div style="margin: 20px 0;">
+        <button class="btn btn-todas" onclick="generarTodasEspecialidades()">
+            📄 Generar PDFs de Todas las Especialidades
+        </button>
+        <button class="btn btn-todas" onclick="listarPdfs()">
+            📋 Listar PDFs Existentes
+        </button>
+    </div>
+    
+    <div id="resultado-general"></div>
+    
+    <h2>Especialidades Individuales:</h2>
+    
+    <div class="especialidad">
+        <h3>🌟 Carta Astral IA</h3>
+        <button class="btn btn-generar" onclick="generarPdf('carta_astral_ia')">Generar PDF</button>
+        <div id="resultado-carta_astral_ia"></div>
+    </div>
+    
+    <div class="especialidad">
+        <h3>🌟 Revolución Solar IA</h3>
+        <button class="btn btn-generar" onclick="generarPdf('revolucion_solar_ia')">Generar PDF</button>
+        <div id="resultado-revolucion_solar_ia"></div>
+    </div>
+    
+    <div class="especialidad">
+        <h3>💕 Sinastría IA</h3>
+        <button class="btn btn-generar" onclick="generarPdf('sinastria_ia')">Generar PDF</button>
+        <div id="resultado-sinastria_ia"></div>
+    </div>
+    
+    <div class="especialidad">
+        <h3>🎯 Astrología Horaria IA</h3>
+        <button class="btn btn-generar" onclick="generarPdf('astrologia_horaria_ia')">Generar PDF</button>
+        <div id="resultado-astrologia_horaria_ia"></div>
+    </div>
+    
+    <div class="especialidad">
+        <h3>✋ Lectura de Manos IA</h3>
+        <button class="btn btn-generar" onclick="generarPdf('lectura_manos_ia')">Generar PDF</button>
+        <div id="resultado-lectura_manos_ia"></div>
+    </div>
+    
+    <div class="especialidad">
+        <h3>👁️ Lectura Facial IA</h3>
+        <button class="btn btn-generar" onclick="generarPdf('lectura_facial_ia')">Generar PDF</button>
+        <div id="resultado-lectura_facial_ia"></div>
+    </div>
+    
+    <div class="especialidad">
+        <h3>🧠 Psico-Coaching IA</h3>
+        <button class="btn btn-generar" onclick="generarPdf('psico_coaching_ia')">Generar PDF</button>
+        <div id="resultado-psico_coaching_ia"></div>
+    </div>
+    
+    <div class="especialidad">
+        <h3>✍️ Grafología IA</h3>
+        <button class="btn btn-generar" onclick="generarPdf('grafologia_ia')">Generar PDF</button>
+        <div id="resultado-grafologia_ia"></div>
+    </div>
+
+    <script>
+    function generarPdf(especialidad) {
+        const resultadoDiv = document.getElementById('resultado-' + especialidad);
+        resultadoDiv.innerHTML = '<div class="resultado">⏳ Generando PDF...</div>';
+        
+        fetch('/test/generar_pdf_especialidad/' + especialidad)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    resultadoDiv.innerHTML = `
+                        <div class="resultado success">
+                            ✅ PDF generado correctamente<br>
+                            <button class="btn btn-descargar" onclick="descargarPdf('${data.download_url}')">
+                                📥 Descargar PDF
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    resultadoDiv.innerHTML = `<div class="resultado error">❌ ${data.mensaje}</div>`;
+                }
+            })
+            .catch(error => {
+                resultadoDiv.innerHTML = `<div class="resultado error">❌ Error: ${error}</div>`;
+            });
+    }
+    
+    function descargarPdf(downloadUrl) {
+        window.open(downloadUrl, '_blank');
+    }
+    
+    function generarTodasEspecialidades() {
+        const resultadoDiv = document.getElementById('resultado-general');
+        resultadoDiv.innerHTML = '<div class="resultado">⏳ Generando PDFs de todas las especialidades...</div>';
+        
+        fetch('/test/generar_pdfs_todas_especialidades')
+            .then(response => response.json())
+            .then(data => {
+                let html = '<div class="resultado success"><h3>📄 Resultados:</h3>';
+                data.resultados.forEach(resultado => {
+                    if (resultado.status === 'success') {
+                        html += `
+                            <div>✅ ${resultado.especialidad}: 
+                                <button class="btn btn-descargar" onclick="descargarPdf('${resultado.download_url}')">
+                                    📥 Descargar
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        html += `<div>❌ ${resultado.especialidad}: ${resultado.mensaje}</div>`;
+                    }
+                });
+                html += '</div>';
+                resultadoDiv.innerHTML = html;
+            })
+            .catch(error => {
+                resultadoDiv.innerHTML = `<div class="resultado error">❌ Error: ${error}</div>`;
+            });
+    }
+    
+    function listarPdfs() {
+        const resultadoDiv = document.getElementById('resultado-general');
+        resultadoDiv.innerHTML = '<div class="resultado">⏳ Listando PDFs...</div>';
+        
+        fetch('/test/listar_pdfs')
+            .then(response => response.json())
+            .then(data => {
+                let html = '<div class="resultado success"><h3>📋 PDFs Disponibles:</h3>';
+                if (data.pdfs.length === 0) {
+                    html += '<p>No hay PDFs generados aún.</p>';
+                } else {
+                    data.pdfs.forEach(pdf => {
+                        html += `
+                            <div style="margin: 5px 0; padding: 5px; border: 1px solid #ddd;">
+                                📄 ${pdf.nombre} (${pdf.tamaño_mb} MB) - ${pdf.fecha_creacion}
+                                <button class="btn btn-descargar" onclick="descargarPdf('${pdf.download_url}')">
+                                    📥 Descargar
+                                </button>
+                            </div>
+                        `;
+                    });
+                }
+                html += '</div>';
+                resultadoDiv.innerHTML = html;
+            })
+            .catch(error => {
+                resultadoDiv.innerHTML = `<div class="resultado error">❌ Error: ${error}</div>`;
+            });
+    }
+    </script>
+</body>
+</html>
+    '''
+    return html
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
