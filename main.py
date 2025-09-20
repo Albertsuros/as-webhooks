@@ -7041,6 +7041,618 @@ def panel_pdfs():
 </html>
     '''
     return html
+    
+# ========================================
+# 1. DEBUG PDF DETALLADO
+# ========================================
+
+@app.route('/test/debug_pdf/<especialidad>')
+def debug_pdf_detallado(especialidad):
+    """Debug completo del proceso de generación de PDF"""
+    try:
+        debug_info = {
+            'paso_1_datos': {},
+            'paso_2_html': {},
+            'paso_3_pdf': {},
+            'errores': []
+        }
+        
+        # PASO 1: Generar datos
+        try:
+            datos_cliente = {
+                'nombre': 'Cliente Debug',
+                'email': 'debug@test.com',
+                'codigo_servicio': f'DEBUG_{especialidad.upper()}',
+                'fecha_nacimiento': '15/07/1985',
+                'hora_nacimiento': '10:30',
+                'lugar_nacimiento': 'Madrid, España'
+            }
+            debug_info['paso_1_datos'] = {
+                'status': 'success',
+                'datos': datos_cliente
+            }
+        except Exception as e:
+            debug_info['paso_1_datos'] = {'status': 'error', 'error': str(e)}
+            debug_info['errores'].append(f"Error datos: {e}")
+        
+        # PASO 2: Generar HTML
+        try:
+            from informes import generar_informe_html
+            archivo_html = generar_informe_html(datos_cliente, especialidad, {}, "Debug test")
+            
+            if archivo_html and os.path.exists(archivo_html):
+                # Leer contenido HTML para debug
+                with open(archivo_html, 'r', encoding='utf-8') as f:
+                    contenido_html = f.read()
+                
+                debug_info['paso_2_html'] = {
+                    'status': 'success',
+                    'archivo': archivo_html,
+                    'tamaño': len(contenido_html),
+                    'preview': contenido_html[:500] + "..." if len(contenido_html) > 500 else contenido_html
+                }
+            else:
+                debug_info['paso_2_html'] = {
+                    'status': 'error',
+                    'error': 'Archivo HTML no generado o no existe'
+                }
+                debug_info['errores'].append("HTML no generado")
+                
+        except Exception as e:
+            debug_info['paso_2_html'] = {'status': 'error', 'error': str(e)}
+            debug_info['errores'].append(f"Error HTML: {e}")
+        
+        # PASO 3: Probar conversión PDF (solo si HTML existe)
+        if debug_info['paso_2_html'].get('status') == 'success':
+            try:
+                from informes import convertir_html_a_pdf, generar_nombre_archivo_unico
+                
+                nombre_base = generar_nombre_archivo_unico(especialidad, 'DEBUG')
+                archivo_pdf = f"informes/{nombre_base}.pdf"
+                
+                # Crear directorio
+                os.makedirs('informes', exist_ok=True)
+                
+                # Intentar conversión
+                exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+                
+                if exito_pdf and os.path.exists(archivo_pdf):
+                    stats = os.stat(archivo_pdf)
+                    debug_info['paso_3_pdf'] = {
+                        'status': 'success',
+                        'archivo': archivo_pdf,
+                        'tamaño_bytes': stats.st_size,
+                        'tamaño_mb': round(stats.st_size / (1024*1024), 2),
+                        'download_url': f'/test/descargar_pdf/{os.path.basename(archivo_pdf)}'
+                    }
+                else:
+                    debug_info['paso_3_pdf'] = {
+                        'status': 'error',
+                        'error': 'PDF no generado'
+                    }
+                    debug_info['errores'].append("PDF no generado")
+                    
+            except Exception as e:
+                debug_info['paso_3_pdf'] = {'status': 'error', 'error': str(e)}
+                debug_info['errores'].append(f"Error PDF: {e}")
+        
+        # PASO 4: Verificar Playwright
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                browser.close()
+            debug_info['playwright_status'] = 'OK'
+        except Exception as e:
+            debug_info['playwright_status'] = f'ERROR: {e}'
+            debug_info['errores'].append(f"Playwright error: {e}")
+        
+        return jsonify({
+            'especialidad': especialidad,
+            'resumen': 'success' if not debug_info['errores'] else 'error',
+            'total_errores': len(debug_info['errores']),
+            'debug_completo': debug_info
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'especialidad': especialidad,
+            'resumen': 'critical_error',
+            'error': str(e)
+        }), 500
+
+# ========================================
+# 2. SISTEMA REPROGRAMACIÓN CITAS
+# ========================================
+
+# INTEGRACIÓN CON SOFIA.PY - Añadir al final de sofia.py
+def detectar_reprogramacion_sofia(mensaje_usuario):
+    """Detectar si cliente quiere reprogramar una cita"""
+    patrones_reprogramacion = [
+        r'reprogramar', r'cambiar.*cita', r'cambiar.*horario', r'cambiar.*fecha',
+        r'mover.*cita', r'otro.*día', r'otro.*horario', r'postponer',
+        r'aplazar', r'reagendar', r'modificar.*cita'
+    ]
+    
+    for patron in patrones_reprogramacion:
+        if re.search(patron, mensaje_usuario.lower()):
+            return True
+    return False
+
+def manejar_reprogramacion_sofia(mensaje_usuario, session_id, numero_telefono):
+    """Manejar proceso de reprogramación desde Sofía"""
+    contexto = sessions.get(session_id, {})
+    
+    # Detectar datos en el mensaje
+    fecha_detectada = detectar_fecha_en_mensaje(mensaje_usuario)
+    horario_detectado = detectar_horario_en_mensaje(mensaje_usuario)
+    
+    # Estado del proceso de reprogramación
+    estado_reprog = contexto.get('estado_reprogramacion', 'inicio')
+    
+    if estado_reprog == 'inicio':
+        # Solicitar datos de la cita actual
+        contexto['estado_reprogramacion'] = 'datos_actuales'
+        sessions[session_id] = contexto
+        return {"type": "speak", "text": "Perfecto, te ayudo a reprogramar tu cita. Dime tu nombre completo y la fecha de tu cita actual."}
+    
+    elif estado_reprog == 'datos_actuales':
+        # Recopilar nombre y fecha actual
+        nombre = detectar_nombre_en_mensaje(mensaje_usuario)
+        if nombre:
+            contexto['nombre_cliente'] = nombre
+        
+        if fecha_detectada:
+            contexto['fecha_actual'] = fecha_detectada
+        
+        if contexto.get('nombre_cliente') and contexto.get('fecha_actual'):
+            contexto['estado_reprogramacion'] = 'nueva_fecha'
+            sessions[session_id] = contexto
+            return {"type": "speak", "text": f"Entendido {contexto['nombre_cliente']}, tu cita del {contexto['fecha_actual']}. ¿Para qué fecha quieres reprogramarla?"}
+        else:
+            return {"type": "speak", "text": "Necesito tu nombre completo y la fecha de tu cita actual. ¿Puedes repetírmelo?"}
+    
+    elif estado_reprog == 'nueva_fecha':
+        if fecha_detectada:
+            contexto['nueva_fecha'] = fecha_detectada
+            contexto['estado_reprogramacion'] = 'nuevo_horario'
+            sessions[session_id] = contexto
+            
+            # Obtener horarios disponibles para esa fecha
+            horarios = obtener_horarios_disponibles_sofia('astrologo_humano', datetime.strptime(fecha_detectada, '%Y-%m-%d'))
+            if horarios:
+                horarios_texto = ", ".join(horarios[:5])
+                return {"type": "speak", "text": f"Para el {fecha_detectada} tengo disponible: {horarios_texto}. ¿Cuál prefieres?"}
+            else:
+                return {"type": "speak", "text": f"No tengo horarios disponibles para {fecha_detectada}. ¿Te interesa otra fecha?"}
+        else:
+            return {"type": "speak", "text": "¿Para qué fecha quieres reprogramar tu cita? Dime el día, por ejemplo: mañana, el viernes, o 25 de septiembre."}
+    
+    elif estado_reprog == 'nuevo_horario':
+        if horario_detectado:
+            # Ejecutar reprogramación
+            try:
+                import requests
+                resultado = requests.post('http://localhost:5000/api/reprogramar-cita', json={
+                    'nombre_cliente': contexto['nombre_cliente'],
+                    'fecha_original': contexto['fecha_actual'],
+                    'horario_original': '11:00-12:00',  # Tendremos que mejorarlo
+                    'nueva_fecha': contexto['nueva_fecha'],
+                    'nuevo_horario': horario_detectado,
+                    'tipo_servicio': 'sofia_astrologo'
+                })
+                
+                if resultado.status_code == 200:
+                    data = resultado.json()
+                    if data['success']:
+                        # Limpiar contexto
+                        sessions.pop(session_id, None)
+                        return {"type": "speak", "text": f"¡Perfecto! He reprogramado tu cita para el {contexto['nueva_fecha']} a las {horario_detectado}. Te llegará una confirmación."}
+                    else:
+                        return {"type": "speak", "text": f"No he podido reprogramar la cita: {data['message']}. ¿Quieres intentar con otro horario?"}
+                else:
+                    return {"type": "speak", "text": "Ha ocurrido un error técnico. ¿Prefieres que te transfiera con un operador?"}
+                    
+            except Exception as e:
+                return {"type": "speak", "text": "Ha ocurrido un error técnico. ¿Prefieres que te transfiera con un operador?"}
+        else:
+            return {"type": "speak", "text": "¿A qué hora prefieres la cita? Por ejemplo: 11:00, 16:00, etc."}
+
+# INTEGRACIÓN CON VERONICA.PY - Añadir al final de veronica.py
+def detectar_reprogramacion_veronica(mensaje_usuario):
+    """Detectar si cliente quiere reprogramar una cita con Verónica"""
+    return detectar_reprogramacion_sofia(mensaje_usuario)  # Misma lógica
+
+def manejar_reprogramacion_veronica(mensaje_usuario, datos_actuales):
+    """Manejar reprogramación desde Verónica"""
+    try:
+        # Lógica similar pero adaptada para Verónica
+        # Por ahora, respuesta básica hasta implementar completo
+        return {"type": "speak", "text": "Entiendo que quieres reprogramar tu cita. Estoy trabajando en eso. Mientras tanto, ¿puedes llamarnos al horario de oficina para que te ayudemos manualmente?"}
+    except Exception as e:
+        return {"type": "speak", "text": "Ha ocurrido un problema técnico. Te transferiré con un operador."}
+
+def detectar_fecha_en_mensaje(texto):
+    """Detectar fechas en formato natural"""
+    import re
+    from datetime import datetime, timedelta
+    
+    texto_lower = texto.lower()
+    hoy = datetime.now()
+    
+    # Mañana
+    if 'mañana' in texto_lower:
+        return (hoy + timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    # Pasado mañana  
+    if 'pasado mañana' in texto_lower:
+        return (hoy + timedelta(days=2)).strftime('%Y-%m-%d')
+    
+    # Días de la semana
+    dias_semana = {
+        'lunes': 0, 'martes': 1, 'miércoles': 2, 'miercoles': 2,
+        'jueves': 3, 'viernes': 4, 'sábado': 5, 'sabado': 5, 'domingo': 6
+    }
+    
+    for dia, num_dia in dias_semana.items():
+        if dia in texto_lower:
+            dias_hasta = (num_dia - hoy.weekday()) % 7
+            if dias_hasta == 0:  # Si es hoy, ir a la próxima semana
+                dias_hasta = 7
+            return (hoy + timedelta(days=dias_hasta)).strftime('%Y-%m-%d')
+    
+    # Formato DD/MM o DD-MM
+    fecha_match = re.search(r'(\d{1,2})[/-](\d{1,2})', texto)
+    if fecha_match:
+        dia, mes = fecha_match.groups()
+        try:
+            fecha = datetime(hoy.year, int(mes), int(dia))
+            return fecha.strftime('%Y-%m-%d')
+        except:
+            pass
+    
+    return None
+
+def detectar_horario_en_mensaje(texto):
+    """Detectar horarios en el mensaje"""
+    import re
+    
+    # Patrones de horario
+    patrones = [
+        r'(\d{1,2}):(\d{2})',  # 14:30
+        r'(\d{1,2}) de la mañana',  # 11 de la mañana
+        r'(\d{1,2}) de la tarde',   # 4 de la tarde  
+        r'(\d{1,2}):\d{2}-(\d{1,2}):\d{2}',  # 11:00-12:00
+    ]
+    
+    for patron in patrones:
+        match = re.search(patron, texto)
+        if match:
+            # Simplificado: retornar formato estándar
+            hora = match.group(1)
+            if 'tarde' in texto.lower() and int(hora) < 12:
+                hora = str(int(hora) + 12)
+            return f"{hora}:00-{int(hora)+1}:00"
+    
+    return None
+
+def detectar_nombre_en_mensaje(texto):
+    """Detectar nombres en el mensaje"""
+    import re
+    
+    # Patrón simple para nombres
+    if 'me llamo' in texto.lower():
+        partes = texto.lower().split('me llamo')
+        if len(partes) > 1:
+            nombre = partes[1].strip().split(',')[0].split('.')[0]
+            return nombre.title()
+    
+    # Si no tiene "me llamo", asumir que es el nombre si no tiene números
+    if not re.search(r'\d', texto) and len(texto.split()) <= 3:
+        return texto.strip().title()
+    
+    return None
+
+def buscar_evento_en_calendar(nombre_cliente, fecha_original, horario_original):
+    """Buscar evento específico en Google Calendar"""
+    try:
+        service = inicializar_google_calendar()
+        if not service:
+            return None, "Error conectando con Google Calendar"
+        
+        # Buscar eventos del día original
+        eventos = service.events().list(
+            calendarId=CALENDAR_ID,
+            timeMin=f"{fecha_original}T00:00:00+01:00",
+            timeMax=f"{fecha_original}T23:59:59+01:00",
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+        
+        eventos_dia = eventos.get('items', [])
+        
+        # Buscar evento que coincida con cliente y horario
+        for evento in eventos_dia:
+            titulo = evento.get('summary', '')
+            descripcion = evento.get('description', '')
+            
+            # Verificar si coincide con el cliente
+            if (nombre_cliente.lower() in titulo.lower() or 
+                nombre_cliente.lower() in descripcion.lower()):
+                
+                # Verificar horario aproximado
+                start_time = evento.get('start', {}).get('dateTime', '')
+                if horario_original.split('-')[0] in start_time:
+                    return evento, "Evento encontrado"
+        
+        return None, f"No se encontró evento para {nombre_cliente} en {fecha_original} {horario_original}"
+        
+    except Exception as e:
+        return None, f"Error buscando evento: {str(e)}"
+
+def modificar_evento_calendar(evento_id, nueva_fecha, nuevo_horario, tipo_servicio):
+    """Modificar evento existente en Google Calendar"""
+    try:
+        service = inicializar_google_calendar()
+        if not service:
+            return False, "Error conectando con Google Calendar"
+        
+        # Obtener evento actual
+        evento = service.events().get(calendarId=CALENDAR_ID, eventId=evento_id).execute()
+        
+        # Calcular nueva duración según tipo
+        duraciones = {
+            'sofia_astrologo': 60,
+            'sofia_tarot': 60,
+            'veronica_telefono': 30,
+            'veronica_visita': 90
+        }
+        
+        duracion = duraciones.get(tipo_servicio, 60)
+        
+        # Calcular nuevas horas
+        from datetime import datetime, timedelta
+        hora_inicio = nuevo_horario.split('-')[0]
+        inicio_dt = datetime.strptime(f"{nueva_fecha} {hora_inicio}", "%Y-%m-%d %H:%M")
+        fin_dt = inicio_dt + timedelta(minutes=duracion)
+        
+        # Modificar evento
+        evento.update({
+            'start': {
+                'dateTime': inicio_dt.strftime('%Y-%m-%dT%H:%M:%S'),
+                'timeZone': 'Europe/Madrid',
+            },
+            'end': {
+                'dateTime': fin_dt.strftime('%Y-%m-%dT%H:%M:%S'),
+                'timeZone': 'Europe/Madrid',
+            },
+        })
+        
+        # Actualizar en Google Calendar
+        evento_actualizado = service.events().update(
+            calendarId=CALENDAR_ID,
+            eventId=evento_id,
+            body=evento
+        ).execute()
+        
+        return True, evento_actualizado.get('id')
+        
+    except Exception as e:
+        return False, f"Error modificando evento: {str(e)}"
+
+@app.route('/api/reprogramar-cita', methods=['POST'])
+def api_reprogramar_cita():
+    """API para reprogramar citas existentes"""
+    try:
+        data = request.get_json()
+        
+        # Datos requeridos
+        nombre_cliente = data.get('nombre_cliente')
+        fecha_original = data.get('fecha_original')  # YYYY-MM-DD
+        horario_original = data.get('horario_original')  # HH:MM-HH:MM
+        nueva_fecha = data.get('nueva_fecha')  # YYYY-MM-DD
+        nuevo_horario = data.get('nuevo_horario')  # HH:MM-HH:MM
+        tipo_servicio = data.get('tipo_servicio', 'sofia_astrologo')
+        
+        if not all([nombre_cliente, fecha_original, horario_original, nueva_fecha, nuevo_horario]):
+            return jsonify({
+                "success": False,
+                "message": "Faltan datos requeridos"
+            }), 400
+        
+        print(f"🔄 Reprogramando cita: {nombre_cliente} de {fecha_original} {horario_original} → {nueva_fecha} {nuevo_horario}")
+        
+        # PASO 1: Verificar disponibilidad del nuevo horario
+        disponible, mensaje = verificar_disponibilidad(nueva_fecha, nuevo_horario)
+        if not disponible:
+            return jsonify({
+                "success": False,
+                "message": f"Nuevo horario no disponible: {mensaje}"
+            })
+        
+        # PASO 2: Buscar evento original
+        evento_original, mensaje_busqueda = buscar_evento_en_calendar(nombre_cliente, fecha_original, horario_original)
+        if not evento_original:
+            return jsonify({
+                "success": False,
+                "message": f"No se encontró la cita original: {mensaje_busqueda}"
+            })
+        
+        # PASO 3: Modificar evento
+        exito, resultado = modificar_evento_calendar(
+            evento_original['id'], 
+            nueva_fecha, 
+            nuevo_horario, 
+            tipo_servicio
+        )
+        
+        if exito:
+            # PASO 4: Notificar por Telegram
+            enviar_notificacion_telegram_reprogramacion(
+                nombre_cliente, 
+                fecha_original, horario_original,
+                nueva_fecha, nuevo_horario,
+                tipo_servicio
+            )
+            
+            return jsonify({
+                "success": True,
+                "message": "Cita reprogramada correctamente",
+                "evento_id": resultado,
+                "cambio": f"{fecha_original} {horario_original} → {nueva_fecha} {nuevo_horario}"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": resultado
+            })
+        
+    except Exception as e:
+        print(f"❌ Error reprogramando cita: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error: {str(e)}"
+        }), 500
+
+def enviar_notificacion_telegram_reprogramacion(nombre, fecha_ant, horario_ant, fecha_nueva, horario_nuevo, tipo):
+    """Notificación específica para reprogramaciones"""
+    try:
+        from datetime import datetime
+        fecha_ant_obj = datetime.strptime(fecha_ant, '%Y-%m-%d')
+        fecha_nueva_obj = datetime.strptime(fecha_nueva, '%Y-%m-%d')
+        
+        fecha_ant_legible = fecha_ant_obj.strftime('%d/%m/%Y')
+        fecha_nueva_legible = fecha_nueva_obj.strftime('%d/%m/%Y')
+        
+        mensaje = f"""
+🔄 <b>CITA REPROGRAMADA</b>
+
+👤 <b>Cliente:</b> {nombre}
+🎯 <b>Servicio:</b> {tipo.replace('_', ' ').title()}
+
+📅 <b>Fecha anterior:</b> {fecha_ant_legible}
+⏰ <b>Horario anterior:</b> {horario_ant}
+
+📅 <b>Nueva fecha:</b> {fecha_nueva_legible}
+⏰ <b>Nuevo horario:</b> {horario_nuevo}
+
+✅ <b>Estado:</b> Modificada en Google Calendar
+🔧 <b>Sistema:</b> Reprogramación automática
+        """.strip()
+        
+        enviar_telegram_mejora(mensaje)
+        
+    except Exception as e:
+        print(f"⚠️ Error enviando notificación reprogramación: {e}")
+
+@app.route('/test/panel_reprogramar')
+def panel_reprogramar_citas():
+    """Panel para probar reprogramación de citas"""
+    html = '''
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Reprogramar Citas - AS Asesores</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 20px auto; padding: 20px; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .resultado { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🔄 Panel de Reprogramación de Citas</h1>
+    
+    <form onsubmit="reprogramarCita(event)">
+        <div class="form-group">
+            <label>Nombre del Cliente:</label>
+            <input type="text" id="nombre_cliente" placeholder="Ej: Juan Pérez" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Fecha Original (YYYY-MM-DD):</label>
+            <input type="date" id="fecha_original" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Horario Original:</label>
+            <input type="text" id="horario_original" placeholder="Ej: 11:00-12:00" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Nueva Fecha (YYYY-MM-DD):</label>
+            <input type="date" id="nueva_fecha" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Nuevo Horario:</label>
+            <input type="text" id="nuevo_horario" placeholder="Ej: 16:00-17:00" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Tipo de Servicio:</label>
+            <select id="tipo_servicio">
+                <option value="sofia_astrologo">Sofía - Astróloga</option>
+                <option value="sofia_tarot">Sofía - Tarot</option>
+                <option value="veronica_telefono">Verónica - Teléfono</option>
+                <option value="veronica_visita">Verónica - Visita</option>
+            </select>
+        </div>
+        
+        <button type="submit" class="btn">🔄 Reprogramar Cita</button>
+    </form>
+    
+    <div id="resultado"></div>
+
+    <script>
+    function reprogramarCita(event) {
+        event.preventDefault();
+        
+        const datos = {
+            nombre_cliente: document.getElementById('nombre_cliente').value,
+            fecha_original: document.getElementById('fecha_original').value,
+            horario_original: document.getElementById('horario_original').value,
+            nueva_fecha: document.getElementById('nueva_fecha').value,
+            nuevo_horario: document.getElementById('nuevo_horario').value,
+            tipo_servicio: document.getElementById('tipo_servicio').value
+        };
+        
+        document.getElementById('resultado').innerHTML = '<div class="resultado">⏳ Reprogramando cita...</div>';
+        
+        fetch('/api/reprogramar-cita', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(datos)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const clase = data.success ? 'success' : 'error';
+            const icono = data.success ? '✅' : '❌';
+            
+            document.getElementById('resultado').innerHTML = `
+                <div class="resultado ${clase}">
+                    ${icono} ${data.message}
+                    ${data.cambio ? '<br><strong>Cambio:</strong> ' + data.cambio : ''}
+                    ${data.evento_id ? '<br><strong>ID Evento:</strong> ' + data.evento_id : ''}
+                </div>
+            `;
+        })
+        .catch(error => {
+            document.getElementById('resultado').innerHTML = 
+                '<div class="resultado error">❌ Error de conexión: ' + error + '</div>';
+        });
+    }
+    </script>
+</body>
+</html>
+    '''
+    return html
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
