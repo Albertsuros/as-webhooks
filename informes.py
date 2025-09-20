@@ -337,21 +337,21 @@ def obtener_template_html(tipo_servicio):
     {base_style}
 </head>
 <body>
-    {obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}}}')}
+    {obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>📊 Datos Natales</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}}}</p>
-        <p><span class="dato">Email:</span> {{ email }}}}</p>
-        <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}}}</p>
-        <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}}}</p>
-        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}}}, {{ pais_nacimiento or 'España' }}}}</p>
+        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
+        <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}</p>
+        <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}, {{ pais_nacimiento or 'España' }}</p>
     </div>
 
     {% if carta_natal_img %}
     <div class="carta-img">
         <h2>🌍 Tu Carta Natal</h2>
-        <img src="file://{{ carta_natal_img }}}}" alt="Carta natal completa">
+        <img src="file://{{ carta_natal_img }}" alt="Carta natal completa">
         <p><em>Tu mapa astrológico personal en el momento de tu nacimiento</em></p>
     </div>
     {% endif %}
@@ -366,7 +366,7 @@ def obtener_template_html(tipo_servicio):
         <h2>🪐 Posiciones Planetarias</h2>
         <ul class="planetas">
             {% for planeta, datos in planetas.items() %}
-            <li><strong>{{ planeta|capitalize }}}}:</strong> {{ datos.degree|round(2) }}}}° en {{ datos.sign }}}}</li>
+            <li><strong>{{ planeta|capitalize }}:</strong> {{ datos.degree|round(2) }}° en {{ datos.sign }}</li>
             {% endfor %}
         </ul>
     </div>
@@ -375,7 +375,7 @@ def obtener_template_html(tipo_servicio):
     {% if progresiones_img %}
     <div class="carta-img">
         <h2>🔄 Progresiones Secundarias</h2>
-        <img src="file://{{ progresiones_img }}}}" alt="Progresiones secundarias">
+        <img src="file://{{ progresiones_img }}" alt="Progresiones secundarias">
         <p><em>Tu evolución astrológica actual</em></p>
     </div>
     {% endif %}
@@ -383,7 +383,7 @@ def obtener_template_html(tipo_servicio):
     {% if transitos_img %}
     <div class="carta-img">
         <h2>🌊 Tránsitos Actuales</h2>
-        <img src="file://{{ transitos_img }}}}" alt="Tránsitos actuales">
+        <img src="file://{{ transitos_img }}" alt="Tránsitos actuales">
         <p><em>Influencias planetarias presentes</em></p>
     </div>
     {% endif %}
@@ -393,7 +393,7 @@ def obtener_template_html(tipo_servicio):
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
         <p><strong>Duración:</strong> 40 minutos</p>
         <div class="interpretacion">
-            {{ resumen_sesion }}}}
+            {{ resumen_sesion }}
         </div>
     </div>
     {% endif %}
@@ -404,7 +404,7 @@ def obtener_template_html(tipo_servicio):
     </div>
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Tipo de análisis:</strong> Carta Astral Completa con Progresiones y Tránsitos</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
@@ -422,21 +422,21 @@ def obtener_template_html(tipo_servicio):
     {base_style}
 </head>
 <body>
-    {obtener_portada_con_logo('revolucion_solar_ia', '{{ nombre }}}}')}
+    {obtener_portada_con_logo('revolucion_solar_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>📊 Datos Natales</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}}}</p>
-        <p><span class="dato">Email:</span> {{ email }}}}</p>
-        <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}}}</p>
-        <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}}}</p>
-        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}}}, {{ pais_nacimiento or 'España' }}}}</p>
+        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
+        <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}</p>
+        <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}, {{ pais_nacimiento or 'España' }}</p>
     </div>
 
     {% if carta_natal_img %}
     <div class="carta-img">
         <h2>🌍 Tu Carta Natal</h2>
-        <img src="file://{{ carta_natal_img }}}}" alt="Carta natal">
+        <img src="file://{{ carta_natal_img }}" alt="Carta natal">
         <p><em>Tu mapa astrológico base</em></p>
     </div>
     {% endif %}
@@ -444,7 +444,7 @@ def obtener_template_html(tipo_servicio):
     {% if revolucion_img %}
     <div class="carta-img">
         <h2>🎂 Tu Revolución Solar</h2>
-        <img src="file://{{ revolucion_img }}}}" alt="Revolución solar">
+        <img src="file://{{ revolucion_img }}" alt="Revolución solar">
         <p><em>Predicciones para tu nuevo año astrológico</em></p>
     </div>
     {% endif %}
@@ -452,7 +452,7 @@ def obtener_template_html(tipo_servicio):
     {% if revolucion_natal_img %}
     <div class="carta-img">
         <h2>🔄 Revolución Solar con Aspectos Natales</h2>
-        <img src="file://{{ revolucion_natal_img }}}}" alt="Revolución con aspectos natales">
+        <img src="file://{{ revolucion_natal_img }}" alt="Revolución con aspectos natales">
         <p><em>Cómo interactúa tu nuevo año con tu naturaleza básica</em></p>
     </div>
     {% endif %}
@@ -469,13 +469,13 @@ def obtener_template_html(tipo_servicio):
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
         <p><strong>Duración:</strong> 50 minutos</p>
         <div class="interpretacion">
-            {{ resumen_sesion }}}}
+            {{ resumen_sesion }}
         </div>
     </div>
     {% endif %}
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Tipo de análisis:</strong> Carta Astral + Revolución Solar</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
@@ -493,31 +493,31 @@ def obtener_template_html(tipo_servicio):
     {base_style}
 </head>
 <body>
-    {obtener_portada_con_logo('sinastria_ia', '{{ nombre_persona1 }}}} & {{ nombre_persona2 }}}}')}
+    {obtener_portada_con_logo('sinastria_ia', '{{ nombre_persona1 }} & {{ nombre_persona2 }}')}
 
     <div class="datos-natales">
         <h2>📊 Datos de las Personas</h2>
         <div style="display: flex; gap: 40px;">
             <div style="flex: 1;">
-                <h3>👤 Persona 1: {{ nombre_persona1 }}}}</h3>
-                <p><span class="dato">Fecha:</span> {{ fecha_persona1 }}}}</p>
-                <p><span class="dato">Hora:</span> {{ hora_persona1 }}}}</p>
-                <p><span class="dato">Lugar:</span> {{ lugar_persona1 }}}}</p>
+                <h3>👤 Persona 1: {{ nombre_persona1 }}</h3>
+                <p><span class="dato">Fecha:</span> {{ fecha_persona1 }}</p>
+                <p><span class="dato">Hora:</span> {{ hora_persona1 }}</p>
+                <p><span class="dato">Lugar:</span> {{ lugar_persona1 }}</p>
             </div>
             <div style="flex: 1;">
-                <h3>👤 Persona 2: {{ nombre_persona2 }}}}</h3>
-                <p><span class="dato">Fecha:</span> {{ fecha_persona2 }}}}</p>
-                <p><span class="dato">Hora:</span> {{ hora_persona2 }}}}</p>
-                <p><span class="dato">Lugar:</span> {{ lugar_persona2 }}}}</p>
+                <h3>👤 Persona 2: {{ nombre_persona2 }}</h3>
+                <p><span class="dato">Fecha:</span> {{ fecha_persona2 }}</p>
+                <p><span class="dato">Hora:</span> {{ hora_persona2 }}</p>
+                <p><span class="dato">Lugar:</span> {{ lugar_persona2 }}</p>
             </div>
         </div>
-        <p><span class="dato">Email de contacto:</span> {{ email }}}}</p>
+        <p><span class="dato">Email de contacto:</span> {{ email }}</p>
     </div>
 
     {% if sinastria_img %}
     <div class="carta-img">
         <h2>💞 Carta de Sinastría</h2>
-        <img src="file://{{ sinastria_img }}}}" alt="Carta de sinastría">
+        <img src="file://{{ sinastria_img }}" alt="Carta de sinastría">
         <p><em>Aspectos planetarios entre ambas cartas natales</em></p>
     </div>
     {% endif %}
@@ -534,13 +534,13 @@ def obtener_template_html(tipo_servicio):
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
         <p><strong>Duración:</strong> 30 minutos</p>
         <div class="interpretacion">
-            {{ resumen_sesion }}}}
+            {{ resumen_sesion }}
         </div>
     </div>
     {% endif %}
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Tipo de análisis:</strong> Sinastría Astrológica</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
@@ -558,24 +558,24 @@ def obtener_template_html(tipo_servicio):
     {base_style}
 </head>
 <body>
-    {obtener_portada_con_logo('astrologia_horaria_ia', '{{ nombre }}}}')}
+    {obtener_portada_con_logo('astrologia_horaria_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>❓ Datos de la Consulta</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}}}</p>
-        <p><span class="dato">Email:</span> {{ email }}}}</p>
-        <p><span class="dato">Fecha de la pregunta:</span> {{ fecha_pregunta }}}}</p>
-        <p><span class="dato">Hora de la pregunta:</span> {{ hora_pregunta }}}}</p>
-        <p><span class="dato">Lugar de la pregunta:</span> {{ lugar_pregunta }}}}</p>
+        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
+        <p><span class="dato">Fecha de la pregunta:</span> {{ fecha_pregunta }}</p>
+        <p><span class="dato">Hora de la pregunta:</span> {{ hora_pregunta }}</p>
+        <p><span class="dato">Lugar de la pregunta:</span> {{ lugar_pregunta }}</p>
         <div class="interpretacion">
-            <p><strong>Tu pregunta:</strong> {{ pregunta }}}}</p>
+            <p><strong>Tu pregunta:</strong> {{ pregunta }}</p>
         </div>
     </div>
 
     {% if carta_horaria_img %}
     <div class="carta-img">
         <h2>🎯 Carta Horaria</h2>
-        <img src="file://{{ carta_horaria_img }}}}" alt="Carta horaria">
+        <img src="file://{{ carta_horaria_img }}" alt="Carta horaria">
         <p><em>Mapa astrológico del momento de tu pregunta</em></p>
     </div>
     {% endif %}
@@ -592,13 +592,13 @@ def obtener_template_html(tipo_servicio):
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
         <p><strong>Duración:</strong> 15 minutos</p>
         <div class="interpretacion">
-            {{ resumen_sesion }}}}
+            {{ resumen_sesion }}
         </div>
     </div>
     {% endif %}
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Tipo de análisis:</strong> Astrología Horaria</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
@@ -616,19 +616,19 @@ def obtener_template_html(tipo_servicio):
     {base_style}
 </head>
 <body>
-    {obtener_portada_con_logo('lectura_manos_ia', '{{ nombre }}}}')}
+    {obtener_portada_con_logo('lectura_manos_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>✋ Datos de la Lectura</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}}}</p>
-        <p><span class="dato">Email:</span> {{ email }}}}</p>
-        <p><span class="dato">Dominancia:</span> {{ dominancia or 'No especificada' }}}}</p>
+        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
+        <p><span class="dato">Dominancia:</span> {{ dominancia or 'No especificada' }}</p>
     </div>
 
     {% if mano_derecha_img %}
     <div class="carta-img">
         <h2>🤚 Mano Derecha</h2>
-        <img src="file://{{ mano_derecha_img }}}}" alt="Mano derecha">
+        <img src="file://{{ mano_derecha_img }}" alt="Mano derecha">
         <p><em>Mano derecha - Representa tu futuro y lo que construyes</em></p>
     </div>
     {% endif %}
@@ -636,7 +636,7 @@ def obtener_template_html(tipo_servicio):
     {% if mano_izquierda_img %}
     <div class="carta-img">
         <h2>🤚 Mano Izquierda</h2>
-        <img src="file://{{ mano_izquierda_img }}}}" alt="Mano izquierda">
+        <img src="file://{{ mano_izquierda_img }}" alt="Mano izquierda">
         <p><em>Mano izquierda - Representa tu pasado y naturaleza innata</em></p>
     </div>
     {% endif %}
@@ -653,13 +653,13 @@ def obtener_template_html(tipo_servicio):
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
         <p><strong>Duración:</strong> 30 minutos</p>
         <div class="interpretacion">
-            {{ resumen_sesion }}}}
+            {{ resumen_sesion }}
         </div>
     </div>
     {% endif %}
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Tipo de análisis:</strong> Lectura de Manos (Quiromancia)</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
@@ -677,18 +677,18 @@ def obtener_template_html(tipo_servicio):
     {base_style}
 </head>
 <body>
-    {obtener_portada_con_logo('lectura_facial_ia', '{{ nombre }}}}')}
+    {obtener_portada_con_logo('lectura_facial_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>👤 Datos de la Lectura</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}}}</p>
-        <p><span class="dato">Email:</span> {{ email }}}}</p>
+        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
     </div>
 
     {% if cara_frente_img %}
     <div class="carta-img">
         <h2>👤 Vista Frontal</h2>
-        <img src="file://{{ cara_frente_img }}}}" alt="Cara frontal">
+        <img src="file://{{ cara_frente_img }}" alt="Cara frontal">
         <p><em>Vista frontal - Análisis de proporciones y simetría</em></p>
     </div>
     {% endif %}
@@ -696,7 +696,7 @@ def obtener_template_html(tipo_servicio):
     {% if cara_izquierda_img %}
     <div class="carta-img">
         <h2>👤 Perfil Izquierdo (45°)</h2>
-        <img src="file://{{ cara_izquierda_img }}}}" alt="Perfil izquierdo">
+        <img src="file://{{ cara_izquierda_img }}" alt="Perfil izquierdo">
         <p><em>Perfil izquierdo - Análisis del lado emocional</em></p>
     </div>
     {% endif %}
@@ -704,7 +704,7 @@ def obtener_template_html(tipo_servicio):
     {% if cara_derecha_img %}
     <div class="carta-img">
         <h2>👤 Perfil Derecho (45°)</h2>
-        <img src="file://{{ cara_derecha_img }}}}" alt="Perfil derecho">
+        <img src="file://{{ cara_derecha_img }}" alt="Perfil derecho">
         <p><em>Perfil derecho - Análisis del lado racional</em></p>
     </div>
     {% endif %}
@@ -721,13 +721,13 @@ def obtener_template_html(tipo_servicio):
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
         <p><strong>Duración:</strong> 15 minutos</p>
         <div class="interpretacion">
-            {{ resumen_sesion }}}}
+            {{ resumen_sesion }}
         </div>
     </div>
     {% endif %}
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Tipo de análisis:</strong> Lectura Facial (Fisiognomía)</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
@@ -745,13 +745,13 @@ def obtener_template_html(tipo_servicio):
     {base_style}
 </head>
 <body>
-    {obtener_portada_con_logo('psico_coaching_ia', '{{ nombre }}}}')}
+    {obtener_portada_con_logo('psico_coaching_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>👤 Datos del Cliente</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}}}</p>
-        <p><span class="dato">Email:</span> {{ email }}}}</p>
-        <p><span class="dato">Fecha de la sesión:</span> {{ fecha_generacion }}}}</p>
+        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
+        <p><span class="dato">Fecha de la sesión:</span> {{ fecha_generacion }}</p>
     </div>
 
     <div class="section">
@@ -767,7 +767,7 @@ def obtener_template_html(tipo_servicio):
         <p><strong>Duración:</strong> 45 minutos</p>
         <p><strong>Seguimiento disponible:</strong> 3 meses</p>
         <div class="interpretacion">
-            {{ resumen_sesion }}}}
+            {{ resumen_sesion }}
         </div>
     </div>
     {% endif %}
@@ -787,7 +787,7 @@ def obtener_template_html(tipo_servicio):
     </div>
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Tipo de análisis:</strong> Sesión de Psico-Coaching</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios de Desarrollo Personal</p>
     </div>
@@ -805,20 +805,20 @@ def obtener_template_html(tipo_servicio):
         {base_style}
     </head>
     <body>
-        {obtener_portada_con_logo('grafologia_ia', '{{ nombre }}}}')}
+        {obtener_portada_con_logo('grafologia_ia', '{{ nombre }}')}
 
         <div class="datos-natales">
             <h2>📝 Datos del Análisis</h2>
-            <p><span class="dato">Nombre:</span> {{ nombre }}}}</p>
-            <p><span class="dato">Email:</span> {{ email }}}}</p>
+            <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+            <p><span class="dato">Email:</span> {{ email }}</p>
             <p><span class="dato">Muestra analizada:</span> Escritura manuscrita</p>
-            <p><span class="dato">Confianza del análisis:</span> {{ confianza }}}}%</p>
+            <p><span class="dato">Confianza del análisis:</span> {{ confianza }}%</p>
         </div>
 
         {% if muestra_escritura_img %}
         <div class="carta-img">
             <h2>✍️ Tu Muestra de Escritura</h2>
-            <img src="file://{{ muestra_escritura_img }}}}" alt="Muestra de escritura analizada">
+            <img src="file://{{ muestra_escritura_img }}" alt="Muestra de escritura analizada">
             <p><em>Muestra de escritura analizada para el informe</em></p>
         </div>
         {% endif %}
@@ -835,13 +835,13 @@ def obtener_template_html(tipo_servicio):
             <h2>📊 Perfil Grafológico</h2>
             {% for dimension, datos in puntuaciones.items() %}
             <div class="datos-natales" style="margin: 15px 0;">
-                <h3>{{ dimension|title }}}}: {{ (datos.score * 100)|round }}}}%</h3>
+                <h3>{{ dimension|title }}: {{ (datos.score * 100)|round }}%</h3>
                 <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
-                    <div style="background: #2c5aa0; height: 100%; width: {{ (datos.score * 100)|round }}}}%; border-radius: 10px;"></div>
+                    <div style="background: #2c5aa0; height: 100%; width: {{ (datos.score * 100)|round }}%; border-radius: 10px;"></div>
                 </div>
                 <ul style="margin-top: 10px;">
                     {% for texto in datos.textos %}
-                    <li>{{ texto }}}}</li>
+                    <li>{{ texto }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -863,10 +863,10 @@ def obtener_template_html(tipo_servicio):
         <div class="section">
             <h2>📏 Medidas Técnicas</h2>
             <div class="datos-natales">
-                <p><span class="dato">Inclinación:</span> {{ medidas_tecnicas.inclinacion_grados }}}}°</p>
-                <p><span class="dato">Presión del trazo:</span> {{ medidas_tecnicas.contraste_med }}}} puntos</p>
-                <p><span class="dato">Grosor promedio:</span> {{ medidas_tecnicas.grosor_trazo_px }}}} píxeles</p>
-                <p><span class="dato">Regularidad:</span> {{ medidas_tecnicas.regularidad_tamano }}}} puntos</p>
+                <p><span class="dato">Inclinación:</span> {{ medidas_tecnicas.inclinacion_grados }}°</p>
+                <p><span class="dato">Presión del trazo:</span> {{ medidas_tecnicas.contraste_med }} puntos</p>
+                <p><span class="dato">Grosor promedio:</span> {{ medidas_tecnicas.grosor_trazo_px }} píxeles</p>
+                <p><span class="dato">Regularidad:</span> {{ medidas_tecnicas.regularidad_tamano }} puntos</p>
             </div>
         </div>
         {% endif %}
@@ -876,7 +876,7 @@ def obtener_template_html(tipo_servicio):
             <h2>📞 Resumen de tu Sesión Telefónica</h2>
             <p><strong>Duración:</strong> 30 minutos</p>
             <div class="interpretacion">
-                {{ resumen_sesion }}}}
+                {{ resumen_sesion }}
             </div>
         </div>
         {% endif %}
@@ -890,7 +890,7 @@ def obtener_template_html(tipo_servicio):
         </div>
 
         <div class="footer">
-            <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+            <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
             <p><strong>Tipo de análisis:</strong> Análisis Grafológico Personalizado</p>
             <p><strong>Generado por:</strong> AS Cartastral - Servicios de Análisis de Personalidad</p>
         </div>
@@ -908,20 +908,20 @@ def obtener_template_html(tipo_servicio):
     {base_style}
 </head>
 <body>
-    {obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}}}')}
+    {obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}')}
     <div class="datos-natales">
         <h2>📊 Datos del Cliente</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}}}</p>
-        <p><span class="dato">Email:</span> {{ email }}}}</p>
+        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
     </div>
     {% if resumen_sesion %}
     <div class="resumen-sesion">
         <h2>📞 Resumen de tu Sesión</h2>
-        <div class="interpretacion">{{ resumen_sesion }}}}</div>
+        <div class="interpretacion">{{ resumen_sesion }}</div>
     </div>
     {% endif %}
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }}}} a las {{ hora_generacion }}}}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Generado por:</strong> AS Cartastral</p>
     </div>
 </body>
