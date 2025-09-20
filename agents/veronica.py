@@ -61,6 +61,10 @@ def handle_veronica_webhook(data):
             'cita', 'hora', 'agendar', 'reunión', 'llamar'
         ]):
             return {"type": "speak", "text": "Perfecto. Te llamaremos mañana entre las 10:00 y 11:00. ¿Te parece bien?"}
+            
+        # NUEVA DETECCIÓN: Reprogramación de citas
+        if detectar_reprogramacion_veronica(user_text):
+            return manejar_reprogramacion_veronica(user_text, {})
         
         # Datos normales - MUY SIMPLE
         session_id = data.get("session_id", "default")

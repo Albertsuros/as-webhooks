@@ -1143,6 +1143,10 @@ def handle_sofia_webhook(data):
             
             # Continuar en flujo de agendamiento
             return {"type": "speak", "text": "¿Qué horario prefieres? Dime la hora exacta, por ejemplo: 11:00-12:00"}
+            
+        # NUEVA DETECCIÓN: Reprogramación de citas
+        if detectar_reprogramacion_sofia(mensaje_usuario):
+            return manejar_reprogramacion_sofia(mensaje_usuario, session_id, numero_telefono)
 
         # DETECTAR SI SOLICITA SERVICIO HUMANO QUE SOFIA PUEDE AGENDAR
         servicio_humano_agendable = detectar_servicio_humano_agendable(mensaje_usuario)
