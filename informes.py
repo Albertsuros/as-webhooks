@@ -58,7 +58,7 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
     imagen_servicio = imagenes_servicios.get(tipo_servicio, 'logo.jpg')
     titulo_servicio = titulos_servicios.get(tipo_servicio, '🌟 INFORME PERSONALIZADO 🌟')
     
-    return f"""
+    return """
     <div class="portada">
         <!-- LOGO AS CARTASTRAL EN ESQUINA SUPERIOR -->
         <div class="logo-header">
@@ -328,16 +328,16 @@ def obtener_template_html(tipo_servicio):
     """
     
     if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
-        return f"""
+        return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe de Carta Astral - AS Cartastral</title>
-    {base_style}
+    {{ base_style }}
 </head>
 <body>
-    {obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>📊 Datos Natales</h2>
@@ -413,16 +413,16 @@ def obtener_template_html(tipo_servicio):
         """
         
     elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
-        return f"""
+        return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe de Carta Astral + Revolución Solar - AS Cartastral</title>
-    {base_style}
+    {{ base_style }}
 </head>
 <body>
-    {obtener_portada_con_logo('revolucion_solar_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo('revolucion_solar_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>📊 Datos Natales</h2>
@@ -484,16 +484,16 @@ def obtener_template_html(tipo_servicio):
         """
         
     elif tipo_servicio in ['sinastria_ia', 'sinastria']:
-        return f"""
+        return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe de Sinastría - AS Cartastral</title>
-    {base_style}
+    {{ base_style }}
 </head>
 <body>
-    {obtener_portada_con_logo('sinastria_ia', '{{ nombre_persona1 }} & {{ nombre_persona2 }}')}
+    {{{{{{obtener_portada_con_logo('sinastria_ia', '{{ nombre_persona1 }} & {{ nombre_persona2 }}')}
 
     <div class="datos-natales">
         <h2>📊 Datos de las Personas</h2>
@@ -549,16 +549,16 @@ def obtener_template_html(tipo_servicio):
         """
         
     elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
-        return f"""
+        return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe de Astrología Horaria - AS Cartastral</title>
-    {base_style}
+    {{ base_style }}
 </head>
 <body>
-    {obtener_portada_con_logo('astrologia_horaria_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo('astrologia_horaria_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>❓ Datos de la Consulta</h2>
@@ -607,16 +607,16 @@ def obtener_template_html(tipo_servicio):
         """
         
     elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
-        return f"""
+        return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe de Lectura de Manos - AS Cartastral</title>
-    {base_style}
+    {{ base_style }}
 </head>
 <body>
-    {obtener_portada_con_logo('lectura_manos_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo('lectura_manos_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>✋ Datos de la Lectura</h2>
@@ -668,16 +668,16 @@ def obtener_template_html(tipo_servicio):
         """
         
     elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
-        return f"""
+        return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe de Lectura Facial - AS Cartastral</title>
-    {base_style}
+    {{ base_style }}
 </head>
 <body>
-    {obtener_portada_con_logo('lectura_facial_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo('lectura_facial_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>👤 Datos de la Lectura</h2>
@@ -736,16 +736,16 @@ def obtener_template_html(tipo_servicio):
         """
         
     elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
-        return f"""
+        return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe de Psico-Coaching - AS Cartastral</title>
-    {base_style}
+    {{ base_style }}
 </head>
 <body>
-    {obtener_portada_con_logo('psico_coaching_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo('psico_coaching_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>👤 Datos del Cliente</h2>
@@ -796,16 +796,16 @@ def obtener_template_html(tipo_servicio):
         """
         
     elif tipo_servicio in ['grafologia_ia', 'grafologia']:
-        return f"""
+        return """
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
         <title>Informe de Análisis Grafológico - AS Cartastral</title>
-        {base_style}
+        {{ base_style }}
     </head>
     <body>
-        {obtener_portada_con_logo('grafologia_ia', '{{ nombre }}')}
+        {{{{{{obtener_portada_con_logo('grafologia_ia', '{{ nombre }}')}
 
         <div class="datos-natales">
             <h2>📝 Datos del Análisis</h2>
@@ -899,16 +899,16 @@ def obtener_template_html(tipo_servicio):
             """
     
     # Template por defecto si no se encuentra el tipo
-    return f"""
+    return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe Personalizado - AS Cartastral</title>
-    {base_style}
+    {{ base_style }}
 </head>
 <body>
-    {obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}')}
     <div class="datos-natales">
         <h2>📊 Datos del Cliente</h2>
         <p><span class="dato">Nombre:</span> {{ nombre }}</p>
