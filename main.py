@@ -78,6 +78,12 @@ from logica_citas_inteligente import obtener_horarios_disponibles_inteligentes, 
 
 load_dotenv()
 
+# 🔧 CREAR ARCHIVO DE CREDENCIALES AUTOMÁTICAMENTE
+if not os.path.exists('google-credentials.json') and os.getenv('GOOGLE_CREDENTIALS_JSON'):
+    with open('google-credentials.json', 'w') as f:
+        f.write(os.getenv('GOOGLE_CREDENTIALS_JSON'))
+    print("✅ Archivo google-credentials.json creado desde variable de entorno")
+
 import sqlite3
 
 class GestorEmpresasSimple:
