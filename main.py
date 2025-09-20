@@ -7653,6 +7653,230 @@ def panel_reprogramar_citas():
 </html>
     '''
     return html
+    
+# AÑADIR AL FINAL DE main.py - DEBUG HTML DETALLADO
+
+@app.route('/test/debug_html_step_by_step/<especialidad>')
+def debug_html_paso_a_paso(especialidad):
+    """Debug detallado paso a paso de la generación HTML"""
+    debug_resultado = {
+        'especialidad': especialidad,
+        'pasos': {},
+        'errores': [],
+        'datos_completos': {}
+    }
+    
+    try:
+        # PASO 1: Preparar datos
+        datos_cliente = {
+            'nombre': 'Cliente Debug',
+            'email': 'debug@test.com',
+            'codigo_servicio': f'DEBUG_{especialidad.upper()}',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        debug_resultado['pasos']['datos_cliente'] = {'status': 'success', 'datos': datos_cliente}
+        
+        # PASO 2: Importar funciones
+        try:
+            from informes import generar_informe_html, obtener_template_html
+            debug_resultado['pasos']['importacion'] = {'status': 'success'}
+        except Exception as e:
+            debug_resultado['pasos']['importacion'] = {'status': 'error', 'error': str(e)}
+            debug_resultado['errores'].append(f"Error importación: {e}")
+            return jsonify(debug_resultado)
+        
+        # PASO 3: Verificar template HTML
+        try:
+            template_html = obtener_template_html(especialidad)
+            debug_resultado['pasos']['template_html'] = {
+                'status': 'success',
+                'longitud': len(template_html),
+                'preview': template_html[:200] + "..." if len(template_html) > 200 else template_html
+            }
+        except Exception as e:
+            debug_resultado['pasos']['template_html'] = {'status': 'error', 'error': str(e)}
+            debug_resultado['errores'].append(f"Error template: {e}")
+            return jsonify(debug_resultado)
+        
+        # PASO 4: Verificar Jinja2
+        try:
+            from jinja2 import Template
+            template = Template(template_html)
+            debug_resultado['pasos']['jinja2'] = {'status': 'success'}
+        except Exception as e:
+            debug_resultado['pasos']['jinja2'] = {'status': 'error', 'error': str(e)}
+            debug_resultado['errores'].append(f"Error Jinja2: {e}")
+            return jsonify(debug_resultado)
+        
+        # PASO 5: Preparar datos template
+        try:
+            from datetime import datetime
+            import pytz
+            
+            madrid_tz = pytz.timezone('Europe/Madrid')
+            ahora = datetime.now(madrid_tz)
+            
+            datos_template = {
+                'nombre': datos_cliente['nombre'],
+                'email': datos_cliente['email'],
+                'fecha_nacimiento': datos_cliente['fecha_nacimiento'],
+                'hora_nacimiento': datos_cliente['hora_nacimiento'],
+                'lugar_nacimiento': datos_cliente['lugar_nacimiento'],
+                'fecha_generacion': ahora.strftime('%d/%m/%Y'),
+                'hora_generacion': ahora.strftime('%H:%M'),
+                'resumen_sesion': "Resumen de prueba para testing"
+            }
+            debug_resultado['pasos']['datos_template'] = {'status': 'success', 'datos': datos_template}
+        except Exception as e:
+            debug_resultado['pasos']['datos_template'] = {'status': 'error', 'error': str(e)}
+            debug_resultado['errores'].append(f"Error datos template: {e}")
+            return jsonify(debug_resultado)
+        
+        # PASO 6: Renderizar template
+        try:
+            html_content = template.render(**datos_template)
+            debug_resultado['pasos']['renderizado'] = {
+                'status': 'success',
+                'longitud': len(html_content),
+                'preview': html_content[:300] + "..." if len(html_content) > 300 else html_content
+            }
+        except Exception as e:
+            debug_resultado['pasos']['renderizado'] = {'status': 'error', 'error': str(e)}
+            debug_resultado['errores'].append(f"Error renderizado: {e}")
+            return jsonify(debug_resultado)
+        
+        # PASO 7: Verificar directorios
+        try:
+            import os
+            os.makedirs('templates', exist_ok=True)
+            debug_resultado['pasos']['directorios'] = {'status': 'success'}
+        except Exception as e:
+            debug_resultado['pasos']['directorios'] = {'status': 'error', 'error': str(e)}
+            debug_resultado['errores'].append(f"Error directorios: {e}")
+            return jsonify(debug_resultado)
+        
+        # PASO 8: Intentar escribir archivo
+        try:
+            from informes import generar_nombre_archivo_unico
+            nombre_base = generar_nombre_archivo_unico(especialidad, 'DEBUG')
+            archivo_html = f"templates/informe_{nombre_base}.html"
+            
+            with open(archivo_html, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+            
+            # Verificar que se creó
+            if os.path.exists(archivo_html):
+                debug_resultado['pasos']['archivo_creado'] = {
+                    'status': 'success',
+                    'archivo': archivo_html,
+                    'tamaño': os.path.getsize(archivo_html)
+                }
+            else:
+                debug_resultado['pasos']['archivo_creado'] = {'status': 'error', 'error': 'Archivo no existe después de escribir'}
+                debug_resultado['errores'].append("Archivo no creado")
+                
+        except Exception as e:
+            debug_resultado['pasos']['archivo_creado'] = {'status': 'error', 'error': str(e)}
+            debug_resultado['errores'].append(f"Error escribiendo archivo: {e}")
+        
+        # RESUMEN
+        debug_resultado['resumen'] = 'success' if not debug_resultado['errores'] else 'error'
+        debug_resultado['total_errores'] = len(debug_resultado['errores'])
+        
+        return jsonify(debug_resultado)
+        
+    except Exception as e:
+        debug_resultado['error_critico'] = str(e)
+        debug_resultado['resumen'] = 'critical_error'
+        return jsonify(debug_resultado)
+
+@app.route('/test/debug_simple_html')
+def debug_simple_html():
+    """Test simple de creación HTML"""
+    try:
+        # Test básico de Jinja2
+        from jinja2 import Template
+        
+        html_simple = """
+        <!DOCTYPE html>
+        <html>
+        <head><title>Test</title></head>
+        <body>
+            <h1>Hola {{ nombre }}</h1>
+            <p>Email: {{ email }}</p>
+        </body>
+        </html>
+        """
+        
+        template = Template(html_simple)
+        resultado = template.render(nombre="Test", email="test@test.com")
+        
+        # Intentar escribir archivo
+        import os
+        os.makedirs('templates', exist_ok=True)
+        
+        with open('templates/test_simple.html', 'w', encoding='utf-8') as f:
+            f.write(resultado)
+        
+        return jsonify({
+            'status': 'success',
+            'html_generado': resultado,
+            'archivo_creado': os.path.exists('templates/test_simple.html')
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'tipo_error': type(e).__name__
+        })
+
+@app.route('/test/verificar_informes_py')
+def verificar_informes_py():
+    """Verificar que informes.py está funcionando"""
+    try:
+        # Verificar importaciones
+        resultado = {}
+        
+        try:
+            import informes
+            resultado['modulo_informes'] = 'OK'
+        except Exception as e:
+            resultado['modulo_informes'] = f'ERROR: {e}'
+        
+        try:
+            from informes import obtener_template_html
+            resultado['funcion_template'] = 'OK'
+        except Exception as e:
+            resultado['funcion_template'] = f'ERROR: {e}'
+        
+        try:
+            from informes import generar_informe_html
+            resultado['funcion_generar'] = 'OK'
+        except Exception as e:
+            resultado['funcion_generar'] = f'ERROR: {e}'
+        
+        try:
+            from jinja2 import Template
+            resultado['jinja2'] = 'OK'
+        except Exception as e:
+            resultado['jinja2'] = f'ERROR: {e}'
+        
+        try:
+            import pytz
+            resultado['pytz'] = 'OK'
+        except Exception as e:
+            resultado['pytz'] = f'ERROR: {e}'
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        return jsonify({
+            'error_critico': str(e),
+            'tipo': type(e).__name__
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
