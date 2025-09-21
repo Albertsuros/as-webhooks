@@ -19,30 +19,38 @@ from jinja2 import Template
 # ========================================
 
 def obtener_ruta_imagen_absoluta(nombre_imagen):
-    """Obtener ruta absoluta para imágenes con diferentes extensiones"""
+    """Obtener ruta accesible para Playwright/navegador"""
     import os
+    import shutil
     
-    # Crear variaciones del nombre (jpg, JPG, jpeg, JPEG)
+    # Crear variaciones del nombre
     nombre_base = os.path.splitext(nombre_imagen)[0]
     extensiones = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG']
     
-    # Rutas donde buscar
-    rutas_busqueda = [
-        "./img/",
-        "/app/img/", 
-        "./static/",
-        "/app/static/",
-        "."  # Directorio raíz
-    ]
-    
-    # Buscar con todas las combinaciones
-    for ruta_base in rutas_busqueda:
-        for ext in extensiones:
-            archivo_completo = nombre_base + ext
-            ruta_completa = os.path.join(ruta_base, archivo_completo)
-            if os.path.exists(ruta_completa):
-                print(f"✅ Imagen encontrada: {nombre_imagen} → {ruta_completa}")
-                return os.path.abspath(ruta_completa)
+    # Buscar en img/
+    for ext in extensiones:
+        archivo_completo = nombre_base + ext
+        ruta_img = os.path.join('./img/', archivo_completo)
+        
+        if os.path.exists(ruta_img):
+            # ✅ CAMBIO CLAVE: Copiar a static/ y devolver URL relativa
+            try:
+                # Crear directorio static/img si no existe
+                os.makedirs('static/img', exist_ok=True)
+                
+                # Copiar imagen a static/
+                destino = f'static/img/{archivo_completo}'
+                if not os.path.exists(destino):
+                    shutil.copy2(ruta_img, destino)
+                
+                # Devolver ruta relativa que Playwright puede acceder
+                print(f"✅ Imagen copiada a static: {nombre_imagen} → {destino}")
+                return f"../static/img/{archivo_completo}"
+                
+            except Exception as e:
+                print(f"⚠️ Error copiando {nombre_imagen}: {e}")
+                # Fallback a data URL
+                return crear_placeholder_svg(nombre_imagen)
     
     # Si no existe, crear placeholder
     print(f"⚠️ Imagen no encontrada: {nombre_imagen} - usando placeholder")
