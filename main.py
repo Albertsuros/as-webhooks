@@ -8537,6 +8537,50 @@ def ver_html_generado(archivo):
             return f"Archivo no encontrado: {ruta_archivo}"
     except Exception as e:
         return f"Error: {str(e)}"
+        
+@app.route("/test/debug_rutas_imagenes_directo")
+def debug_rutas_imagenes_directo():
+    """Debug directo de las rutas de imágenes"""
+    try:
+        from informes import obtener_ruta_imagen_absoluta
+        import os
+        
+        # Test todas las imágenes que necesitamos
+        imagenes_test = [
+            'logo.jpg', 'astrologia-3.jpg', 'Tarot y astrologia-5.jpg',
+            'Sinastria.jpg', 'astrologia-1.jpg', 'coaching-4.jpg'
+        ]
+        
+        resultados = {}
+        
+        for imagen in imagenes_test:
+            # Llamar a nuestra función
+            ruta_generada = obtener_ruta_imagen_absoluta(imagen)
+            
+            # Verificar si existe
+            existe = os.path.exists(ruta_generada) if not ruta_generada.startswith('data:') else False
+            
+            resultados[imagen] = {
+                'ruta_generada': ruta_generada,
+                'existe_archivo': existe,
+                'es_placeholder': ruta_generada.startswith('data:image/svg')
+            }
+        
+        # También listar lo que hay realmente en img/
+        contenido_img = []
+        if os.path.exists('./img/'):
+            for archivo in os.listdir('./img/'):
+                if archivo.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                    contenido_img.append(archivo)
+        
+        return jsonify({
+            'resultados_imagenes': resultados,
+            'archivos_reales_en_img': contenido_img,
+            'directorio_actual': os.getcwd()
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e), 'tipo': type(e).__name__})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
