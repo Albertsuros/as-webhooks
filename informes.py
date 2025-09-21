@@ -167,7 +167,7 @@ def obtener_template_anexo_medio_tiempo(tipo_servicio):
 </body>
 </html>"""
 
-def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
+def obtener_portada_con_logo_corregida(tipo_servicio, nombre_cliente):
     """Generar portada con logo AS Cartastral + imagen del servicio - CORREGIDA"""
     
     # MAPEO IMÁGENES (mantenido igual)
@@ -665,7 +665,7 @@ def obtener_template_html(tipo_servicio):
     {{ base_style }}
 </head>
 <body>
-    {{{{{{obtener_portada_con_logo('revolucion_solar_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo_corregida('revolucion_solar_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>📊 Datos Natales</h2>
@@ -736,7 +736,7 @@ def obtener_template_html(tipo_servicio):
     {{ base_style }}
 </head>
 <body>
-    {{{{{{obtener_portada_con_logo('sinastria_ia', '{{ nombre_persona1 }} & {{ nombre_persona2 }}')}
+    {{{{{{obtener_portada_con_logo_corregida('sinastria_ia', '{{ nombre_persona1 }} & {{ nombre_persona2 }}')}
 
     <div class="datos-natales">
         <h2>📊 Datos de las Personas</h2>
@@ -801,7 +801,7 @@ def obtener_template_html(tipo_servicio):
     {{ base_style }}
 </head>
 <body>
-    {{{{{{obtener_portada_con_logo('astrologia_horaria_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo_corregida('astrologia_horaria_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>❓ Datos de la Consulta</h2>
@@ -859,7 +859,7 @@ def obtener_template_html(tipo_servicio):
     {{ base_style }}
 </head>
 <body>
-    {{{{{{obtener_portada_con_logo('lectura_manos_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo_corregida('lectura_manos_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>✋ Datos de la Lectura</h2>
@@ -920,7 +920,7 @@ def obtener_template_html(tipo_servicio):
     {{ base_style }}
 </head>
 <body>
-    {{{{{{obtener_portada_con_logo('lectura_facial_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo_corregida('lectura_facial_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>👤 Datos de la Lectura</h2>
@@ -988,7 +988,7 @@ def obtener_template_html(tipo_servicio):
     {{ base_style }}
 </head>
 <body>
-    {{{{{{obtener_portada_con_logo('psico_coaching_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo_corregida('psico_coaching_ia', '{{ nombre }}')}
 
     <div class="datos-natales">
         <h2>👤 Datos del Cliente</h2>
@@ -1048,7 +1048,7 @@ def obtener_template_html(tipo_servicio):
         {{ base_style }}
     </head>
     <body>
-        {{{{{{obtener_portada_con_logo('grafologia_ia', '{{ nombre }}')}
+        {{{{{{obtener_portada_con_logo_corregida('grafologia_ia', '{{ nombre }}')}
 
         <div class="datos-natales">
             <h2>📝 Datos del Análisis</h2>
@@ -1151,7 +1151,7 @@ def obtener_template_html(tipo_servicio):
     {{ base_style }}
 </head>
 <body>
-    {{{{{{obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}')}
+    {{{{{{obtener_portada_con_logo_corregida('carta_astral_ia', '{{ nombre }}')}
     <div class="datos-natales">
         <h2>📊 Datos del Cliente</h2>
         <p><span class="dato">Nombre:</span> {{ nombre }}</p>
