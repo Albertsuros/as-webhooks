@@ -128,7 +128,7 @@ def obtener_template_anexo_medio_tiempo(tipo_servicio):
     else:
         duracion, codigo, titulo = "Medio tiempo", "XXM", "SESIÓN"
     
-    return f"""
+    return """
 <!DOCTYPE html>
 <html lang="es">
 <head>
