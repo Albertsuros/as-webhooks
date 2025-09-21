@@ -207,35 +207,42 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         'psico_coaching': '🧠 SESIÓN DE PSICO-COACHING 🧠'
     }
     
-    # ✅ USAR BÚSQUEDA MEJORADA
+    # ✅ CAMBIO PRINCIPAL: Usar búsqueda mejorada
     imagen_servicio = imagenes_servicios.get(tipo_servicio, 'logo.jpg')
     titulo_servicio = titulos_servicios.get(tipo_servicio, '🌟 INFORME PERSONALIZADO 🌟')
     
     ruta_logo = obtener_ruta_imagen_absoluta('logo.jpg')
     ruta_imagen_servicio = obtener_ruta_imagen_absoluta(imagen_servicio)
     
-    return f"""
+    return """
     <div class="portada">
         <div class="logo-header">
-            <img src="{ruta_logo}" alt="AS Cartastral" class="logo-esquina">
+            <img src="{}" alt="AS Cartastral" class="logo-esquina">
             <span class="nombre-empresa">AS Cartastral</span>
         </div>
         
-        <h1 class="titulo-principal">{titulo_servicio}</h1>
+        <h1 class="titulo-principal">{}</h1>
         
         <div class="imagen-servicio">
-            <img src="{ruta_imagen_servicio}" alt="{tipo_servicio}" class="imagen-central">
+            <img src="{}" alt="{}" class="imagen-central">
         </div>
         
-        <h2 class="nombre-cliente">{nombre_cliente}</h2>
+        <h2 class="nombre-cliente">{}</h2>
         
         <h3 class="subtitulo">Tu análisis personalizado</h3>
         
         <div class="fecha-portada">
-            <p>Generado el {datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d de %B de %Y')}</p>
+            <p>Generado el {}</p>
         </div>
     </div>
-    """
+    """.format(
+        ruta_logo,
+        titulo_servicio, 
+        ruta_imagen_servicio,
+        tipo_servicio,
+        nombre_cliente,
+        datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d de %B de %Y')
+    )
 
 # ========================================
 # ACTUALIZAR ESTILOS CON LOGO DORADO E ITALICS
