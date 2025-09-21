@@ -45,7 +45,7 @@ def obtener_ruta_imagen_absoluta(nombre_imagen):
                 
                 # Devolver ruta relativa que Playwright puede acceder
                 print(f"✅ Imagen copiada a static: {nombre_imagen} → {destino}")
-                return f"../static/img/{archivo_completo}"
+                return f"static/img/{archivo_completo}"
                 
             except Exception as e:
                 print(f"⚠️ Error copiando {nombre_imagen}: {e}")
@@ -395,6 +395,9 @@ def generar_nombre_archivo_unico(tipo_servicio, codigo_cliente):
 # REEMPLAZAR TODO EL base_style POR ESTO:
 def obtener_template_html(tipo_servicio):
     """Obtener template HTML según tipo de servicio"""
+    
+    # 🔥 DEBUG CRÍTICO
+    print(f"🔥 obtener_template_html EJECUTÁNDOSE - tipo: {tipo_servicio}")
     
     # ✅ PRODUCTOS M (MEDIO TIEMPO) - NUEVOS
     productos_medio_tiempo = [
