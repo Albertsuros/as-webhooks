@@ -8092,6 +8092,437 @@ def corregir_template_carta_astral():
             'error': str(e),
             'template_corregido': template_corregido
         })
+        
+# ========================================
+# ⚡ TEST INMEDIATO - AÑADIR A main.py
+# Copia y pega este código al final de main.py
+# ========================================
+
+@app.route("/test/verificar_imagenes_detallado")
+def verificar_imagenes_detallado():
+    """Verificar estado actual de imágenes en Railway"""
+    import os
+    from datetime import datetime
+    
+    # Lista de imágenes necesarias
+    imagenes_necesarias = [
+        'logo.jpg', 'astrologia-3.jpg', 'Tarot y astrologia-5.jpg',
+        'Sinastria.jpg', 'astrologia-1.jpg', 'Lectura-de-manos-p.jpg',
+        'lectura facial.jpg', 'coaching-4.jpg', 'grafologia_2.jpeg'
+    ]
+    
+    # Rutas donde buscar
+    rutas_busqueda = [
+        "./img/", "/app/img/", "./static/img/", "/app/static/img/",
+        "./assets/img/", "/app/assets/img/", "."
+    ]
+    
+    resultados = {}
+    encontradas = 0
+    
+    # Verificar cada imagen
+    for imagen in imagenes_necesarias:
+        encontrada = False
+        ruta_encontrada = None
+        tamaño = 0
+        
+        for ruta_base in rutas_busqueda:
+            ruta_completa = os.path.join(ruta_base, imagen)
+            if os.path.exists(ruta_completa):
+                try:
+                    tamaño = os.path.getsize(ruta_completa)
+                    encontrada = True
+                    ruta_encontrada = ruta_completa
+                    encontradas += 1
+                    break
+                except:
+                    pass
+        
+        resultados[imagen] = {
+            'existe': encontrada,
+            'ruta': ruta_encontrada,
+            'tamaño': tamaño
+        }
+    
+    # Verificar directorio actual
+    contenido_directorio = []
+    directorio_actual = os.getcwd()
+    
+    try:
+        items = os.listdir('.')
+        for item in sorted(items):
+            if os.path.isdir(item):
+                contenido_directorio.append(f"📁 {item}/")
+                # Si es directorio de imágenes, mostrar contenido
+                if item in ['img', 'static', 'assets', 'images']:
+                    try:
+                        sub_items = os.listdir(item)
+                        for sub in sorted(sub_items)[:8]:  # Máximo 8 archivos
+                            try:
+                                sub_ruta = os.path.join(item, sub)
+                                if os.path.isfile(sub_ruta):
+                                    tamaño_sub = os.path.getsize(sub_ruta)
+                                    contenido_directorio.append(f"   📄 {sub} ({tamaño_sub} bytes)")
+                                else:
+                                    contenido_directorio.append(f"   📁 {sub}/")
+                            except:
+                                contenido_directorio.append(f"   📄 {sub}")
+                        if len(sub_items) > 8:
+                            contenido_directorio.append(f"   ... y {len(sub_items) - 8} más")
+                    except:
+                        contenido_directorio.append(f"   ❌ No se puede leer")
+            elif item.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                try:
+                    tamaño_archivo = os.path.getsize(item)
+                    contenido_directorio.append(f"🖼️ {item} ({tamaño_archivo} bytes)")
+                except:
+                    contenido_directorio.append(f"🖼️ {item}")
+    except Exception as e:
+        contenido_directorio.append(f"❌ Error leyendo directorio: {str(e)}")
+    
+    # Verificar si informes.py tiene las funciones necesarias
+    funciones_check = {}
+    if os.path.exists('informes.py'):
+        try:
+            with open('informes.py', 'r', encoding='utf-8') as f:
+                contenido_informes = f.read()
+            
+            funciones_necesarias = [
+                'obtener_ruta_imagen_absoluta',
+                'obtener_portada_con_logo_corregida', 
+                'obtener_template_anexo_medio_tiempo',
+                'corregir_rutas_imagenes_cartas'
+            ]
+            
+            for funcion in funciones_necesarias:
+                funciones_check[funcion] = funcion in contenido_informes
+        except:
+            funciones_check['error'] = 'No se puede leer informes.py'
+    else:
+        funciones_check['error'] = 'informes.py no existe'
+    
+    # Calcular porcentaje de éxito
+    porcentaje_imagenes = (encontradas / len(imagenes_necesarias)) * 100
+    
+    # Generar HTML de respuesta
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Verificación Completa - AS Cartastral</title>
+        <style>
+            body {{ 
+                font-family: 'Segoe UI', Arial, sans-serif; 
+                margin: 0; 
+                padding: 40px; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+            }}
+            
+            .container {{ 
+                background: white; 
+                padding: 40px; 
+                border-radius: 15px; 
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                max-width: 1200px;
+                margin: 0 auto;
+            }}
+            
+            h1 {{ 
+                color: #2c5aa0; 
+                text-align: center; 
+                margin-bottom: 10px;
+                font-size: 28px;
+            }}
+            
+            .subtitle {{
+                text-align: center;
+                color: #666;
+                margin-bottom: 30px;
+                font-size: 16px;
+            }}
+            
+            .status-card {{
+                background: #f8f9fa;
+                border-left: 5px solid #28a745;
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 8px;
+            }}
+            
+            .status-card.warning {{
+                border-left-color: #ffc107;
+                background: #fff8e1;
+            }}
+            
+            .status-card.error {{
+                border-left-color: #dc3545;
+                background: #ffebee;
+            }}
+            
+            table {{ 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin: 20px 0; 
+                font-size: 14px;
+            }}
+            
+            th, td {{ 
+                padding: 12px; 
+                border: 1px solid #ddd; 
+                text-align: left; 
+            }}
+            
+            th {{ 
+                background: #f8f9fa; 
+                font-weight: bold;
+                color: #2c5aa0;
+            }}
+            
+            .encontrada {{ background: #e8f5e8; }}
+            .no-encontrada {{ background: #ffebee; }}
+            
+            .directorio {{ 
+                background: #f8f9fa; 
+                padding: 20px; 
+                border-radius: 8px; 
+                margin: 20px 0;
+            }}
+            
+            .directorio ul {{ 
+                list-style: none; 
+                padding: 0; 
+                margin: 0;
+            }}
+            
+            .directorio li {{ 
+                margin: 8px 0; 
+                font-family: 'Courier New', monospace; 
+                font-size: 13px;
+                padding: 4px 8px;
+                background: white;
+                border-radius: 4px;
+            }}
+            
+            .progress-bar {{
+                width: 100%;
+                height: 25px;
+                background: #e9ecef;
+                border-radius: 12px;
+                overflow: hidden;
+                margin: 15px 0;
+            }}
+            
+            .progress-fill {{
+                height: 100%;
+                background: linear-gradient(90deg, #28a745, #20c997);
+                transition: width 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                font-size: 12px;
+            }}
+            
+            .buttons {{
+                text-align: center;
+                margin: 30px 0;
+            }}
+            
+            .btn {{
+                display: inline-block;
+                padding: 12px 24px;
+                margin: 5px;
+                background: #2c5aa0;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+                transition: background 0.3s;
+            }}
+            
+            .btn:hover {{
+                background: #1e3f73;
+            }}
+            
+            .btn.warning {{
+                background: #ffc107;
+                color: #000;
+            }}
+            
+            .btn.success {{
+                background: #28a745;
+            }}
+            
+            .info-grid {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin: 20px 0;
+            }}
+            
+            @media (max-width: 768px) {{
+                .info-grid {{
+                    grid-template-columns: 1fr;
+                }}
+                
+                body {{
+                    padding: 20px;
+                }}
+                
+                .container {{
+                    padding: 20px;
+                }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔍 Verificación Completa del Sistema</h1>
+            <p class="subtitle">Estado actual: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Directorio: {directorio_actual}</p>
+            
+            <div class="status-card {'warning' if porcentaje_imagenes < 100 else ''}">
+                <h2>📊 Resumen General</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {porcentaje_imagenes}%">
+                        {porcentaje_imagenes:.1f}% Completo
+                    </div>
+                </div>
+                <p><strong>Imágenes:</strong> {encontradas}/{len(imagenes_necesarias)} encontradas</p>
+                <p><strong>Estado:</strong> {'✅ Listo para continuar' if porcentaje_imagenes >= 50 else '⚠️ Necesita atención'}</p>
+            </div>
+            
+            <div class="info-grid">
+                <div>
+                    <h2>📸 Estado de Imágenes Necesarias</h2>
+                    <table>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Estado</th>
+                            <th>Ruta</th>
+                            <th>Tamaño</th>
+                        </tr>
+    """
+    
+    # Añadir filas de la tabla de imágenes
+    for imagen, datos in resultados.items():
+        if datos['existe']:
+            estado = "✅ Encontrada"
+            ruta = datos['ruta']
+            tamaño = f"{datos['tamaño']:,} bytes"
+            clase = "encontrada"
+        else:
+            estado = "❌ No encontrada"
+            ruta = "Se creará placeholder"
+            tamaño = "N/A"
+            clase = "no-encontrada"
+        
+        html += f"""
+                        <tr class="{clase}">
+                            <td><strong>{imagen}</strong></td>
+                            <td>{estado}</td>
+                            <td style="font-family: monospace; font-size: 11px;">{ruta}</td>
+                            <td>{tamaño}</td>
+                        </tr>
+        """
+    
+    html += """
+                    </table>
+                </div>
+                
+                <div>
+                    <h2>🔧 Estado de Funciones en informes.py</h2>
+    """
+    
+    if 'error' in funciones_check:
+        html += f'<div class="status-card error"><p>❌ {funciones_check["error"]}</p></div>'
+    else:
+        html += '<table><tr><th>Función</th><th>Estado</th></tr>'
+        for funcion, existe in funciones_check.items():
+            estado = "✅ Existe" if existe else "❌ Falta"
+            clase = "encontrada" if existe else "no-encontrada"
+            html += f'<tr class="{clase}"><td>{funcion}</td><td>{estado}</td></tr>'
+        html += '</table>'
+    
+    html += """
+                </div>
+            </div>
+            
+            <h2>📁 Contenido del Directorio Actual</h2>
+            <div class="directorio">
+                <ul>
+    """
+    
+    for item in contenido_directorio[:30]:  # Limitar a 30 items
+        html += f"<li>{item}</li>"
+    
+    if len(contenido_directorio) > 30:
+        html += f"<li><em>... y {len(contenido_directorio) - 30} elementos más</em></li>"
+    
+    html += f"""
+                </ul>
+            </div>
+            
+            <h2>🚀 Próximos Pasos</h2>
+            <div class="status-card">
+                <ol>
+                    <li><strong>Aplicar Patch 1:</strong> Añadir funciones de imágenes a informes.py</li>
+                    <li><strong>Aplicar Patch 2:</strong> Añadir productos M (AIM, RSM, SIM, LMM, PCM)</li>
+                    <li><strong>Testear:</strong> Verificar que los PDFs se generan correctamente</li>
+                    <li><strong>Validar:</strong> Confirmar que las imágenes aparecen en los PDFs</li>
+                </ol>
+            </div>
+            
+            <div class="buttons">
+                <a href="/test/panel_pdfs" class="btn">📋 Panel Principal</a>
+                <a href="/test/generar_pdf_especialidad/carta_astral_ia" class="btn warning">🧪 Test PDF Normal</a>
+                <a href="/test/debug_html_step_by_step/carta_astral_ia" class="btn">🔍 Debug HTML</a>
+                <a href="/test/generar_pdf_especialidad/carta_astral_ia_half" class="btn success">🔄 Test Producto M</a>
+            </div>
+            
+            <div class="status-card">
+                <h3>📋 Lista de Verificación</h3>
+                <ul>
+                    <li>{'✅' if encontradas >= 5 else '❌'} Al menos 5 imágenes disponibles ({encontradas}/9)</li>
+                    <li>{'✅' if os.path.exists('informes.py') else '❌'} Archivo informes.py existe</li>
+                    <li>{'✅' if os.path.exists('main.py') else '❌'} Archivo main.py existe</li>
+                    <li>{'✅' if os.path.exists('sofia.py') else '❌'} Archivo sofia.py existe</li>
+                    <li>{'⚠️' if not funciones_check.get('obtener_ruta_imagen_absoluta', False) else '✅'} Funciones de imagen en informes.py</li>
+                </ul>
+            </div>
+            
+            <p style="text-align: center; color: #666; margin-top: 40px;">
+                <em>Generado automáticamente el {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</em><br>
+                <strong>AS Cartastral</strong> - Sistema de Verificación de Imágenes y PDFs
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html
+
+# ========================================
+# ⚡ INSTRUCCIONES DE USO INMEDIATO
+# ========================================
+
+"""
+📋 PASOS PARA USAR ESTE TEST:
+
+1. COPIA este código completo
+2. PÉGALO al final de main.py (antes del if __name__ == "__main__")
+3. GUARDA el archivo
+4. VISITA: https://as-webhooks-production.up.railway.app/test/verificar_imagenes_detallado
+
+✅ Este test te mostrará:
+- ✅ Qué imágenes están disponibles
+- ✅ Qué funciones faltan en informes.py  
+- ✅ Estado general del sistema
+- ✅ Links directos para testear PDFs
+
+🎯 Una vez que veas el resultado, sabrás exactamente qué aplicar de los Patches 1 y 2.
+"""
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
