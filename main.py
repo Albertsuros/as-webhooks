@@ -7877,6 +7877,221 @@ def verificar_informes_py():
             'error_critico': str(e),
             'tipo': type(e).__name__
         })
+        
+@app.route('/test/debug_jinja_incremental/<especialidad>')
+def debug_jinja_incremental(especialidad):
+    """Debug línea por línea del template Jinja2"""
+    try:
+        from informes import obtener_template_html
+        from jinja2 import Template, TemplateSyntaxError
+        
+        # Obtener template completo
+        template_html = obtener_template_html(especialidad)
+        
+        # Dividir en líneas
+        lineas = template_html.split('\n')
+        
+        resultado = {
+            'especialidad': especialidad,
+            'total_lineas': len(lineas),
+            'template_preview': template_html[:500] + "..." if len(template_html) > 500 else template_html,
+            'errores_sintaxis': [],
+            'lineas_problematicas': []
+        }
+        
+        # Probar template completo primero
+        try:
+            template = Template(template_html)
+            resultado['template_completo'] = 'OK'
+        except TemplateSyntaxError as e:
+            resultado['template_completo'] = f'ERROR: {str(e)}'
+            resultado['error_linea'] = getattr(e, 'lineno', 'desconocida')
+            resultado['error_mensaje'] = str(e)
+            
+            # Si hay error, buscar línea problemática
+            try:
+                linea_error = e.lineno - 1 if hasattr(e, 'lineno') and e.lineno > 0 else 0
+                if 0 <= linea_error < len(lineas):
+                    resultado['linea_problema'] = {
+                        'numero': linea_error + 1,
+                        'contenido': lineas[linea_error],
+                        'contexto_antes': lineas[max(0, linea_error-2):linea_error],
+                        'contexto_despues': lineas[linea_error+1:min(len(lineas), linea_error+3)]
+                    }
+            except:
+                pass
+        
+        # Buscar patrones problemáticos específicos
+        patrones_problematicos = [
+            r'\{\{\{\{',  # 4 llaves
+            r'\}\}\}\}',  # 4 llaves cierre
+            r'\{\%\%',    # doble %
+            r'\%\%\}',    # doble % cierre
+            r'\{\{[^}]*\{\{',  # variables anidadas
+            r'\}\}[^{]*\}\}',  # cierres duplicados
+        ]
+        
+        import re
+        for i, linea in enumerate(lineas):
+            for patron in patrones_problematicos:
+                if re.search(patron, linea):
+                    resultado['lineas_problematicas'].append({
+                        'numero': i + 1,
+                        'contenido': linea.strip(),
+                        'patron': patron
+                    })
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        return jsonify({
+            'error_critico': str(e),
+            'tipo': type(e).__name__
+        })
+
+@app.route('/test/template_minimo')
+def test_template_minimo():
+    """Probar template mínimo funcional"""
+    try:
+        from jinja2 import Template
+        
+        # Template super básico
+        template_minimo = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Mínimo</title>
+</head>
+<body>
+    <h1>{{ nombre }}</h1>
+    <p>Email: {{ email }}</p>
+    
+    {% if mostrar_extra %}
+        <p>Contenido extra: {{ contenido_extra }}</p>
+    {% endif %}
+    
+    {% for item in lista %}
+        <li>{{ item }}</li>
+    {% endfor %}
+</body>
+</html>
+        """
+        
+        template = Template(template_minimo)
+        resultado = template.render(
+            nombre="Test Usuario",
+            email="test@test.com",
+            mostrar_extra=True,
+            contenido_extra="Funciona!",
+            lista=["Item 1", "Item 2", "Item 3"]
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'template_funciona': True,
+            'html_generado': resultado
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'template_funciona': False,
+            'error': str(e)
+        })
+
+@app.route('/test/corregir_template_carta_astral')
+def corregir_template_carta_astral():
+    """Generar template corregido para carta astral"""
+    
+    # Template limpio sin errores
+    template_corregido = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Carta Astral - AS Cartastral</title>
+    <style>
+        body { font-family: Georgia, serif; margin: 40px; line-height: 1.6; }
+        .portada { text-align: center; margin-bottom: 30px; }
+        .datos-natales { background: #f8f9fa; padding: 20px; margin: 20px 0; }
+        .section { margin: 30px 0; }
+        .footer { margin-top: 50px; font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="portada">
+        <h1>🌟 CARTA ASTRAL PERSONALIZADA 🌟</h1>
+        <h2>{{ nombre }}</h2>
+        <p>AS Cartastral - Servicios Astrológicos Personalizados</p>
+    </div>
+
+    <div class="datos-natales">
+        <h2>📊 Datos Natales</h2>
+        <p><strong>Nombre:</strong> {{ nombre }}</p>
+        <p><strong>Email:</strong> {{ email }}</p>
+        <p><strong>Fecha de nacimiento:</strong> {{ fecha_nacimiento }}</p>
+        <p><strong>Hora de nacimiento:</strong> {{ hora_nacimiento }}</p>
+        <p><strong>Lugar de nacimiento:</strong> {{ lugar_nacimiento }}</p>
+    </div>
+
+    {% if carta_natal_img %}
+    <div class="section">
+        <h2>🌍 Tu Carta Natal</h2>
+        <img src="file://{{ carta_natal_img }}" alt="Carta natal" style="max-width: 100%;">
+        <p><em>Tu mapa astrológico personal en el momento de tu nacimiento</em></p>
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <h2>✨ Introducción</h2>
+        <p>Bienvenido/a a tu análisis astrológico personalizado. Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento.</p>
+    </div>
+
+    {% if resumen_sesion %}
+    <div class="section">
+        <h2>📞 Resumen de tu Sesión Telefónica</h2>
+        <p><strong>Duración:</strong> 40 minutos</p>
+        <div>{{ resumen_sesion }}</div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+    </div>
+</body>
+</html>"""
+    
+    # Probar que funciona
+    try:
+        from jinja2 import Template
+        template = Template(template_corregido)
+        
+        # Test con datos dummy
+        resultado = template.render(
+            nombre="Cliente Test",
+            email="test@test.com",
+            fecha_nacimiento="15/07/1985",
+            hora_nacimiento="10:30",
+            lugar_nacimiento="Madrid, España",
+            carta_natal_img="test.png",
+            resumen_sesion="Resumen de prueba",
+            fecha_generacion="20/09/2025",
+            hora_generacion="15:30"
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'template_corregido': template_corregido,
+            'test_resultado': resultado[:500] + "..." if len(resultado) > 500 else resultado,
+            'longitud': len(resultado)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'template_corregido': template_corregido
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
