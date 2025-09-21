@@ -8658,6 +8658,46 @@ def debug_railway_images():
             'error': str(e),
             'tipo_error': type(e).__name__
         })
+        
+@app.route("/test/ver_html_ultimo")
+def ver_html_ultimo():
+    """Ver el último HTML generado para debugging"""
+    try:
+        import os
+        import glob
+        
+        # Buscar el archivo HTML más reciente
+        patron = "templates/informe_*.html"
+        archivos = glob.glob(patron)
+        
+        if archivos:
+            archivo_mas_reciente = max(archivos, key=os.path.getmtime)
+            
+            with open(archivo_mas_reciente, 'r', encoding='utf-8') as f:
+                contenido = f.read()
+            
+            # Buscar las líneas de imágenes específicamente
+            lineas_img = []
+            for i, linea in enumerate(contenido.split('\n')):
+                if '<img src=' in linea:
+                    lineas_img.append(f"Línea {i+1}: {linea.strip()}")
+            
+            return f"""
+            <h2>Archivo: {archivo_mas_reciente}</h2>
+            <h3>🖼️ Líneas de imágenes encontradas:</h3>
+            <pre>{'<br>'.join(lineas_img)}</pre>
+            
+            <h3>📄 HTML completo:</h3>
+            <textarea style="width:100%; height:400px;">{contenido}</textarea>
+            
+            <h3>🔗 Ver renderizado:</h3>
+            <iframe src="/{archivo_mas_reciente}" width="100%" height="600px"></iframe>
+            """
+        else:
+            return "No se encontraron archivos HTML generados"
+            
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
