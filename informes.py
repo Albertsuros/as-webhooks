@@ -14,10 +14,163 @@ from email.mime.base import MIMEBase
 from email import encoders
 from jinja2 import Template
 
-def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
-    """Generar portada con logo AS Cartastral + imagen del servicio"""
+# ========================================
+# 🔧 FIX IMÁGENES - Búsqueda mejorada
+# ========================================
+
+def obtener_ruta_imagen_absoluta(nombre_imagen):
+    """Obtener ruta absoluta para imágenes con diferentes extensiones"""
+    import os
     
-    # MAPEO CORREGIDO CON RUTAS Y NOMBRES REALES
+    # Crear variaciones del nombre (jpg, JPG, jpeg, JPEG)
+    nombre_base = os.path.splitext(nombre_imagen)[0]
+    extensiones = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG']
+    
+    # Rutas donde buscar
+    rutas_busqueda = [
+        "./img/",
+        "/app/img/", 
+        "./static/",
+        "/app/static/",
+        "."  # Directorio raíz
+    ]
+    
+    # Buscar con todas las combinaciones
+    for ruta_base in rutas_busqueda:
+        for ext in extensiones:
+            archivo_completo = nombre_base + ext
+            ruta_completa = os.path.join(ruta_base, archivo_completo)
+            if os.path.exists(ruta_completa):
+                print(f"✅ Imagen encontrada: {nombre_imagen} → {ruta_completa}")
+                return os.path.abspath(ruta_completa)
+    
+    # Si no existe, crear placeholder
+    print(f"⚠️ Imagen no encontrada: {nombre_imagen} - usando placeholder")
+    return crear_placeholder_svg(nombre_imagen)
+
+def crear_placeholder_svg(nombre_imagen):
+    """Crear placeholder SVG inline"""
+    import base64
+    
+    if 'logo' in nombre_imagen.lower():
+        svg_content = """<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="100" fill="#2c5aa0"/>
+  <text x="100" y="35" font-family="Arial" font-size="18" fill="white" text-anchor="middle">AS</text>
+  <text x="100" y="60" font-family="Arial" font-size="14" fill="#DAA520" text-anchor="middle">Cartastral</text>
+</svg>"""
+    else:
+        svg_content = f"""<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#ff9800"/>
+  <text x="200" y="180" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Imagen disponible</text>
+  <text x="200" y="220" font-family="Arial" font-size="12" fill="white" text-anchor="middle">{nombre_imagen}</text>
+</svg>"""
+    
+    svg_b64 = base64.b64encode(svg_content.encode()).decode()
+    return f"data:image/svg+xml;base64,{svg_b64}"
+
+def corregir_rutas_imagenes_cartas(datos_template):
+    """Corregir rutas de imágenes de cartas generadas"""
+    import os
+    
+    campos_imagen = [
+        'carta_natal_img', 'progresiones_img', 'transitos_img',
+        'revolucion_img', 'revolucion_natal_img', 'sinastria_img',
+        'carta_horaria_img', 'mano_derecha_img', 'mano_izquierda_img',
+        'cara_frente_img', 'cara_izquierda_img', 'cara_derecha_img'
+    ]
+    
+    for campo in campos_imagen:
+        if campo in datos_template and datos_template[campo]:
+            ruta_original = datos_template[campo]
+            
+            # Quitar file:// si existe
+            if ruta_original.startswith('file://'):
+                ruta_original = ruta_original.replace('file://', '')
+            
+            # Usar ruta absoluta si existe
+            if os.path.exists(ruta_original):
+                datos_template[campo] = os.path.abspath(ruta_original)
+            else:
+                nombre_archivo = os.path.basename(ruta_original)
+                datos_template[campo] = obtener_ruta_imagen_absoluta(nombre_archivo)
+    
+    return datos_template
+
+def obtener_template_anexo_medio_tiempo(tipo_servicio):
+    """Templates para productos M (medio tiempo)"""
+    
+    css_anexo = """
+    <style>
+        body { font-family: 'Georgia', serif; margin: 40px 20px; line-height: 1.6; color: #333; }
+        .encabezado-anexo { background: linear-gradient(135deg, #ff9800, #ffb74d); padding: 25px; border-radius: 12px; margin-bottom: 30px; text-align: center; border: 3px solid #f57c00; }
+        .encabezado-anexo h1 { color: white; font-size: 24px; margin: 0 0 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+        .encabezado-anexo p { color: white; margin: 5px 0; font-weight: bold; }
+        .badge-continuacion { background: #4caf50; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 10px; }
+        h2 { font-size: 20px; margin-top: 30px; border-bottom: 2px solid #ff9800; padding-bottom: 8px; color: #f57c00; }
+        .interpretacion { background: #fff8e1; padding: 20px; border-left: 4px solid #ff9800; margin: 20px 0; border-radius: 4px; }
+        .resumen-sesion { background: #e8f5e8; padding: 25px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #4caf50; }
+        .footer { text-align: center; margin-top: 60px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }
+        .dato { font-weight: bold; color: #f57c00; }
+    </style>
+    """
+    
+    # Determinar detalles según tipo
+    if tipo_servicio == 'carta_astral_ia_half':
+        duracion, codigo, titulo = "20 minutos", "AIM", "CARTA ASTRAL"
+    elif tipo_servicio == 'revolucion_solar_ia_half':
+        duracion, codigo, titulo = "25 minutos", "RSM", "REVOLUCIÓN SOLAR"
+    elif tipo_servicio == 'sinastria_ia_half':
+        duracion, codigo, titulo = "15 minutos", "SIM", "SINASTRÍA"
+    elif tipo_servicio == 'lectura_manos_ia_half':
+        duracion, codigo, titulo = "15 minutos", "LMM", "LECTURA DE MANOS"
+    elif tipo_servicio == 'psico_coaching_ia_half':
+        duracion, codigo, titulo = "20 minutos", "PCM", "PSICO-COACHING"
+    else:
+        duracion, codigo, titulo = "Medio tiempo", "XXM", "SESIÓN"
+    
+    return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ANEXO - {titulo} Continuación - AS Cartastral</title>
+    {css_anexo}
+</head>
+<body>
+    <div class="encabezado-anexo">
+        <h1>📋 ANEXO - CONTINUACIÓN {titulo}</h1>
+        <p><strong>Cliente:</strong> {{{{ nombre }}}}</p>
+        <p><strong>Email:</strong> {{{{ email }}}}</p>
+        <p><strong>Duración:</strong> {duracion} (½ tiempo)</p>
+        <p><strong>Fecha:</strong> {{{{ fecha_generacion }}}}</p>
+        <div class="badge-continuacion">✨ SESIÓN DE SEGUIMIENTO</div>
+    </div>
+
+    <div class="resumen-sesion">
+        <h2>📞 Continuación de tu Consulta</h2>
+        <p><span class="dato">Código:</span> {codigo} - {titulo} IA (½ tiempo)</p>
+        <p><span class="dato">Modalidad:</span> Sesión telefónica de seguimiento</p>
+        
+        {{{% if resumen_sesion %}}}
+        <div class="interpretacion">
+            {{{{ resumen_sesion }}}}
+        </div>
+        {{{% endif %}}}
+    </div>
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+        <p><strong>Código de sesión:</strong> {codigo} - {titulo} IA (½ tiempo)</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+        <p><em>Este anexo complementa tu informe principal</em></p>
+    </div>
+</body>
+</html>"""
+
+def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
+    """Generar portada con logo AS Cartastral + imagen del servicio - CORREGIDA"""
+    
+    # MAPEO IMÁGENES (mantenido igual)
     imagenes_servicios = {
         'carta_astral_ia': 'astrologia-3.jpg',
         'carta_natal': 'astrologia-3.jpg',
@@ -37,7 +190,6 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         'grafologia': 'grafologia_2.jpeg'
     }
     
-    # Títulos iguales que antes...
     titulos_servicios = {
         'carta_astral_ia': '🌟 CARTA ASTRAL PERSONALIZADA 🌟',
         'carta_natal': '🌟 CARTA ASTRAL PERSONALIZADA 🌟',
@@ -55,32 +207,30 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         'psico_coaching': '🧠 SESIÓN DE PSICO-COACHING 🧠'
     }
     
+    # ✅ USAR BÚSQUEDA MEJORADA
     imagen_servicio = imagenes_servicios.get(tipo_servicio, 'logo.jpg')
     titulo_servicio = titulos_servicios.get(tipo_servicio, '🌟 INFORME PERSONALIZADO 🌟')
     
-    return """
+    ruta_logo = obtener_ruta_imagen_absoluta('logo.jpg')
+    ruta_imagen_servicio = obtener_ruta_imagen_absoluta(imagen_servicio)
+    
+    return f"""
     <div class="portada">
-        <!-- LOGO AS CARTASTRAL EN ESQUINA SUPERIOR -->
         <div class="logo-header">
-            <img src="file://img/logo.jpg" alt="AS Cartastral" class="logo-esquina">
+            <img src="{ruta_logo}" alt="AS Cartastral" class="logo-esquina">
             <span class="nombre-empresa">AS Cartastral</span>
         </div>
         
-        <!-- TÍTULO PRINCIPAL -->
         <h1 class="titulo-principal">{titulo_servicio}</h1>
         
-        <!-- IMAGEN CENTRAL DEL SERVICIO (14x14 cm) -->
         <div class="imagen-servicio">
-            <img src="file://img/{imagen_servicio}" alt="{tipo_servicio}" class="imagen-central">
+            <img src="{ruta_imagen_servicio}" alt="{tipo_servicio}" class="imagen-central">
         </div>
         
-        <!-- NOMBRE DEL CLIENTE -->
         <h2 class="nombre-cliente">{nombre_cliente}</h2>
         
-        <!-- SUBTÍTULO DESCRIPTIVO -->
         <h3 class="subtitulo">Tu análisis personalizado</h3>
         
-        <!-- FECHA DE GENERACIÓN -->
         <div class="fecha-portada">
             <p>Generado el {datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d de %B de %Y')}</p>
         </div>
@@ -230,6 +380,16 @@ def generar_nombre_archivo_unico(tipo_servicio, codigo_cliente):
 # REEMPLAZAR TODO EL base_style POR ESTO:
 def obtener_template_html(tipo_servicio):
     """Obtener template HTML según tipo de servicio"""
+    
+    # ✅ PRODUCTOS M (MEDIO TIEMPO) - NUEVOS
+    productos_medio_tiempo = [
+        'carta_astral_ia_half', 'revolucion_solar_ia_half', 'sinastria_ia_half',
+        'lectura_manos_ia_half', 'psico_coaching_ia_half'
+    ]
+    
+    # Si es producto M, usar template de anexo
+    if tipo_servicio in productos_medio_tiempo:
+        return obtener_template_anexo_medio_tiempo(tipo_servicio)
     
     # Template base común para todos - ACTUALIZADO CON NUEVOS ESTILOS
     base_style = f"""
@@ -1094,6 +1254,9 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         
         # Obtener template HTML
         template_html = obtener_template_html(tipo_servicio)
+        
+        # ✅ CORREGIR RUTAS DE IMÁGENES
+        datos_template = corregir_rutas_imagenes_cartas(datos_template)
         
         # Renderizar template
         template = Template(template_html)
