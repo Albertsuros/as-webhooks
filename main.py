@@ -8581,6 +8581,83 @@ def debug_rutas_imagenes_directo():
         
     except Exception as e:
         return jsonify({'error': str(e), 'tipo': type(e).__name__})
+        
+@app.route("/test/debug_railway_images")
+def debug_railway_images():
+    """Debug específico para Railway - verificar acceso real a imágenes"""
+    try:
+        from informes import obtener_ruta_imagen_absoluta
+        import os
+        
+        # Test cada imagen específica
+        imagenes_test = ['logo.jpg', 'astrologia-3.jpg', 'coaching-4.jpg']
+        resultados = {}
+        
+        for imagen in imagenes_test:
+            resultado = {
+                'imagen_buscada': imagen,
+                'ruta_generada': '',
+                'archivo_existe': False,
+                'es_placeholder': False,
+                'contenido_img_dir': [],
+                'ruta_absoluta_real': '',
+                'accesible_playwright': False
+            }
+            
+            # 1. Llamar función
+            ruta = obtener_ruta_imagen_absoluta(imagen)
+            resultado['ruta_generada'] = ruta
+            resultado['es_placeholder'] = ruta.startswith('data:')
+            
+            # 2. Si no es placeholder, verificar acceso
+            if not resultado['es_placeholder']:
+                resultado['archivo_existe'] = os.path.exists(ruta)
+                resultado['ruta_absoluta_real'] = os.path.abspath(ruta) if resultado['archivo_existe'] else 'No existe'
+            
+            # 3. Listar contenido real de img/
+            if os.path.exists('./img/'):
+                archivos_img = []
+                for f in os.listdir('./img/'):
+                    if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                        archivos_img.append(f)
+                resultado['contenido_img_dir'] = archivos_img
+            
+            # 4. Test de acceso Playwright simulado
+            if resultado['archivo_existe']:
+                try:
+                    # Simular lo que hace Playwright
+                    with open(ruta, 'rb') as f:
+                        f.read(100)  # Leer un poco
+                    resultado['accesible_playwright'] = True
+                except:
+                    resultado['accesible_playwright'] = False
+            
+            resultados[imagen] = resultado
+        
+        # Info del sistema
+        sistema_info = {
+            'directorio_actual': os.getcwd(),
+            'usuario_actual': os.getenv('USER', 'unknown'),
+            'existe_img_dir': os.path.exists('./img/'),
+            'permisos_img_dir': oct(os.stat('./img/').st_mode)[-3:] if os.path.exists('./img/') else 'No existe',
+            'variables_entorno_railway': {
+                'RAILWAY_ENVIRONMENT': os.getenv('RAILWAY_ENVIRONMENT'),
+                'RAILWAY_PROJECT_NAME': os.getenv('RAILWAY_PROJECT_NAME'),
+                'PORT': os.getenv('PORT')
+            }
+        }
+        
+        return jsonify({
+            'resultados_imagenes': resultados,
+            'sistema_info': sistema_info,
+            'problema_detectado': 'Railway container access' if any(not r['archivo_existe'] and not r['es_placeholder'] for r in resultados.values()) else 'Otro'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'tipo_error': type(e).__name__
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
