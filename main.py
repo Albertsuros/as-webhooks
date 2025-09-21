@@ -8524,6 +8524,20 @@ def verificar_imagenes_detallado():
 🎯 Una vez que veas el resultado, sabrás exactamente qué aplicar de los Patches 1 y 2.
 """
 
+@app.route("/test/ver_html_generado/<archivo>")
+def ver_html_generado(archivo):
+    """Ver contenido del HTML generado"""
+    try:
+        ruta_archivo = f"templates/{archivo}"
+        if os.path.exists(ruta_archivo):
+            with open(ruta_archivo, 'r', encoding='utf-8') as f:
+                contenido = f.read()
+            return f"<pre>{contenido}</pre>"
+        else:
+            return f"Archivo no encontrado: {ruta_archivo}"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
 
