@@ -167,7 +167,7 @@ def obtener_template_anexo_medio_tiempo(tipo_servicio):
 </body>
 </html>"""
 
-def obtener_portada_con_logo_corregida(tipo_servicio, nombre_cliente):
+def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
     """Generar portada con logo AS Cartastral + imagen del servicio - CORREGIDA"""
     
     # MAPEO IMÁGENES (mantenido igual)
@@ -207,7 +207,7 @@ def obtener_portada_con_logo_corregida(tipo_servicio, nombre_cliente):
         'psico_coaching': '🧠 SESIÓN DE PSICO-COACHING 🧠'
     }
     
-    # ✅ CAMBIO PRINCIPAL: Usar búsqueda mejorada
+    # ✅ USAR BÚSQUEDA MEJORADA
     imagen_servicio = imagenes_servicios.get(tipo_servicio, 'logo.jpg')
     titulo_servicio = titulos_servicios.get(tipo_servicio, '🌟 INFORME PERSONALIZADO 🌟')
     
