@@ -328,16 +328,89 @@ def obtener_template_html(tipo_servicio):
     """
     
     if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
-        return """
-<!DOCTYPE html>
+        return """<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Informe de Carta Astral - AS Cartastral</title>
-    {{ base_style }}
+    <style>
+        body { 
+            font-family: 'Georgia', serif; 
+            margin: 40px; 
+            line-height: 1.6; 
+            color: #333;
+        }
+        .portada { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        .datos-natales { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .section { 
+            margin: 30px 0; 
+            padding: 15px;
+        }
+        .carta-img { 
+            text-align: center; 
+            margin: 30px 0; 
+        }
+        .carta-img img { 
+            max-width: 100%; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .footer { 
+            margin-top: 50px; 
+            font-size: 0.9em; 
+            color: #666; 
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .dato { 
+            font-weight: bold; 
+            color: #667eea; 
+        }
+        .interpretacion {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .planetas li {
+            margin: 5px 0;
+            padding: 5px;
+            background: #f1f3f4;
+            border-radius: 3px;
+        }
+        .resumen-sesion {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        h1, h2 { color: #667eea; }
+        @media print {
+            body { margin: 20px; }
+            .portada { background: #667eea !important; }
+        }
+    </style>
 </head>
 <body>
-    {{{{{{obtener_portada_con_logo('carta_astral_ia', '{{ nombre }}')}
+    <div class="portada">
+        <h1>🌟 CARTA ASTRAL PERSONALIZADA 🌟</h1>
+        <h2>{{ nombre }}</h2>
+        <p>AS Cartastral - Servicios Astrológicos Personalizados</p>
+    </div>
 
     <div class="datos-natales">
         <h2>📊 Datos Natales</h2>
@@ -345,7 +418,7 @@ def obtener_template_html(tipo_servicio):
         <p><span class="dato">Email:</span> {{ email }}</p>
         <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}</p>
         <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}</p>
-        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}, {{ pais_nacimiento or 'España' }}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}</p>
     </div>
 
     {% if carta_natal_img %}
@@ -358,7 +431,9 @@ def obtener_template_html(tipo_servicio):
 
     <div class="section">
         <h2>✨ Introducción</h2>
-        <p>Bienvenido/a a tu análisis astrológico personalizado. Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento y su influencia en tu personalidad, talentos y destino.</p>
+        <div class="interpretacion">
+            <p>Bienvenido/a a tu análisis astrológico personalizado. Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento y su influencia en tu personalidad, talentos y destino.</p>
+        </div>
     </div>
 
     {% if planetas %}
@@ -400,7 +475,9 @@ def obtener_template_html(tipo_servicio):
 
     <div class="section">
         <h2>🌟 Conclusión</h2>
-        <p>Tu carta astral es una guía para el autoconocimiento. Úsala para comprender tus patrones internos y tomar decisiones más conscientes en tu camino de crecimiento personal.</p>
+        <div class="interpretacion">
+            <p>Tu carta astral es una guía para el autoconocimiento. Úsala para comprender tus patrones internos y tomar decisiones más conscientes en tu camino de crecimiento personal.</p>
+        </div>
     </div>
 
     <div class="footer">
@@ -409,8 +486,7 @@ def obtener_template_html(tipo_servicio):
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
 </body>
-</html>
-        """
+</html>"""
         
     elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
         return """
