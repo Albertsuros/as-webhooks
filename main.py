@@ -9362,6 +9362,77 @@ def crear_imagen_dummy(ruta_archivo, tipo_imagen):
     except Exception as e:
         print(f"❌ Error creando imagen dummy: {e}")
         return False
+        
+@app.route('/test/verificar_cambios_aplicados/<especialidad>')
+def verificar_cambios_aplicados(especialidad):
+    """Verificar si los cambios se aplicaron correctamente"""
+    try:
+        from informes import generar_informe_html, generar_nombre_archivo_unico
+        import os
+        
+        # Datos de prueba
+        datos_cliente = {
+            'nombre': 'Cliente Test Verificación',
+            'email': 'test@verificacion.com',
+            'codigo_servicio': 'VERIFY_123',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        print(f"🔍 VERIFICACIÓN: Iniciando test para {especialidad}")
+        
+        # PASO 1: Crear archivos_unicos de prueba
+        archivos_unicos_prueba = crear_archivos_unicos_testing(especialidad)
+        print(f"🔍 PASO 1 - archivos_unicos creados: {archivos_unicos_prueba}")
+        
+        # PASO 2: Intentar generar HTML directamente
+        print(f"🔍 PASO 2 - Llamando a generar_informe_html...")
+        archivo_html = generar_informe_html(
+            datos_cliente, 
+            especialidad, 
+            archivos_unicos_prueba,  # ← Este es el paso crítico
+            "Test de verificación - Comprobar si archivos_unicos llegan correctamente"
+        )
+        
+        resultado = {
+            'especialidad': especialidad,
+            'paso_1_archivos_unicos': archivos_unicos_prueba,
+            'paso_2_html_generado': archivo_html is not None,
+        }
+        
+        if archivo_html:
+            resultado['archivo_html_path'] = archivo_html
+            
+            # PASO 3: Leer el HTML generado y verificar imágenes
+            try:
+                with open(archivo_html, 'r', encoding='utf-8') as f:
+                    html_content = f.read()
+                
+                img_count = html_content.count('<img')
+                resultado['paso_3_imagenes_en_html'] = img_count
+                resultado['html_preview'] = html_content[:1000] + "..." if len(html_content) > 1000 else html_content
+                
+                if img_count > 0:
+                    # Extraer las etiquetas img
+                    import re
+                    img_tags = re.findall(r'<img[^>]+>', html_content)
+                    resultado['img_tags_encontradas'] = img_tags[:3]  # Primeras 3
+                
+            except Exception as e:
+                resultado['error_leyendo_html'] = str(e)
+        else:
+            resultado['error'] = 'No se pudo generar HTML'
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+            'especialidad': especialidad
+        }), 500
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
