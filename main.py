@@ -9196,6 +9196,30 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
         import traceback
         traceback.print_exc()
         return None
+        
+@app.route('/test/ping')
+def test_ping():
+    """Endpoint simple para verificar que la app funciona"""
+    return jsonify({
+        'status': 'OK',
+        'message': 'La aplicación está funcionando',
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/test/endpoints')  
+def test_endpoints():
+    """Listar todos los endpoints disponibles"""
+    import urllib.parse
+    endpoints = []
+    for rule in app.url_map.iter_rules():
+        endpoints.append({
+            'endpoint': rule.rule,
+            'methods': list(rule.methods)
+        })
+    return jsonify({
+        'total_endpoints': len(endpoints),
+        'endpoints': endpoints
+    })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
