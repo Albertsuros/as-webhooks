@@ -1,0 +1,314 @@
+{
+    "fecha_nacimiento": {
+        "año": 1959,
+        "mes": 10,
+        "dia": 1,
+        "hora_oficial": "11:47",
+        "hora_utc": "10.78"
+    },
+    "lugar": {
+        "latitud": 41.39,
+        "longitud": 2.16,
+        "descripcion": "Barcelona, España"
+    },
+    "posiciones_planetas": {
+        "Sol": {
+            "grado_absoluto": 187.5083952396248,
+            "signo": "Libra",
+            "grado_en_signo": 7.508395239624804,
+            "elemento": "aire",
+            "retrogrado": false,
+            "velocidad_diaria": 0.9837
+        },
+        "Luna": {
+            "grado_absoluto": 173.3046108175974,
+            "signo": "Virgo",
+            "grado_en_signo": 23.304610817597393,
+            "elemento": "tierra",
+            "retrogrado": false,
+            "velocidad_diaria": 14.053
+        },
+        "Mercurio": {
+            "grado_absoluto": 197.79837889158594,
+            "signo": "Libra",
+            "grado_en_signo": 17.79837889158594,
+            "elemento": "aire",
+            "retrogrado": false,
+            "velocidad_diaria": 1.6334
+        },
+        "Venus": {
+            "grado_absoluto": 151.2926930180083,
+            "signo": "Virgo",
+            "grado_en_signo": 1.2926930180082934,
+            "elemento": "tierra",
+            "retrogrado": false,
+            "velocidad_diaria": 0.3154
+        },
+        "Marte": {
+            "grado_absoluto": 196.65774030647952,
+            "signo": "Libra",
+            "grado_en_signo": 16.657740306479525,
+            "elemento": "aire",
+            "retrogrado": false,
+            "velocidad_diaria": 0.6618
+        },
+        "Júpiter": {
+            "grado_absoluto": 239.2568699204914,
+            "signo": "Escorpio",
+            "grado_en_signo": 29.256869920491397,
+            "elemento": "agua",
+            "retrogrado": false,
+            "velocidad_diaria": 0.1754
+        },
+        "Saturno": {
+            "grado_absoluto": 271.0224028677873,
+            "signo": "Capricornio",
+            "grado_en_signo": 1.0224028677873207,
+            "elemento": "tierra",
+            "retrogrado": false,
+            "velocidad_diaria": 0.0422
+        },
+        "Urano": {
+            "grado_absoluto": 139.66578211781808,
+            "signo": "Leo",
+            "grado_en_signo": 19.665782117818082,
+            "elemento": "fuego",
+            "retrogrado": false,
+            "velocidad_diaria": 0.0464
+        },
+        "Neptuno": {
+            "grado_absoluto": 215.63022827548787,
+            "signo": "Escorpio",
+            "grado_en_signo": 5.630228275487866,
+            "elemento": "agua",
+            "retrogrado": false,
+            "velocidad_diaria": 0.0338
+        },
+        "Plutón": {
+            "grado_absoluto": 155.04952273639094,
+            "signo": "Virgo",
+            "grado_en_signo": 5.049522736390941,
+            "elemento": "tierra",
+            "retrogrado": false,
+            "velocidad_diaria": 0.0294
+        }
+    },
+    "aspectos": [
+        {
+            "planeta1": "Sol",
+            "planeta2": "Saturno",
+            "tipo": "cuadratura",
+            "orbe": 6.485992371837483
+        },
+        {
+            "planeta1": "Sol",
+            "planeta2": "Neptuno",
+            "tipo": "semisextil",
+            "orbe": 1.8781669641369376
+        },
+        {
+            "planeta1": "Sol",
+            "planeta2": "Plutón",
+            "tipo": "semisextil",
+            "orbe": 2.458872503233863
+        },
+        {
+            "planeta1": "Luna",
+            "planeta2": "Júpiter",
+            "tipo": "sextil",
+            "orbe": 5.952259102894004
+        },
+        {
+            "planeta1": "Mercurio",
+            "planeta2": "Venus",
+            "tipo": "semicuadratura",
+            "orbe": 1.5056858735776473
+        },
+        {
+            "planeta1": "Mercurio",
+            "planeta2": "Marte",
+            "tipo": "conjuncion",
+            "orbe": 1.1406385851064158
+        },
+        {
+            "planeta1": "Mercurio",
+            "planeta2": "Saturno",
+            "tipo": "quintil",
+            "orbe": 1.22402397620138
+        },
+        {
+            "planeta1": "Mercurio",
+            "planeta2": "Urano",
+            "tipo": "sextil",
+            "orbe": 1.8674032262321418
+        },
+        {
+            "planeta1": "Mercurio",
+            "planeta2": "Plutón",
+            "tipo": "semicuadratura",
+            "orbe": 2.251143844805
+        },
+        {
+            "planeta1": "Venus",
+            "planeta2": "Marte",
+            "tipo": "semicuadratura",
+            "orbe": 0.36504728847123147
+        },
+        {
+            "planeta1": "Venus",
+            "planeta2": "Júpiter",
+            "tipo": "cuadratura",
+            "orbe": 2.0358230975168965
+        },
+        {
+            "planeta1": "Venus",
+            "planeta2": "Saturno",
+            "tipo": "trigono",
+            "orbe": 0.2702901502209727
+        },
+        {
+            "planeta1": "Venus",
+            "planeta2": "Neptuno",
+            "tipo": "sextil",
+            "orbe": 4.337535257479573
+        },
+        {
+            "planeta1": "Venus",
+            "planeta2": "Plutón",
+            "tipo": "conjuncion",
+            "orbe": 3.7568297183826473
+        },
+        {
+            "planeta1": "Marte",
+            "planeta2": "Júpiter",
+            "tipo": "semicuadratura",
+            "orbe": 2.400870385988128
+        },
+        {
+            "planeta1": "Marte",
+            "planeta2": "Saturno",
+            "tipo": "quintil",
+            "orbe": 2.364662561307796
+        },
+        {
+            "planeta1": "Marte",
+            "planeta2": "Urano",
+            "tipo": "sextil",
+            "orbe": 3.0080418113385576
+        },
+        {
+            "planeta1": "Júpiter",
+            "planeta2": "Saturno",
+            "tipo": "semisextil",
+            "orbe": 1.7655329472959238
+        },
+        {
+            "planeta1": "Júpiter",
+            "planeta2": "Plutón",
+            "tipo": "cuadratura",
+            "orbe": 5.792652815899544
+        },
+        {
+            "planeta1": "Saturno",
+            "planeta2": "Neptuno",
+            "tipo": "sextil",
+            "orbe": 4.607825407700545
+        },
+        {
+            "planeta1": "Saturno",
+            "planeta2": "Plutón",
+            "tipo": "trigono",
+            "orbe": 4.02711986860362
+        },
+        {
+            "planeta1": "Neptuno",
+            "planeta2": "Plutón",
+            "tipo": "sextil",
+            "orbe": 0.5807055390969253
+        }
+    ],
+    "ascendente": {
+        "grado": 245.08595918647788,
+        "signo": "Sagitario",
+        "grado_en_signo": 5.085959186477879
+    },
+    "mediocielo": {
+        "grado": 172.46717939404454,
+        "signo": "Virgo",
+        "grado_en_signo": 22.467179394044535
+    },
+    "cuspides_casas": [
+        {
+            "casa": 1,
+            "grado": 245.08595918647788,
+            "signo": "Sagitario",
+            "grado_en_signo": 5.085959186477879
+        },
+        {
+            "casa": 2,
+            "grado": 277.5947514952719,
+            "signo": "Capricornio",
+            "grado_en_signo": 7.5947514952719075
+        },
+        {
+            "casa": 3,
+            "grado": 315.698361639946,
+            "signo": "Acuario",
+            "grado_en_signo": 15.698361639945972
+        },
+        {
+            "casa": 4,
+            "grado": 352.46717939404454,
+            "signo": "Piscis",
+            "grado_en_signo": 22.467179394044535
+        },
+        {
+            "casa": 5,
+            "grado": 22.189936294515064,
+            "signo": "Aries",
+            "grado_en_signo": 22.189936294515064
+        },
+        {
+            "casa": 6,
+            "grado": 45.47566949574218,
+            "signo": "Tauro",
+            "grado_en_signo": 15.475669495742181
+        },
+        {
+            "casa": 7,
+            "grado": 65.08595918647791,
+            "signo": "Géminis",
+            "grado_en_signo": 5.085959186477908
+        },
+        {
+            "casa": 8,
+            "grado": 97.59475149527191,
+            "signo": "Cáncer",
+            "grado_en_signo": 7.5947514952719075
+        },
+        {
+            "casa": 9,
+            "grado": 135.69836163994597,
+            "signo": "Leo",
+            "grado_en_signo": 15.698361639945972
+        },
+        {
+            "casa": 10,
+            "grado": 172.46717939404454,
+            "signo": "Virgo",
+            "grado_en_signo": 22.467179394044535
+        },
+        {
+            "casa": 11,
+            "grado": 202.18993629451504,
+            "signo": "Libra",
+            "grado_en_signo": 22.189936294515036
+        },
+        {
+            "casa": 12,
+            "grado": 225.47566949574218,
+            "signo": "Escorpio",
+            "grado_en_signo": 15.475669495742181
+        }
+    ]
+}
