@@ -13,8 +13,11 @@ from datetime import datetime, timedelta
 
 # IMPORTACIONES para generar cartas astrales
 from carta_natal import CartaAstralNatal
-from progresiones import generar_progresiones_personalizada as generar_progresiones
-from transitos import generar_transitos_personalizada as generar_transitos
+
+# Cargar funciones wrapper corregidas
+exec(open('sofia_fixes.py').read())
+generar_progresiones = generar_progresiones_desde_datos_natales  
+generar_transitos = generar_transitos_desde_datos_natales
 
 # IMPORTACIONES para revolución solar
 from revolucion_sola import generar_revolucion_solar_sola_personalizada as generar_revolucion_sola
@@ -760,7 +763,7 @@ def generar_cartas_astrales_completas(datos_natales, archivos_unicos):
             residencia_actual=datos_natales['residencia_actual']
         )
         
-        carta_natal.generar_carta_completa(archivo_salida=archivos_unicos['carta_natal_img'])
+        datos_carta_natal = generar_carta_natal_desde_datos_natales(datos_natales, archivos_unicos['carta_natal_img'])
         
         # Generar progresiones
         datos_progresiones = generar_progresiones(datos_natales, archivos_unicos['progresiones_img'])
