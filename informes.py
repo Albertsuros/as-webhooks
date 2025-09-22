@@ -1338,247 +1338,37 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         
 @app.route('/test/debug_archivos_unicos/<especialidad>')
 def debug_archivos_unicos(especialidad):
-    """Debug específico para archivos_unicos - VERSIÓN CORREGIDA"""
+    """Debug específico para archivos_unicos"""
     try:
         # Simular creación de archivos_unicos
-        print(f"🔍 Debug: Creando archivos_unicos para {especialidad}")
         archivos_unicos = crear_archivos_unicos_testing(especialidad)
-        
-        # ✅ VERIFICAR QUE NO SEA None O VACÍO
-        if archivos_unicos is None:
-            return jsonify({
-                'error': 'crear_archivos_unicos_testing() devolvió None',
-                'especialidad': especialidad
-            }), 500
-            
-        if not isinstance(archivos_unicos, dict):
-            return jsonify({
-                'error': f'archivos_unicos no es dict, es: {type(archivos_unicos)}',
-                'especialidad': especialidad,
-                'valor': str(archivos_unicos)
-            }), 500
-        
-        print(f"🔍 Debug: archivos_unicos creados: {archivos_unicos}")
         
         # Verificar existencia de archivos
         archivos_verificados = {}
-        
         for key, ruta in archivos_unicos.items():
-            print(f"🔍 Debug: Procesando {key} = {ruta} (tipo: {type(ruta)})")
-            
-            # ✅ MANEJAR SOLO STRINGS QUE PARECEN RUTAS DE ARCHIVO
-            if isinstance(ruta, str) and ('/' in ruta or '\\' in ruta or ruta.endswith(('.png', '.jpg', '.jpeg', '.JPG'))):
-                # Es una ruta de archivo
-                try:
-                    if os.path.exists(ruta):
-                        archivos_verificados[key] = {
-                            'ruta': ruta,
-                            'existe': True,
-                            'tamaño': os.path.getsize(ruta),
-                            'tipo': 'archivo'
-                        }
-                    else:
-                        archivos_verificados[key] = {
-                            'ruta': ruta,
-                            'existe': False,
-                            'tipo': 'archivo_no_encontrado'
-                        }
-                except Exception as e:
-                    archivos_verificados[key] = {
-                        'ruta': ruta,
-                        'existe': False,
-                        'tipo': 'error_verificacion',
-                        'error': str(e)
-                    }
-            else:
-                # ✅ NO ES UNA RUTA DE ARCHIVO (número, diccionario, etc.)
+            if isinstance(ruta, str) and os.path.exists(ruta):
                 archivos_verificados[key] = {
-                    'valor': ruta,
-                    'tipo': str(type(ruta).__name__),
-                    'es_ruta': False
+                    'ruta': ruta,
+                    'existe': True,
+                    'tamaño': os.path.getsize(ruta)
                 }
-        
-        # Contar solo archivos (no otros valores)
-        archivos_reales = {k: v for k, v in archivos_verificados.items() 
-                          if v.get('tipo', '').startswith('archivo')}
-        archivos_existentes = sum(1 for v in archivos_reales.values() 
-                                 if v.get('existe', False))
+            else:
+                archivos_verificados[key] = {
+                    'ruta': str(ruta),
+                    'existe': False,
+                    'valor': ruta
+                }
         
         return jsonify({
             'especialidad': especialidad,
             'archivos_unicos_generados': archivos_unicos,
             'verificacion_existencia': archivos_verificados,
-            'total_elementos': len(archivos_unicos),
-            'total_archivos_esperados': len(archivos_reales),
-            'archivos_existentes': archivos_existentes,
-            'elementos_no_archivo': [k for k, v in archivos_verificados.items() 
-                                   if not v.get('es_ruta', True)]
+            'total_archivos': len(archivos_unicos),
+            'archivos_existentes': sum(1 for v in archivos_verificados.values() if v.get('existe', False))
         })
         
     except Exception as e:
-        # ✅ DEBUG MÁS DETALLADO DEL ERROR
-        import traceback
-        error_details = {
-            'error': str(e),
-            'especialidad': especialidad,
-            'traceback': traceback.format_exc(),
-            'error_type': type(e).__name__
-        }
-        
-        print(f"❌ Error en debug_archivos_unicos: {error_details}")
-        return jsonify(error_details), 500
-
-# ===================================
-# TAMBIÉN CORREGIR crear_archivos_unicos_testing()
-# ===================================
-
-def crear_archivos_unicos_testing(tipo_servicio):
-    """Crear archivos_unicos para testing con imágenes reales o dummy - VERSIÓN CORREGIDA"""
-    try:
-        import os
-        from datetime import datetime
-        
-        print(f"🔍 Creando archivos_unicos para: {tipo_servicio}")
-        
-        # Timestamp único para archivos
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        archivos_unicos = {}
-        
-        if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
-            # Buscar imágenes existentes o crear referencias dummy
-            archivos_unicos = {
-                'carta_natal_img': buscar_o_crear_imagen_dummy('carta_natal', timestamp),
-                'progresiones_img': buscar_o_crear_imagen_dummy('progresiones', timestamp),
-                'transitos_img': buscar_o_crear_imagen_dummy('transitos', timestamp)
-            }
-            
-        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
-            archivos_unicos = {
-                'carta_natal_img': buscar_o_crear_imagen_dummy('carta_natal', timestamp),
-                'revolucion_img': buscar_o_crear_imagen_dummy('revolucion_solar', timestamp),
-                'revolucion_natal_img': buscar_o_crear_imagen_dummy('revolucion_natal', timestamp)
-            }
-            
-        elif tipo_servicio in ['sinastria_ia', 'sinastria']:
-            archivos_unicos = {
-                'sinastria_img': buscar_o_crear_imagen_dummy('sinastria', timestamp)
-            }
-            
-        elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
-            archivos_unicos = {
-                'carta_horaria_img': buscar_o_crear_imagen_dummy('carta_horaria', timestamp)
-            }
-            
-        elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
-            archivos_unicos = {
-                'mano_izquierda_img': buscar_o_crear_imagen_dummy('mano_izquierda', timestamp),
-                'mano_derecha_img': buscar_o_crear_imagen_dummy('mano_derecha', timestamp),
-                'lineas_anotadas_img': buscar_o_crear_imagen_dummy('lineas_anotadas', timestamp)
-            }
-            
-        elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
-            archivos_unicos = {
-                'cara_frontal_img': buscar_o_crear_imagen_dummy('cara_frontal', timestamp),
-                'cara_izquierda_img': buscar_o_crear_imagen_dummy('cara_izquierda', timestamp),
-                'cara_derecha_img': buscar_o_crear_imagen_dummy('cara_derecha', timestamp)
-            }
-            
-        elif tipo_servicio in ['grafologia_ia', 'grafologia']:
-            archivos_unicos = {
-                'muestra_escritura_img': buscar_o_crear_imagen_dummy('muestra_escritura', timestamp),
-                'confianza': 85,  # ✅ ESTE ES UN NÚMERO, NO UNA RUTA
-                'puntuaciones': {  # ✅ ESTE ES UN DICT, NO UNA RUTA
-                    'precision': 90,
-                    'estabilidad': 80,
-                    'creatividad': 75
-                }
-            }
-            
-        elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
-            # ✅ SERVICIOS SIN IMÁGENES
-            archivos_unicos = {
-                'sesion_completa': True,
-                'duracion_minutos': 45
-            }
-        
-        else:
-            # ✅ SERVICIO DESCONOCIDO
-            print(f"⚠️ Tipo de servicio no reconocido: {tipo_servicio}")
-            archivos_unicos = {}
-        
-        print(f"✅ Archivos_unicos creados: {archivos_unicos}")
-        return archivos_unicos
-        
-    except Exception as e:
-        print(f"❌ Error en crear_archivos_unicos_testing: {e}")
-        import traceback
-        traceback.print_exc()
-        return {}  # ✅ DEVOLVER DICT VACÍO EN LUGAR DE None
-
-def buscar_o_crear_imagen_dummy(tipo_imagen, timestamp):
-    """Buscar imagen existente o usar una dummy - VERSIÓN SEGURA"""
-    try:
-        import os
-        import glob
-        
-        print(f"🔍 Buscando imagen para: {tipo_imagen}")
-        
-        # 1. Buscar en static/ archivos recientes (últimas 2 horas)
-        patterns = [
-            f"static/{tipo_imagen}_*.png",
-            f"static/*{tipo_imagen}*.png"
-        ]
-        
-        archivos_encontrados = []
-        for pattern in patterns:
-            try:
-                archivos_encontrados.extend(glob.glob(pattern))
-            except Exception as e:
-                print(f"⚠️ Error en patrón {pattern}: {e}")
-        
-        if archivos_encontrados:
-            # Usar el más reciente
-            try:
-                archivo_mas_reciente = max(archivos_encontrados, key=os.path.getmtime)
-                print(f"✅ Usando imagen existente: {archivo_mas_reciente}")
-                return archivo_mas_reciente
-            except Exception as e:
-                print(f"⚠️ Error seleccionando archivo reciente: {e}")
-        
-        # 2. Buscar en img/ (imágenes estáticas)
-        img_patterns = [
-            f"img/{tipo_imagen}*.jpg",
-            f"img/{tipo_imagen}*.JPG",
-            f"img/{tipo_imagen}*.png",
-            f"img/*{tipo_imagen}*.jpg",
-            f"img/*{tipo_imagen}*.JPG"
-        ]
-        
-        for pattern in img_patterns:
-            try:
-                archivos_img = glob.glob(pattern)
-                if archivos_img:
-                    print(f"✅ Usando imagen estática: {archivos_img[0]}")
-                    return archivos_img[0]
-            except Exception as e:
-                print(f"⚠️ Error en patrón img {pattern}: {e}")
-        
-        # 3. Crear imagen dummy si no existe
-        dummy_path = f"static/{tipo_imagen}_dummy_{timestamp}.png"
-        print(f"🔨 Creando imagen dummy: {dummy_path}")
-        
-        if crear_imagen_dummy(dummy_path, tipo_imagen):
-            return dummy_path
-        else:
-            # ✅ FALLBACK: Devolver ruta aunque no exista
-            print(f"⚠️ No se pudo crear dummy, devolviendo ruta de fallback")
-            return dummy_path
-            
-    except Exception as e:
-        print(f"❌ Error en buscar_o_crear_imagen_dummy: {e}")
-        # ✅ FALLBACK SEGURO
-        return f"static/error_{tipo_imagen}_{timestamp}.png"
+        return jsonify({'error': str(e)}), 500
 
 def convertir_html_a_pdf(archivo_html, archivo_pdf):
     """Convertir HTML a PDF usando Playwright"""
