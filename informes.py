@@ -1335,40 +1335,6 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         import traceback
         traceback.print_exc()
         return None
-        
-@app.route('/test/debug_archivos_unicos/<especialidad>')
-def debug_archivos_unicos(especialidad):
-    """Debug específico para archivos_unicos"""
-    try:
-        # Simular creación de archivos_unicos
-        archivos_unicos = crear_archivos_unicos_testing(especialidad)
-        
-        # Verificar existencia de archivos
-        archivos_verificados = {}
-        for key, ruta in archivos_unicos.items():
-            if isinstance(ruta, str) and os.path.exists(ruta):
-                archivos_verificados[key] = {
-                    'ruta': ruta,
-                    'existe': True,
-                    'tamaño': os.path.getsize(ruta)
-                }
-            else:
-                archivos_verificados[key] = {
-                    'ruta': str(ruta),
-                    'existe': False,
-                    'valor': ruta
-                }
-        
-        return jsonify({
-            'especialidad': especialidad,
-            'archivos_unicos_generados': archivos_unicos,
-            'verificacion_existencia': archivos_verificados,
-            'total_archivos': len(archivos_unicos),
-            'archivos_existentes': sum(1 for v in archivos_verificados.values() if v.get('existe', False))
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 def convertir_html_a_pdf(archivo_html, archivo_pdf):
     """Convertir HTML a PDF usando Playwright"""
