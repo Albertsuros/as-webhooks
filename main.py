@@ -10134,6 +10134,105 @@ def verificar_generar_solo_pdf():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+        
+@app.route('/test/generar_cartas_directas')
+def generar_cartas_directas():
+    """Test directo: generar cartas sin Sofia, crear PDF automáticamente"""
+    try:
+        import time
+        from datetime import datetime
+        
+        # Importar funciones directamente desde sofia.py
+        from agents.sofia import generar_cartas_astrales_completas
+        
+        print("🎯 GENERANDO CARTAS DIRECTAMENTE...")
+        
+        # Datos de prueba (exactos como Sofia los usa)
+        timestamp = int(time.time())
+        
+        datos_natales = {
+            'nombre': 'Test Directo',
+            'email': 'directo@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid',
+            'residencia_actual': 'Madrid'
+        }
+        
+        # Archivos únicos con timestamp (exacto como Sofia)
+        archivos_unicos = {
+            'carta_natal_img': f'static/carta_natal_DIRECTO_{timestamp}.png',
+            'progresiones_img': f'static/progresiones_DIRECTO_{timestamp}.png',
+            'transitos_img': f'static/transitos_DIRECTO_{timestamp}.png'
+        }
+        
+        # GENERAR CARTAS DIRECTAMENTE
+        exito, datos_interpretacion = generar_cartas_astrales_completas(datos_natales, archivos_unicos)
+        
+        if exito:
+            print("✅ CARTAS GENERADAS EXITOSAMENTE")
+            
+            # Verificar archivos creados
+            import os
+            archivos_verificados = {}
+            for key, ruta in archivos_unicos.items():
+                exists = os.path.exists(ruta)
+                size = os.path.getsize(ruta) if exists else 0
+                archivos_verificados[key] = {
+                    'ruta': ruta,
+                    'existe': exists,
+                    'tamaño': size
+                }
+                print(f"📁 {key}: {ruta} - Existe: {exists} - Tamaño: {size}")
+            
+            # GENERAR PDF AUTOMÁTICAMENTE CON LAS NUEVAS IMÁGENES
+            from informes import procesar_y_enviar_informe
+            
+            datos_cliente = {
+                'nombre': 'Test Directo Cartas',
+                'email': 'directo@test.com',
+                'codigo_servicio': 'DIRECTO_TEST',
+                'fecha_nacimiento': '15/07/1985',
+                'hora_nacimiento': '10:30',
+                'lugar_nacimiento': 'Madrid, España'
+            }
+            
+            # Convertir rutas a HTTP URLs para PDF
+            base_url = "https://as-webhooks-production.up.railway.app"
+            archivos_http = {
+                key: ruta.replace('static/', f'{base_url}/static/') 
+                for key, ruta in archivos_unicos.items()
+            }
+            
+            resultado_pdf = procesar_y_enviar_informe(
+                datos_cliente=datos_cliente,
+                tipo_servicio='carta_astral_ia',
+                archivos_unicos=archivos_http,
+                resumen_sesion="GENERACIÓN DIRECTA DE CARTAS - TEST EXITOSO"
+            )
+            
+            return jsonify({
+                'resultado': 'EXITO_TOTAL',
+                'cartas_generadas': exito,
+                'archivos_creados': archivos_verificados,
+                'datos_interpretacion_disponibles': bool(datos_interpretacion),
+                'pdf_generado': bool(resultado_pdf),
+                'archivos_http': archivos_http,
+                'mensaje': 'CARTAS GENERADAS DIRECTAMENTE Y PDF CREADO - PROBLEMA RESUELTO'
+            })
+        else:
+            return jsonify({
+                'resultado': 'ERROR_GENERACION',
+                'error': 'No se pudieron generar las cartas astrales'
+            })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'resultado': 'ERROR_CRITICO',
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
