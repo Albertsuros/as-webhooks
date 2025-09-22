@@ -6786,62 +6786,62 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
 # ===================================
 
 def crear_archivos_unicos_testing(tipo_servicio):
-    """Crear archivos_unicos para testing con RUTAS ABSOLUTAS"""
+    """Crear archivos_unicos para testing con URLs HTTP"""
     try:
         import os
         from datetime import datetime
         
         print(f"🔍 Creando archivos_unicos para: {tipo_servicio}")
         
-        # OBTENER RUTA ABSOLUTA BASE
-        base_dir = os.path.abspath('.')  # /app en Railway
-        print(f"🔍 Base directory: {base_dir}")
-        
+        # 🔥 DEFINIR UNA VEZ - URLs base
+        base_url = "https://as-webhooks-production.up.railway.app"
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
         archivos_unicos = {}
         
         if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
-            # 🔥 USAR RUTAS ABSOLUTAS COMPLETAS
             archivos_unicos = {
-                'carta_natal_img': os.path.join(base_dir, 'static', 'carta_astral.png'),
-                'progresiones_img': os.path.join(base_dir, 'static', 'carta_astral_completa.png'),
-                'transitos_img': os.path.join(base_dir, 'static', 'carta_astral_corregida.png')
+                'carta_natal_img': f"{base_url}/static/carta_astral.png",
+                'progresiones_img': f"{base_url}/static/carta_astral_completa.png",
+                'transitos_img': f"{base_url}/static/carta_astral_corregida.png"
             }
             
         elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
             archivos_unicos = {
-                'carta_natal_img': os.path.join(base_dir, 'static', 'carta_astral.png'),
-                'revolucion_img': os.path.join(base_dir, 'static', 'carta_astral_placidus.png'),
-                'revolucion_natal_img': os.path.join(base_dir, 'static', 'carta_astral_placidus_corregida.png')
+                'carta_natal_img': f"{base_url}/static/carta_astral.png",
+                'revolucion_img': f"{base_url}/static/carta_astral_placidus.png",
+                'revolucion_natal_img': f"{base_url}/static/carta_astral_placidus_corregida.png"
             }
             
         elif tipo_servicio in ['sinastria_ia', 'sinastria']:
             archivos_unicos = {
-                'sinastria_img': os.path.join(base_dir, 'static', 'carta_astral_demo.png')
+                'sinastria_img': f"{base_url}/static/carta_astral_demo.png"
             }
             
         elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
             archivos_unicos = {
-                'carta_horaria_img': os.path.join(base_dir, 'static', 'carta.png')
+                'carta_horaria_img': f"{base_url}/static/carta.png"
             }
             
         elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
+            # Para manos: usar placeholders HTTP o crear dummies
             archivos_unicos = {
-                'mano_izquierda_img': buscar_o_crear_imagen_dummy('mano_izquierda', timestamp),
-                'mano_derecha_img': buscar_o_crear_imagen_dummy('mano_derecha', timestamp),
-                'lineas_anotadas_img': buscar_o_crear_imagen_dummy('lineas_anotadas', timestamp)
+                'mano_izquierda_img': f"{base_url}/static/mano_placeholder.jpg",
+                'mano_derecha_img': f"{base_url}/static/mano_placeholder2.jpg",
+                'lineas_anotadas_img': f"{base_url}/static/lineas_placeholder.jpg"
             }
             
         elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
+            # Para facial: usar placeholders HTTP
             archivos_unicos = {
-                'cara_frontal_img': buscar_o_crear_imagen_dummy('cara_frontal', timestamp),
-                'cara_izquierda_img': buscar_o_crear_imagen_dummy('cara_izquierda', timestamp),
-                'cara_derecha_img': buscar_o_crear_imagen_dummy('cara_derecha', timestamp)
+                'cara_frontal_img': f"{base_url}/static/cara_placeholder.jpg",
+                'cara_izquierda_img': f"{base_url}/static/cara_perfil_placeholder.jpg",
+                'cara_derecha_img': f"{base_url}/static/cara_perfil2_placeholder.jpg"
             }
             
         elif tipo_servicio in ['grafologia_ia', 'grafologia']:
             archivos_unicos = {
-                'muestra_escritura_img': buscar_o_crear_imagen_dummy('muestra_escritura', timestamp),
+                'muestra_escritura_img': f"{base_url}/static/escritura_placeholder.jpg",
                 'confianza': 85,
                 'puntuaciones': {
                     'precision': 90,
@@ -6856,6 +6856,7 @@ def crear_archivos_unicos_testing(tipo_servicio):
             }
             
         elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
+            # Psico-coaching no usa imágenes dinámicas
             archivos_unicos = {
                 'sesion_completa': True,
                 'duracion_minutos': 45
@@ -6865,13 +6866,7 @@ def crear_archivos_unicos_testing(tipo_servicio):
             print(f"⚠️ Tipo de servicio no reconocido: {tipo_servicio}")
             archivos_unicos = {}
         
-        # 🔥 VERIFICAR Y MOSTRAR RUTAS ABSOLUTAS
-        for key, value in archivos_unicos.items():
-            if isinstance(value, str) and value.endswith(('.png', '.jpg', '.jpeg')):
-                print(f"🔍 {key}: {value}")
-                print(f"   - Existe: {os.path.exists(value)}")
-        
-        print(f"✅ Archivos_unicos creados con rutas absolutas: {archivos_unicos}")
+        print(f"✅ Archivos_unicos creados con HTTP URLs: {archivos_unicos}")
         return archivos_unicos
         
     except Exception as e:
