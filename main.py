@@ -6751,8 +6751,8 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
         archivo_html = generar_informe_html(
             datos_cliente, 
             tipo_servicio, 
-            archivos_unicos_prueba,  # 🔥 CAMBIO: No más diccionario vacío
-            "Resumen de prueba para testing - Generado en Railway"
+            archivos_unicos_prueba,  # 🔥 CAMBIO CRÍTICO: No más diccionario vacío
+            "Resumen de prueba para testing - Generado en Railway con imágenes"
         )
         
         if not archivo_html:
@@ -6769,7 +6769,7 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
         exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
         
         if exito_pdf:
-            print(f"✅ PDF generado: {archivo_pdf}")
+            print(f"✅ PDF generado con imágenes: {archivo_pdf}")
             return archivo_pdf
         else:
             print("❌ Error generando PDF")
@@ -6780,6 +6780,45 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
         import traceback
         traceback.print_exc()
         return None
+
+@app.route('/test/debug_archivos_unicos/<especialidad>')
+def debug_archivos_unicos(especialidad):
+    """Debug específico para archivos_unicos"""
+    try:
+        archivos_unicos = crear_archivos_unicos_testing(especialidad)
+        
+        # Verificar existencia de archivos
+        archivos_verificados = {}
+        
+        for key, ruta in archivos_unicos.items():
+            if isinstance(ruta, str) and ('/' in ruta or '\\' in ruta or ruta.endswith(('.png', '.jpg', '.jpeg'))):
+                if os.path.exists(ruta):
+                    archivos_verificados[key] = {
+                        'ruta': ruta,
+                        'existe': True,
+                        'tamaño': os.path.getsize(ruta)
+                    }
+                else:
+                    archivos_verificados[key] = {
+                        'ruta': ruta,
+                        'existe': False
+                    }
+            else:
+                archivos_verificados[key] = {
+                    'valor': ruta,
+                    'es_ruta': False
+                }
+        
+        return jsonify({
+            'especialidad': especialidad,
+            'archivos_unicos_generados': archivos_unicos,
+            'verificacion_existencia': archivos_verificados,
+            'total_archivos_esperados': len([k for k, v in archivos_verificados.items() if v.get('es_ruta', True)]),
+            'archivos_existentes': sum(1 for v in archivos_verificados.values() if v.get('existe', False))
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ===================================
 # 2. NUEVA FUNCIÓN EN main.py - Crear archivos testing
@@ -9220,6 +9259,148 @@ def test_endpoints():
         'total_endpoints': len(endpoints),
         'endpoints': endpoints
     })
+    
+def crear_archivos_unicos_testing(tipo_servicio):
+    """Crear archivos_unicos para testing con imágenes reales o dummy"""
+    try:
+        import os
+        from datetime import datetime
+        
+        print(f"🔍 Creando archivos_unicos para: {tipo_servicio}")
+        
+        # Timestamp único para archivos
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        archivos_unicos = {}
+        
+        if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
+            # 🔥 USAR IMÁGENES ESTÁTICAS EXISTENTES (confirmadas por debug)
+            archivos_unicos = {
+                'carta_natal_img': 'static/carta_astral.png',  # Existe en debug
+                'progresiones_img': 'static/carta_astral_completa.png',  # Existe en debug
+                'transitos_img': 'static/carta_astral_corregida.png'  # Existe en debug
+            }
+            
+        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
+            archivos_unicos = {
+                'carta_natal_img': 'static/carta_astral.png',
+                'revolucion_img': 'static/carta_astral_placidus.png',  # Existe en debug
+                'revolucion_natal_img': 'static/carta_astral_placidus_corregida.png'  # Existe en debug
+            }
+            
+        elif tipo_servicio in ['sinastria_ia', 'sinastria']:
+            archivos_unicos = {
+                'sinastria_img': 'static/carta_astral_demo.png'  # Existe en debug
+            }
+            
+        elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
+            archivos_unicos = {
+                'carta_horaria_img': 'static/carta.png'  # Existe en debug
+            }
+            
+        elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
+            archivos_unicos = {
+                'mano_izquierda_img': buscar_o_crear_imagen_dummy('mano_izquierda', timestamp),
+                'mano_derecha_img': buscar_o_crear_imagen_dummy('mano_derecha', timestamp),
+                'lineas_anotadas_img': buscar_o_crear_imagen_dummy('lineas_anotadas', timestamp)
+            }
+            
+        elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
+            archivos_unicos = {
+                'cara_frontal_img': buscar_o_crear_imagen_dummy('cara_frontal', timestamp),
+                'cara_izquierda_img': buscar_o_crear_imagen_dummy('cara_izquierda', timestamp),
+                'cara_derecha_img': buscar_o_crear_imagen_dummy('cara_derecha', timestamp)
+            }
+            
+        elif tipo_servicio in ['grafologia_ia', 'grafologia']:
+            archivos_unicos = {
+                'muestra_escritura_img': buscar_o_crear_imagen_dummy('muestra_escritura', timestamp),
+                'confianza': 85,
+                'puntuaciones': {
+                    'precision': 90,
+                    'estabilidad': 80,
+                    'creatividad': 75
+                },
+                'medidas_tecnicas': {
+                    'regularidad_tamano': 85,
+                    'presion_escritura': 78,
+                    'velocidad_escritura': 82
+                }
+            }
+            
+        elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
+            archivos_unicos = {
+                'sesion_completa': True,
+                'duracion_minutos': 45
+            }
+        
+        else:
+            print(f"⚠️ Tipo de servicio no reconocido: {tipo_servicio}")
+            archivos_unicos = {}
+        
+        print(f"✅ Archivos_unicos creados: {archivos_unicos}")
+        return archivos_unicos
+        
+    except Exception as e:
+        print(f"❌ Error en crear_archivos_unicos_testing: {e}")
+        import traceback
+        traceback.print_exc()
+        return {}
+
+def buscar_o_crear_imagen_dummy(tipo_imagen, timestamp):
+    """Buscar imagen existente o crear dummy"""
+    try:
+        import os
+        import glob
+        
+        # 1. Buscar en static/ archivos existentes
+        patterns = [
+            f"static/{tipo_imagen}_*.png",
+            f"static/*{tipo_imagen}*.png"
+        ]
+        
+        archivos_encontrados = []
+        for pattern in patterns:
+            try:
+                archivos_encontrados.extend(glob.glob(pattern))
+            except:
+                pass
+        
+        if archivos_encontrados:
+            archivo_mas_reciente = max(archivos_encontrados, key=os.path.getmtime)
+            return archivo_mas_reciente
+        
+        # 2. Crear imagen dummy
+        dummy_path = f"static/{tipo_imagen}_dummy_{timestamp}.png"
+        crear_imagen_dummy(dummy_path, tipo_imagen)
+        return dummy_path
+            
+    except Exception as e:
+        print(f"❌ Error en buscar_o_crear_imagen_dummy: {e}")
+        return f"static/error_{tipo_imagen}_{timestamp}.png"
+
+def crear_imagen_dummy(ruta_archivo, tipo_imagen):
+    """Crear imagen dummy simple"""
+    try:
+        from PIL import Image, ImageDraw
+        import os
+        
+        os.makedirs(os.path.dirname(ruta_archivo), exist_ok=True)
+        
+        img = Image.new('RGB', (800, 600), color='white')
+        draw = ImageDraw.Draw(img)
+        
+        # Dibujar rectángulo y texto
+        draw.rectangle([50, 50, 750, 550], outline='black', width=3)
+        draw.text((400, 300), f"IMAGEN DUMMY\n{tipo_imagen.upper()}", fill='black', anchor='mm')
+        
+        img.save(ruta_archivo, 'PNG')
+        print(f"✅ Imagen dummy creada: {ruta_archivo}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error creando imagen dummy: {e}")
+        return False
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")

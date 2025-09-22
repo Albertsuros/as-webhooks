@@ -1185,15 +1185,18 @@ def obtener_template_html(tipo_servicio):
 def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=None):
     """Generar informe HTML personalizado según el tipo de servicio"""
     try:
-        # 🔥 DEBUG CRÍTICO: Imprimir lo que llega
+        # 🔥 DEBUG CRÍTICO: AÑADIR AL INICIO DE LA FUNCIÓN
         print(f"🔥 DEBUG generar_informe_html:")
         print(f"   - tipo_servicio: {tipo_servicio}")
         print(f"   - archivos_unicos recibidos: {archivos_unicos}")
         print(f"   - archivos_unicos tipo: {type(archivos_unicos)}")
+        print(f"   - archivos_unicos keys: {list(archivos_unicos.keys()) if archivos_unicos else 'VACÍO'}")
         
         # Verificar que archivos_unicos no esté vacío
         if not archivos_unicos:
             print(f"⚠️ WARNING: archivos_unicos está vacío para {tipo_servicio}")
+        else:
+            print(f"✅ archivos_unicos contiene {len(archivos_unicos)} elementos")
         
         # Obtener fecha y hora de generación
         zona = pytz.timezone('Europe/Madrid')
@@ -1234,16 +1237,22 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
             })
             
         elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
+            # 🔥 DEBUG: Verificar imágenes de revolución solar
+            carta_natal_img = archivos_unicos.get('carta_natal_img')
+            revolucion_img = archivos_unicos.get('revolucion_img')
+            
+            print(f"🔥 DEBUG revolución solar:")
+            print(f"   - carta_natal_img: {carta_natal_img}")
+            print(f"   - revolucion_img: {revolucion_img}")
+            
             datos_template.update({
                 'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
                 'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
                 'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
                 'pais_nacimiento': datos_cliente.get('pais_nacimiento', 'España'),
-                'carta_natal_img': archivos_unicos.get('carta_natal_img'),
-                'revolucion_img': archivos_unicos.get('revolucion_img'),
-                'revolucion_natal_img': archivos_unicos.get('revolucion_natal_img'),
-                'progresiones_img': archivos_unicos.get('progresiones_img'),
-                'transitos_img': archivos_unicos.get('transitos_img')
+                'carta_natal_img': carta_natal_img,
+                'revolucion_img': revolucion_img,
+                'revolucion_natal_img': archivos_unicos.get('revolucion_natal_img')
             })
             
         elif tipo_servicio in ['sinastria_ia', 'sinastria']:
@@ -1306,15 +1315,14 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         # 🔥 DEBUG: Verificar si el HTML renderizado contiene imágenes
         if '<img' in html_content:
             print(f"✅ HTML renderizado contiene {html_content.count('<img')} etiquetas <img>")
+            
+            # Mostrar primeras líneas de imágenes encontradas
+            import re
+            img_tags = re.findall(r'<img[^>]+>', html_content)
+            for i, img in enumerate(img_tags[:3]):  # Mostrar solo las primeras 3
+                print(f"   IMG {i+1}: {img[:100]}...")
         else:
             print(f"❌ HTML renderizado NO contiene etiquetas <img>")
-        
-        # ✅ CORREGIR RUTAS DE IMÁGENES
-        datos_template = corregir_rutas_imagenes_cartas(datos_template)
-        
-        # Renderizar template
-        template = Template(template_html)
-        html_content = template.render(**datos_template)
         
         # Generar nombre de archivo único
         nombre_base = generar_nombre_archivo_unico(tipo_servicio, datos_cliente.get('codigo_servicio', ''))
