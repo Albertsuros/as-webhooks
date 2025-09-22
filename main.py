@@ -9985,6 +9985,155 @@ def pdf_templates_sin_file_prefix(especialidad):
     except Exception as e:
         import traceback
         return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+        
+@app.route('/test/diagnostico_completo_pdf/<especialidad>')
+def diagnostico_completo_pdf(especialidad):
+    """Diagnóstico completo: generar_solo_pdf paso a paso"""
+    try:
+        from informes import generar_informe_html, convertir_html_a_pdf, generar_nombre_archivo_unico
+        import os
+        
+        resultado = {'pasos': {}, 'archivos_debug': {}}
+        
+        # Datos de cliente
+        datos_cliente = {
+            'nombre': 'DIAGNOSTICO FINAL',
+            'email': 'diagnostico@final.com',
+            'codigo_servicio': 'DIAG_FINAL',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # PASO 1: Verificar función crear_archivos_unicos_testing
+        print(f"=== DIAGNÓSTICO FINAL - {especialidad} ===")
+        archivos_unicos = crear_archivos_unicos_testing(especialidad)
+        resultado['pasos']['paso_1_archivos_unicos'] = {
+            'creados': archivos_unicos,
+            'total': len(archivos_unicos),
+            'primer_url': list(archivos_unicos.values())[0] if archivos_unicos else None
+        }
+        
+        # PASO 2: Verificar si generar_solo_pdf usa esta función
+        print(f"=== PASO 2: Verificando generar_solo_pdf ===")
+        
+        # Simular exactamente lo que hace generar_solo_pdf
+        archivo_html = generar_informe_html(datos_cliente, especialidad, archivos_unicos, "DIAGNÓSTICO FINAL")
+        
+        resultado['pasos']['paso_2_html'] = {
+            'generado': archivo_html is not None,
+            'path': archivo_html
+        }
+        
+        if archivo_html:
+            # PASO 3: Leer y analizar HTML generado
+            with open(archivo_html, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            import re
+            img_tags = re.findall(r'<img[^>]*src="([^"]*)"[^>]*>', html_content)
+            
+            resultado['pasos']['paso_3_html_analisis'] = {
+                'total_img_tags': len(img_tags),
+                'src_urls': img_tags,
+                'contiene_file_prefix': any('file://' in url for url in img_tags),
+                'contiene_http_urls': any('https://' in url for url in img_tags),
+                'html_preview': html_content[:1000] + "..."
+            }
+            
+            # PASO 4: Verificar accesibilidad de URLs
+            import requests
+            url_verificacion = {}
+            for i, url in enumerate(img_tags):
+                try:
+                    if url.startswith('https://'):
+                        response = requests.head(url, timeout=3)
+                        url_verificacion[f'img_{i}'] = {
+                            'url': url,
+                            'status': response.status_code,
+                            'accesible': response.status_code == 200
+                        }
+                    else:
+                        url_verificacion[f'img_{i}'] = {
+                            'url': url,
+                            'status': 'No HTTP',
+                            'accesible': False
+                        }
+                except Exception as e:
+                    url_verificacion[f'img_{i}'] = {
+                        'url': url,
+                        'status': f'Error: {str(e)}',
+                        'accesible': False
+                    }
+            
+            resultado['pasos']['paso_4_url_verificacion'] = url_verificacion
+            
+            # PASO 5: Generar PDF y verificar
+            nombre_base = generar_nombre_archivo_unico(especialidad, 'DIAG_FINAL')
+            archivo_pdf = f"informes/{nombre_base}.pdf"
+            os.makedirs('informes', exist_ok=True)
+            
+            exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+            
+            # Verificar tamaño del PDF
+            if exito_pdf and os.path.exists(archivo_pdf):
+                tamaño_pdf = os.path.getsize(archivo_pdf)
+                resultado['pasos']['paso_5_pdf'] = {
+                    'generado': True,
+                    'path': archivo_pdf,
+                    'tamaño_bytes': tamaño_pdf,
+                    'tamaño_kb': round(tamaño_pdf / 1024, 2),
+                    'download_url': f"/test/descargar_pdf/{os.path.basename(archivo_pdf)}"
+                }
+            else:
+                resultado['pasos']['paso_5_pdf'] = {
+                    'generado': False,
+                    'error': 'PDF no se generó o no existe'
+                }
+        
+        # DIAGNÓSTICO FINAL
+        resultado['diagnostico'] = {
+            'problema_archivos_unicos': not archivos_unicos,
+            'problema_html': not archivo_html,
+            'problema_img_tags': resultado.get('pasos', {}).get('paso_3_html_analisis', {}).get('total_img_tags', 0) == 0,
+            'problema_file_prefix': resultado.get('pasos', {}).get('paso_3_html_analisis', {}).get('contiene_file_prefix', False),
+            'problema_urls_no_http': not resultado.get('pasos', {}).get('paso_3_html_analisis', {}).get('contiene_http_urls', False),
+            'problema_urls_inaccesibles': all(not v.get('accesible', False) for v in resultado.get('pasos', {}).get('paso_4_url_verificacion', {}).values())
+        }
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+            'especialidad': especialidad
+        }), 500
+
+# TAMBIÉN VERIFICAR SI generar_solo_pdf USA LA FUNCIÓN CORRECTA
+@app.route('/test/verificar_generar_solo_pdf')
+def verificar_generar_solo_pdf():
+    """Verificar el código actual de generar_solo_pdf"""
+    try:
+        import inspect
+        
+        # Obtener código fuente de generar_solo_pdf
+        codigo = inspect.getsource(generar_solo_pdf)
+        
+        return jsonify({
+            'funcion_codigo': codigo,
+            'usa_crear_archivos_unicos_testing': 'crear_archivos_unicos_testing(' in codigo,
+            'pasa_archivos_unicos': 'archivos_unicos' in codigo,
+            'debug_print': '🔥 DEBUG' in codigo,
+            'lineas_criticas': [
+                line.strip() for line in codigo.split('\n') 
+                if any(keyword in line for keyword in ['archivos_unicos', 'generar_informe_html', 'crear_archivos_unicos_testing'])
+            ]
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
