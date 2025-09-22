@@ -602,7 +602,7 @@ def obtener_template_html(tipo_servicio):
     {% if carta_natal_img %}
     <div class="carta-img">
         <h2>🌍 Tu Carta Natal</h2>
-        <img src="file://{{ carta_natal_img }}" alt="Carta natal completa">
+        <img src="{{ carta_natal_img }}" alt="Carta natal completa">
         <p><em>Tu mapa astrológico personal en el momento de tu nacimiento</em></p>
     </div>
     {% endif %}
@@ -628,7 +628,7 @@ def obtener_template_html(tipo_servicio):
     {% if progresiones_img %}
     <div class="carta-img">
         <h2>🔄 Progresiones Secundarias</h2>
-        <img src="file://{{ progresiones_img }}" alt="Progresiones secundarias">
+        <img src="{{ progresiones_img }}" alt="Progresiones secundarias">
         <p><em>Tu evolución astrológica actual</em></p>
     </div>
     {% endif %}
@@ -636,7 +636,7 @@ def obtener_template_html(tipo_servicio):
     {% if transitos_img %}
     <div class="carta-img">
         <h2>🌊 Tránsitos Actuales</h2>
-        <img src="file://{{ transitos_img }}" alt="Tránsitos actuales">
+        <img src="{{ transitos_img }}" alt="Tránsitos actuales">
         <p><em>Influencias planetarias presentes</em></p>
     </div>
     {% endif %}
@@ -690,7 +690,7 @@ def obtener_template_html(tipo_servicio):
     {% if carta_natal_img %}
     <div class="carta-img">
         <h2>🌍 Tu Carta Natal</h2>
-        <img src="file://{{ carta_natal_img }}" alt="Carta natal">
+        <img src="{{ carta_natal_img }}" alt="Carta natal">
         <p><em>Tu mapa astrológico base</em></p>
     </div>
     {% endif %}
@@ -698,7 +698,7 @@ def obtener_template_html(tipo_servicio):
     {% if revolucion_img %}
     <div class="carta-img">
         <h2>🎂 Tu Revolución Solar</h2>
-        <img src="file://{{ revolucion_img }}" alt="Revolución solar">
+        <img src="{{ revolucion_img }}" alt="Revolución solar">
         <p><em>Predicciones para tu nuevo año astrológico</em></p>
     </div>
     {% endif %}
@@ -706,7 +706,7 @@ def obtener_template_html(tipo_servicio):
     {% if revolucion_natal_img %}
     <div class="carta-img">
         <h2>🔄 Revolución Solar con Aspectos Natales</h2>
-        <img src="file://{{ revolucion_natal_img }}" alt="Revolución con aspectos natales">
+        <img src="{{ revolucion_natal_img }}" alt="Revolución con aspectos natales">
         <p><em>Cómo interactúa tu nuevo año con tu naturaleza básica</em></p>
     </div>
     {% endif %}
@@ -771,7 +771,7 @@ def obtener_template_html(tipo_servicio):
     {% if sinastria_img %}
     <div class="carta-img">
         <h2>💞 Carta de Sinastría</h2>
-        <img src="file://{{ sinastria_img }}" alt="Carta de sinastría">
+        <img src="{{ sinastria_img }}" alt="Carta de sinastría">
         <p><em>Aspectos planetarios entre ambas cartas natales</em></p>
     </div>
     {% endif %}
@@ -829,7 +829,7 @@ def obtener_template_html(tipo_servicio):
     {% if carta_horaria_img %}
     <div class="carta-img">
         <h2>🎯 Carta Horaria</h2>
-        <img src="file://{{ carta_horaria_img }}" alt="Carta horaria">
+        <img src="{{ carta_horaria_img }}" alt="Carta horaria">
         <p><em>Mapa astrológico del momento de tu pregunta</em></p>
     </div>
     {% endif %}
@@ -882,7 +882,7 @@ def obtener_template_html(tipo_servicio):
     {% if mano_derecha_img %}
     <div class="carta-img">
         <h2>🤚 Mano Derecha</h2>
-        <img src="file://{{ mano_derecha_img }}" alt="Mano derecha">
+        <img src="{{ mano_derecha_img }}" alt="Mano derecha">
         <p><em>Mano derecha - Representa tu futuro y lo que construyes</em></p>
     </div>
     {% endif %}
@@ -890,7 +890,7 @@ def obtener_template_html(tipo_servicio):
     {% if mano_izquierda_img %}
     <div class="carta-img">
         <h2>🤚 Mano Izquierda</h2>
-        <img src="file://{{ mano_izquierda_img }}" alt="Mano izquierda">
+        <img src="{{ mano_izquierda_img }}" alt="Mano izquierda">
         <p><em>Mano izquierda - Representa tu pasado y naturaleza innata</em></p>
     </div>
     {% endif %}
@@ -942,7 +942,7 @@ def obtener_template_html(tipo_servicio):
     {% if cara_frente_img %}
     <div class="carta-img">
         <h2>👤 Vista Frontal</h2>
-        <img src="file://{{ cara_frente_img }}" alt="Cara frontal">
+        <img src="{{ cara_frente_img }}" alt="Cara frontal">
         <p><em>Vista frontal - Análisis de proporciones y simetría</em></p>
     </div>
     {% endif %}
@@ -950,7 +950,7 @@ def obtener_template_html(tipo_servicio):
     {% if cara_izquierda_img %}
     <div class="carta-img">
         <h2>👤 Perfil Izquierdo (45°)</h2>
-        <img src="file://{{ cara_izquierda_img }}" alt="Perfil izquierdo">
+        <img src="{{ cara_izquierda_img }}" alt="Perfil izquierdo">
         <p><em>Perfil izquierdo - Análisis del lado emocional</em></p>
     </div>
     {% endif %}
@@ -958,7 +958,7 @@ def obtener_template_html(tipo_servicio):
     {% if cara_derecha_img %}
     <div class="carta-img">
         <h2>👤 Perfil Derecho (45°)</h2>
-        <img src="file://{{ cara_derecha_img }}" alt="Perfil derecho">
+        <img src="{{ cara_derecha_img }}" alt="Perfil derecho">
         <p><em>Perfil derecho - Análisis del lado racional</em></p>
     </div>
     {% endif %}
@@ -1072,7 +1072,7 @@ def obtener_template_html(tipo_servicio):
         {% if muestra_escritura_img %}
         <div class="carta-img">
             <h2>✍️ Tu Muestra de Escritura</h2>
-            <img src="file://{{ muestra_escritura_img }}" alt="Muestra de escritura analizada">
+            <img src="{{ muestra_escritura_img }}" alt="Muestra de escritura analizada">
             <p><em>Muestra de escritura analizada para el informe</em></p>
         </div>
         {% endif %}
