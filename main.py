@@ -9810,6 +9810,186 @@ def verificar_static_http():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+        
+@app.route('/test/pdf_templates_sin_file_prefix/<especialidad>')
+def pdf_templates_sin_file_prefix(especialidad):
+    """Generar PDF con templates corregidos (sin file:// prefix)"""
+    try:
+        from informes import convertir_html_a_pdf, generar_nombre_archivo_unico
+        from jinja2 import Template
+        import os
+        
+        datos_cliente = {
+            'nombre': 'Test Sin File Prefix',
+            'email': 'sinfile@test.com',
+            'codigo_servicio': 'NOFILE_123',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # Usar HTTP URLs
+        base_url = "https://as-webhooks-production.up.railway.app"
+        
+        if especialidad in ['carta_astral_ia', 'carta_natal']:
+            archivos_unicos = {
+                'carta_natal_img': f"{base_url}/static/carta_astral.png",
+                'progresiones_img': f"{base_url}/static/carta_astral_completa.png",
+                'transitos_img': f"{base_url}/static/carta_astral_corregida.png"
+            }
+            
+            # TEMPLATE CORREGIDO SIN file:// PREFIX
+            template_html = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Carta Astral - AS Cartastral</title>
+    <style>
+        body { font-family: Georgia, serif; margin: 40px; line-height: 1.6; color: #333; }
+        .portada { text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; }
+        .datos-natales { background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #667eea; }
+        .section { margin: 30px 0; padding: 15px; }
+        .carta-img { text-align: center; margin: 30px 0; }
+        .carta-img img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .footer { margin-top: 50px; font-size: 0.9em; color: #666; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+        .dato { font-weight: bold; color: #667eea; }
+        .interpretacion { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="portada">
+        <h1>🌟 CARTA ASTRAL PERSONALIZADA 🌟</h1>
+        <h2>{{ nombre }}</h2>
+        <p>AS Cartastral - Servicios Astrológicos Personalizados</p>
+    </div>
+
+    <div class="datos-natales">
+        <h2>📊 Datos Natales</h2>
+        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
+        <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}</p>
+        <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}</p>
+    </div>
+
+    {% if carta_natal_img %}
+    <div class="carta-img">
+        <h2>🌌 Tu Carta Natal</h2>
+        <img src="{{ carta_natal_img }}" alt="Carta natal completa">
+        <p><em>Tu mapa astrológico personal en el momento de tu nacimiento</em></p>
+    </div>
+    {% endif %}
+
+    {% if progresiones_img %}
+    <div class="carta-img">
+        <h2>📈 Progresiones Secundarias</h2>
+        <img src="{{ progresiones_img }}" alt="Progresiones secundarias">
+        <p><em>La evolución de tu personalidad a lo largo del tiempo</em></p>
+    </div>
+    {% endif %}
+
+    {% if transitos_img %}
+    <div class="carta-img">
+        <h2>🔄 Tránsitos Actuales</h2>
+        <img src="{{ transitos_img }}" alt="Tránsitos actuales">
+        <p><em>Las influencias planetarias que te afectan ahora</em></p>
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <h2>✨ Introducción</h2>
+        <div class="interpretacion">
+            <p>Bienvenido/a a tu análisis astrológico personalizado. Esta carta astral representa una fotografía del cielo en el momento exacto de tu nacimiento, mostrando la posición de los planetas y su influencia en tu personalidad y destino.</p>
+        </div>
+    </div>
+
+    {% if resumen_sesion %}
+    <div class="section">
+        <h2>📞 Resumen de tu Sesión</h2>
+        <div class="interpretacion">
+            {{ resumen_sesion }}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
+        <p><strong>Tipo de análisis:</strong> Carta Astral Completa con Progresiones y Tránsitos</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+    </div>
+</body>
+</html>"""
+
+        else:
+            # Para otras especialidades, template básico
+            archivos_unicos = {'imagen_principal': f"{base_url}/static/carta_astral.png"}
+            template_html = """<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Informe - AS Cartastral</title></head>
+<body>
+    <h1>{{ nombre }}</h1>
+    <p>Email: {{ email }}</p>
+    {% if imagen_principal %}<img src="{{ imagen_principal }}" alt="Imagen principal">{% endif %}
+    <p>{{ fecha_generacion }}</p>
+</body>
+</html>"""
+        
+        # Preparar datos para template
+        from datetime import datetime
+        import pytz
+        zona = pytz.timezone('Europe/Madrid')
+        ahora = datetime.now(zona)
+        
+        datos_template = {
+            'nombre': datos_cliente.get('nombre', 'Cliente'),
+            'email': datos_cliente.get('email', ''),
+            'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
+            'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
+            'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
+            'fecha_generacion': ahora.strftime("%d/%m/%Y"),
+            'hora_generacion': ahora.strftime("%H:%M:%S"),
+            'resumen_sesion': "Test de template sin file:// prefix - Todas las imágenes deben cargar correctamente"
+        }
+        datos_template.update(archivos_unicos)
+        
+        # Renderizar template
+        template = Template(template_html)
+        html_content = template.render(**datos_template)
+        
+        # Verificar HTML generado
+        import re
+        img_tags = re.findall(r'<img[^>]+>', html_content)
+        
+        # Guardar HTML
+        nombre_base = generar_nombre_archivo_unico(especialidad, datos_cliente.get('codigo_servicio', ''))
+        archivo_html = f"templates/informe_{nombre_base}.html"
+        os.makedirs('templates', exist_ok=True)
+        
+        with open(archivo_html, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        # Generar PDF
+        nombre_pdf = f"nofile_{especialidad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        archivo_pdf = f"informes/{nombre_pdf}"
+        os.makedirs('informes', exist_ok=True)
+        
+        exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+        
+        return jsonify({
+            'especialidad': especialidad,
+            'metodo': 'Template sin file:// prefix',
+            'archivos_unicos': archivos_unicos,
+            'img_tags_corregidas': img_tags,
+            'total_imagenes': len(img_tags),
+            'html_path': archivo_html,
+            'pdf_generado': exito_pdf,
+            'download_url': f"/test/descargar_pdf/{nombre_pdf}" if exito_pdf else None,
+            'diferencia_clave': 'Templates usan src="{{ imagen }}" en lugar de src="file://{{ imagen }}"'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
