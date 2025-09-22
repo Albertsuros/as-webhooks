@@ -9534,6 +9534,112 @@ def verificar_cambios_aplicados(especialidad):
             'traceback': traceback.format_exc(),
             'especialidad': especialidad
         }), 500
+        
+@app.route('/test/generar_pdf_rutas_absolutas/<especialidad>')
+def generar_pdf_rutas_absolutas(especialidad):
+    """Generar PDF forzando rutas absolutas sin depender de crear_archivos_unicos_testing"""
+    try:
+        from informes import generar_informe_html, convertir_html_a_pdf, generar_nombre_archivo_unico
+        import os
+        
+        # Datos de prueba
+        datos_cliente = {
+            'nombre': 'Cliente Test Absoluto',
+            'email': 'absoluto@test.com',
+            'codigo_servicio': 'ABS_123',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # 🔥 CREAR RUTAS ABSOLUTAS DIRECTAMENTE AQUÍ
+        base_dir = os.path.abspath('.')  # Debería ser /app
+        print(f"🔥 DEBUG: Base directory = {base_dir}")
+        
+        # Crear archivos_unicos con rutas absolutas HARDCODED
+        if especialidad in ['carta_astral_ia', 'carta_natal']:
+            archivos_unicos = {
+                'carta_natal_img': f"{base_dir}/static/carta_astral.png",
+                'progresiones_img': f"{base_dir}/static/carta_astral_completa.png",
+                'transitos_img': f"{base_dir}/static/carta_astral_corregida.png"
+            }
+        else:
+            # Para otras especialidades, usar archivos que sabemos que existen
+            archivos_unicos = {
+                'imagen_principal': f"{base_dir}/static/carta_astral.png"
+            }
+        
+        # 🔥 VERIFICAR RUTAS ANTES DE CONTINUAR
+        print(f"🔥 DEBUG: Archivos_unicos con rutas absolutas:")
+        for key, path in archivos_unicos.items():
+            exists = os.path.exists(path)
+            print(f"  - {key}: {path} (existe: {exists})")
+        
+        # Generar HTML
+        archivo_html = generar_informe_html(datos_cliente, especialidad, archivos_unicos, "Test rutas absolutas")
+        
+        if not archivo_html:
+            return jsonify({'error': 'No se pudo generar HTML'}), 500
+        
+        # Leer HTML y verificar rutas
+        with open(archivo_html, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Buscar etiquetas img
+        import re
+        img_tags = re.findall(r'<img[^>]+>', html_content)
+        
+        # Generar PDF
+        nombre_pdf = f"absoluto_{especialidad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        archivo_pdf = f"informes/{nombre_pdf}"
+        os.makedirs('informes', exist_ok=True)
+        
+        exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+        
+        return jsonify({
+            'especialidad': especialidad,
+            'base_directory': base_dir,
+            'archivos_unicos_absolutos': archivos_unicos,
+            'verificacion_existencia': {k: os.path.exists(v) for k, v in archivos_unicos.items()},
+            'html_generado': archivo_html is not None,
+            'img_tags_en_html': img_tags,
+            'total_imagenes_html': len(img_tags),
+            'pdf_generado': exito_pdf,
+            'download_url': f"/test/descargar_pdf/{nombre_pdf}" if exito_pdf else None
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+# TAMBIÉN AÑADIR ENDPOINT PARA VER QUE FUNCIÓN SE ESTÁ USANDO
+
+@app.route('/test/verificar_funcion_archivos_unicos')
+def verificar_funcion_archivos_unicos():
+    """Verificar qué función crear_archivos_unicos_testing se está ejecutando"""
+    try:
+        import inspect
+        
+        # Obtener el código fuente de la función actual
+        funcion_codigo = inspect.getsource(crear_archivos_unicos_testing)
+        
+        # Probar la función
+        resultado_test = crear_archivos_unicos_testing('carta_astral_ia')
+        
+        return jsonify({
+            'funcion_codigo_preview': funcion_codigo[:500] + "...",
+            'usa_os_path_join': 'os.path.join' in funcion_codigo,
+            'usa_base_dir': 'base_dir' in funcion_codigo,
+            'resultado_test': resultado_test,
+            'primer_archivo': list(resultado_test.values())[0] if resultado_test else None,
+            'es_ruta_absoluta': str(list(resultado_test.values())[0]).startswith('/') if resultado_test else False
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
