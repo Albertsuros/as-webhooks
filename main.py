@@ -6786,66 +6786,167 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
 # ===================================
 
 def crear_archivos_unicos_testing(tipo_servicio):
-    """Crear archivos_unicos para testing con imágenes reales o dummy"""
-    import os
-    from datetime import datetime
-    
-    # Timestamp único para archivos
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    archivos_unicos = {}
-    
-    if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
-        # Buscar imágenes existentes o crear referencias dummy
-        archivos_unicos = {
-            'carta_natal_img': buscar_o_crear_imagen_dummy('carta_natal', timestamp),
-            'progresiones_img': buscar_o_crear_imagen_dummy('progresiones', timestamp),
-            'transitos_img': buscar_o_crear_imagen_dummy('transitos', timestamp)
-        }
+    """Crear archivos_unicos para testing con RUTAS ABSOLUTAS"""
+    try:
+        import os
+        from datetime import datetime
         
-    elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
-        archivos_unicos = {
-            'carta_natal_img': buscar_o_crear_imagen_dummy('carta_natal', timestamp),
-            'revolucion_img': buscar_o_crear_imagen_dummy('revolucion_solar', timestamp),
-            'revolucion_natal_img': buscar_o_crear_imagen_dummy('revolucion_natal', timestamp)
-        }
+        print(f"🔍 Creando archivos_unicos para: {tipo_servicio}")
         
-    elif tipo_servicio in ['sinastria_ia', 'sinastria']:
-        archivos_unicos = {
-            'sinastria_img': buscar_o_crear_imagen_dummy('sinastria', timestamp)
-        }
+        # OBTENER RUTA ABSOLUTA BASE
+        base_dir = os.path.abspath('.')  # /app en Railway
+        print(f"🔍 Base directory: {base_dir}")
         
-    elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
-        archivos_unicos = {
-            'carta_horaria_img': buscar_o_crear_imagen_dummy('carta_horaria', timestamp)
-        }
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archivos_unicos = {}
         
-    elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
-        archivos_unicos = {
-            'mano_izquierda_img': buscar_o_crear_imagen_dummy('mano_izquierda', timestamp),
-            'mano_derecha_img': buscar_o_crear_imagen_dummy('mano_derecha', timestamp),
-            'lineas_anotadas_img': buscar_o_crear_imagen_dummy('lineas_anotadas', timestamp)
-        }
-        
-    elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
-        archivos_unicos = {
-            'cara_frontal_img': buscar_o_crear_imagen_dummy('cara_frontal', timestamp),
-            'cara_izquierda_img': buscar_o_crear_imagen_dummy('cara_izquierda', timestamp),
-            'cara_derecha_img': buscar_o_crear_imagen_dummy('cara_derecha', timestamp)
-        }
-        
-    elif tipo_servicio in ['grafologia_ia', 'grafologia']:
-        archivos_unicos = {
-            'muestra_escritura_img': buscar_o_crear_imagen_dummy('muestra_escritura', timestamp),
-            'confianza': 85,
-            'puntuaciones': {
-                'precision': 90,
-                'estabilidad': 80,
-                'creatividad': 75
+        if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
+            # 🔥 USAR RUTAS ABSOLUTAS COMPLETAS
+            archivos_unicos = {
+                'carta_natal_img': os.path.join(base_dir, 'static', 'carta_astral.png'),
+                'progresiones_img': os.path.join(base_dir, 'static', 'carta_astral_completa.png'),
+                'transitos_img': os.path.join(base_dir, 'static', 'carta_astral_corregida.png')
             }
+            
+        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
+            archivos_unicos = {
+                'carta_natal_img': os.path.join(base_dir, 'static', 'carta_astral.png'),
+                'revolucion_img': os.path.join(base_dir, 'static', 'carta_astral_placidus.png'),
+                'revolucion_natal_img': os.path.join(base_dir, 'static', 'carta_astral_placidus_corregida.png')
+            }
+            
+        elif tipo_servicio in ['sinastria_ia', 'sinastria']:
+            archivos_unicos = {
+                'sinastria_img': os.path.join(base_dir, 'static', 'carta_astral_demo.png')
+            }
+            
+        elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
+            archivos_unicos = {
+                'carta_horaria_img': os.path.join(base_dir, 'static', 'carta.png')
+            }
+            
+        elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
+            archivos_unicos = {
+                'mano_izquierda_img': buscar_o_crear_imagen_dummy('mano_izquierda', timestamp),
+                'mano_derecha_img': buscar_o_crear_imagen_dummy('mano_derecha', timestamp),
+                'lineas_anotadas_img': buscar_o_crear_imagen_dummy('lineas_anotadas', timestamp)
+            }
+            
+        elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
+            archivos_unicos = {
+                'cara_frontal_img': buscar_o_crear_imagen_dummy('cara_frontal', timestamp),
+                'cara_izquierda_img': buscar_o_crear_imagen_dummy('cara_izquierda', timestamp),
+                'cara_derecha_img': buscar_o_crear_imagen_dummy('cara_derecha', timestamp)
+            }
+            
+        elif tipo_servicio in ['grafologia_ia', 'grafologia']:
+            archivos_unicos = {
+                'muestra_escritura_img': buscar_o_crear_imagen_dummy('muestra_escritura', timestamp),
+                'confianza': 85,
+                'puntuaciones': {
+                    'precision': 90,
+                    'estabilidad': 80,
+                    'creatividad': 75
+                },
+                'medidas_tecnicas': {
+                    'regularidad_tamano': 85,
+                    'presion_escritura': 78,
+                    'velocidad_escritura': 82
+                }
+            }
+            
+        elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
+            archivos_unicos = {
+                'sesion_completa': True,
+                'duracion_minutos': 45
+            }
+        
+        else:
+            print(f"⚠️ Tipo de servicio no reconocido: {tipo_servicio}")
+            archivos_unicos = {}
+        
+        # 🔥 VERIFICAR Y MOSTRAR RUTAS ABSOLUTAS
+        for key, value in archivos_unicos.items():
+            if isinstance(value, str) and value.endswith(('.png', '.jpg', '.jpeg')):
+                print(f"🔍 {key}: {value}")
+                print(f"   - Existe: {os.path.exists(value)}")
+        
+        print(f"✅ Archivos_unicos creados con rutas absolutas: {archivos_unicos}")
+        return archivos_unicos
+        
+    except Exception as e:
+        print(f"❌ Error en crear_archivos_unicos_testing: {e}")
+        import traceback
+        traceback.print_exc()
+        return {}
+
+# ===================================
+# AÑADIR ENDPOINT DE TEST FINAL
+# ===================================
+
+@app.route('/test/generar_pdf_con_debug/<especialidad>')
+def generar_pdf_con_debug(especialidad):
+    """Generar PDF con debug completo paso a paso"""
+    try:
+        from informes import generar_informe_html, convertir_html_a_pdf, generar_nombre_archivo_unico
+        import os
+        
+        # Datos de prueba
+        datos_cliente = {
+            'nombre': 'Cliente Test Debug',
+            'email': 'debug@test.com',
+            'codigo_servicio': 'DEBUG_123',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
         }
-    
-    return archivos_unicos
+        
+        resultado = {'pasos': {}}
+        
+        # PASO 1: Crear archivos_unicos
+        print(f"🔍 PASO 1: Creando archivos_unicos...")
+        archivos_unicos = crear_archivos_unicos_testing(especialidad)
+        resultado['pasos']['paso_1'] = {
+            'archivos_unicos': archivos_unicos,
+            'total_archivos': len([k for k, v in archivos_unicos.items() if isinstance(v, str) and v.endswith(('.png', '.jpg'))])
+        }
+        
+        # PASO 2: Generar HTML
+        print(f"🔍 PASO 2: Generando HTML...")
+        archivo_html = generar_informe_html(datos_cliente, especialidad, archivos_unicos, "Debug test")
+        resultado['pasos']['paso_2'] = {
+            'html_generado': archivo_html is not None,
+            'archivo_path': archivo_html
+        }
+        
+        if archivo_html:
+            # PASO 3: Verificar contenido HTML
+            with open(archivo_html, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            img_count = html_content.count('<img')
+            resultado['pasos']['paso_3'] = {
+                'imagenes_en_html': img_count,
+                'html_preview': html_content[:500]
+            }
+            
+            # PASO 4: Generar PDF
+            print(f"🔍 PASO 4: Generando PDF...")
+            nombre_pdf = f"debug_{especialidad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            archivo_pdf = f"informes/{nombre_pdf}"
+            os.makedirs('informes', exist_ok=True)
+            
+            exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+            resultado['pasos']['paso_4'] = {
+                'pdf_generado': exito_pdf,
+                'archivo_pdf': archivo_pdf if exito_pdf else None,
+                'download_url': f"/test/descargar_pdf/{nombre_pdf}" if exito_pdf else None
+            }
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 def buscar_o_crear_imagen_dummy(tipo_imagen, timestamp):
     """Buscar imagen existente o usar una dummy"""
