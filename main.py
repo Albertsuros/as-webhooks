@@ -9640,6 +9640,176 @@ def verificar_funcion_archivos_unicos():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+        
+@app.route('/test/pdf_arquitectura_correcta/<especialidad>')
+def pdf_arquitectura_correcta(especialidad):
+    """Test usando arquitectura real: HTTP para /img/, verificar /static/"""
+    try:
+        from informes import generar_informe_html, convertir_html_a_pdf, generar_nombre_archivo_unico
+        import os
+        
+        datos_cliente = {
+            'nombre': 'Test Arquitectura Real',
+            'email': 'arq@test.com',
+            'codigo_servicio': 'ARQ_123',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30', 
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        base_url = "https://as-webhooks-production.up.railway.app"
+        base_dir = "/app"
+        
+        # 🔥 USAR ARQUITECTURA REAL
+        if especialidad in ['carta_astral_ia', 'carta_natal']:
+            archivos_unicos = {
+                # IMÁGENES DINÁMICAS: Intentar HTTP primero, luego file:// si falla
+                'carta_natal_img': f"{base_url}/static/carta_astral.png",
+                'progresiones_img': f"{base_url}/static/carta_astral_completa.png",
+                'transitos_img': f"{base_url}/static/carta_astral_corregida.png"
+            }
+        elif especialidad in ['revolucion_solar_ia', 'revolucion_solar']:
+            archivos_unicos = {
+                'carta_natal_img': f"{base_url}/static/carta_astral.png",
+                'revolucion_img': f"{base_url}/static/carta_astral_placidus.png"
+            }
+        elif especialidad in ['sinastria_ia', 'sinastria']:
+            archivos_unicos = {
+                'sinastria_img': f"{base_url}/static/carta_astral_demo.png"
+            }
+        elif especialidad in ['lectura_manos_ia', 'lectura_manos']:
+            # Para manos, las imágenes las sube el cliente a /static/
+            archivos_unicos = {
+                'mano_izquierda_img': f"{base_url}/static/mano_ejemplo.jpg",  # Placeholder
+                'mano_derecha_img': f"{base_url}/static/mano_ejemplo2.jpg"    # Placeholder
+            }
+        elif especialidad in ['lectura_facial_ia', 'lectura_facial']:
+            # Para facial, las imágenes las sube el cliente a /static/
+            archivos_unicos = {
+                'cara_frontal_img': f"{base_url}/static/cara_ejemplo.jpg"     # Placeholder
+            }
+        else:
+            archivos_unicos = {}
+        
+        # Verificar accesibilidad HTTP de imágenes dinámicas
+        import requests
+        verificacion = {}
+        fallback_local = {}
+        
+        for key, url in archivos_unicos.items():
+            try:
+                response = requests.head(url, timeout=3)
+                if response.status_code == 200:
+                    verificacion[key] = {'url': url, 'http_ok': True}
+                else:
+                    # Si HTTP falla, usar file:// local
+                    ruta_local = url.replace(base_url, base_dir)
+                    if os.path.exists(ruta_local):
+                        fallback_local[key] = ruta_local
+                        verificacion[key] = {'url': url, 'http_ok': False, 'fallback': ruta_local, 'exists_local': True}
+                    else:
+                        verificacion[key] = {'url': url, 'http_ok': False, 'exists_local': False}
+            except:
+                # Si HTTP falla completamente, usar file:// local
+                ruta_local = url.replace(base_url, base_dir)
+                if os.path.exists(ruta_local):
+                    fallback_local[key] = ruta_local
+                    verificacion[key] = {'url': url, 'http_ok': False, 'fallback': ruta_local, 'exists_local': True}
+                else:
+                    verificacion[key] = {'url': url, 'http_ok': False, 'exists_local': False}
+        
+        # Usar fallbacks locales donde sea necesario
+        for key, ruta_local in fallback_local.items():
+            archivos_unicos[key] = ruta_local
+        
+        # Generar HTML y PDF
+        archivo_html = generar_informe_html(datos_cliente, especialidad, archivos_unicos, "Test arquitectura real")
+        
+        if archivo_html:
+            with open(archivo_html, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            import re
+            img_tags = re.findall(r'<img[^>]+>', html_content)
+            
+            nombre_pdf = f"arq_{especialidad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            archivo_pdf = f"informes/{nombre_pdf}"
+            os.makedirs('informes', exist_ok=True)
+            
+            exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+            
+            return jsonify({
+                'especialidad': especialidad,
+                'metodo': 'Arquitectura real: HTTP + fallback local',
+                'archivos_unicos_finales': archivos_unicos,
+                'verificacion_http': verificacion,
+                'fallbacks_usados': len(fallback_local),
+                'img_tags_en_html': img_tags,
+                'total_imagenes': len(img_tags),
+                'pdf_generado': exito_pdf,
+                'download_url': f"/test/descargar_pdf/{nombre_pdf}" if exito_pdf else None
+            })
+        else:
+            return jsonify({'error': 'No se pudo generar HTML'}), 500
+            
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+
+# TAMBIÉN VERIFICAR SI RAILWAY SIRVE /static/ POR HTTP
+
+@app.route('/test/verificar_static_http')
+def verificar_static_http():
+    """Verificar si Railway sirve archivos de /static/ por HTTP"""
+    try:
+        import requests
+        import os
+        
+        base_url = "https://as-webhooks-production.up.railway.app"
+        
+        # Archivos que sabemos que existen en /static/ según debug anterior
+        archivos_test = [
+            'carta_astral.png',
+            'carta_astral_completa.png', 
+            'carta_astral_corregida.png',
+            'carta_astral_demo.png'
+        ]
+        
+        resultados = {}
+        
+        for archivo in archivos_test:
+            url_http = f"{base_url}/static/{archivo}"
+            ruta_local = f"/app/static/{archivo}"
+            
+            # Test HTTP
+            try:
+                response = requests.head(url_http, timeout=3)
+                http_ok = response.status_code == 200
+            except:
+                http_ok = False
+            
+            # Test local
+            existe_local = os.path.exists(ruta_local)
+            
+            resultados[archivo] = {
+                'url_http': url_http,
+                'http_accesible': http_ok,
+                'existe_localmente': existe_local,
+                'recomendacion': 'HTTP' if http_ok else ('file://' if existe_local else 'NO DISPONIBLE')
+            }
+        
+        return jsonify({
+            'railway_sirve_static': any(r['http_accesible'] for r in resultados.values()),
+            'archivos_probados': resultados,
+            'resumen': {
+                'http_funciona': sum(1 for r in resultados.values() if r['http_accesible']),
+                'solo_local': sum(1 for r in resultados.values() if r['existe_localmente'] and not r['http_accesible']),
+                'no_disponible': sum(1 for r in resultados.values() if not r['existe_localmente'])
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
