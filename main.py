@@ -6781,45 +6781,6 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
         traceback.print_exc()
         return None
 
-@app.route('/test/debug_archivos_unicos/<especialidad>')
-def debug_archivos_unicos(especialidad):
-    """Debug específico para archivos_unicos"""
-    try:
-        archivos_unicos = crear_archivos_unicos_testing(especialidad)
-        
-        # Verificar existencia de archivos
-        archivos_verificados = {}
-        
-        for key, ruta in archivos_unicos.items():
-            if isinstance(ruta, str) and ('/' in ruta or '\\' in ruta or ruta.endswith(('.png', '.jpg', '.jpeg'))):
-                if os.path.exists(ruta):
-                    archivos_verificados[key] = {
-                        'ruta': ruta,
-                        'existe': True,
-                        'tamaño': os.path.getsize(ruta)
-                    }
-                else:
-                    archivos_verificados[key] = {
-                        'ruta': ruta,
-                        'existe': False
-                    }
-            else:
-                archivos_verificados[key] = {
-                    'valor': ruta,
-                    'es_ruta': False
-                }
-        
-        return jsonify({
-            'especialidad': especialidad,
-            'archivos_unicos_generados': archivos_unicos,
-            'verificacion_existencia': archivos_verificados,
-            'total_archivos_esperados': len([k for k, v in archivos_verificados.items() if v.get('es_ruta', True)]),
-            'archivos_existentes': sum(1 for v in archivos_verificados.values() if v.get('existe', False))
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 # ===================================
 # 2. NUEVA FUNCIÓN EN main.py - Crear archivos testing
 # ===================================
