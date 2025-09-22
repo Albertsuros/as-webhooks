@@ -1185,6 +1185,16 @@ def obtener_template_html(tipo_servicio):
 def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=None):
     """Generar informe HTML personalizado según el tipo de servicio"""
     try:
+        # 🔥 DEBUG CRÍTICO: Imprimir lo que llega
+        print(f"🔥 DEBUG generar_informe_html:")
+        print(f"   - tipo_servicio: {tipo_servicio}")
+        print(f"   - archivos_unicos recibidos: {archivos_unicos}")
+        print(f"   - archivos_unicos tipo: {type(archivos_unicos)}")
+        
+        # Verificar que archivos_unicos no esté vacío
+        if not archivos_unicos:
+            print(f"⚠️ WARNING: archivos_unicos está vacío para {tipo_servicio}")
+        
         # Obtener fecha y hora de generación
         zona = pytz.timezone('Europe/Madrid')
         ahora = datetime.now(zona)
@@ -1202,15 +1212,25 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         
         # Datos específicos según tipo de servicio
         if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
+            # 🔥 DEBUG: Verificar imágenes específicas
+            carta_natal_img = archivos_unicos.get('carta_natal_img')
+            progresiones_img = archivos_unicos.get('progresiones_img')
+            transitos_img = archivos_unicos.get('transitos_img')
+            
+            print(f"🔥 DEBUG carta astral:")
+            print(f"   - carta_natal_img: {carta_natal_img}")
+            print(f"   - progresiones_img: {progresiones_img}")
+            print(f"   - transitos_img: {transitos_img}")
+            
             datos_template.update({
                 'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
                 'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
                 'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
                 'pais_nacimiento': datos_cliente.get('pais_nacimiento', 'España'),
                 'planetas': datos_cliente.get('planetas', {}),
-                'carta_natal_img': archivos_unicos.get('carta_natal_img'),
-                'progresiones_img': archivos_unicos.get('progresiones_img'),
-                'transitos_img': archivos_unicos.get('transitos_img')
+                'carta_natal_img': carta_natal_img,
+                'progresiones_img': progresiones_img,
+                'transitos_img': transitos_img
             })
             
         elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
@@ -1273,6 +1293,22 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         # Obtener template HTML
         template_html = obtener_template_html(tipo_servicio)
         
+        # 🔥 DEBUG: Verificar si template contiene condicionales de imágenes
+        if '{% if carta_natal_img %}' in template_html:
+            print(f"✅ Template contiene condicional carta_natal_img")
+        else:
+            print(f"⚠️ Template NO contiene condicional carta_natal_img")
+        
+        # Renderizar template
+        template = Template(template_html)
+        html_content = template.render(**datos_template)
+        
+        # 🔥 DEBUG: Verificar si el HTML renderizado contiene imágenes
+        if '<img' in html_content:
+            print(f"✅ HTML renderizado contiene {html_content.count('<img')} etiquetas <img>")
+        else:
+            print(f"❌ HTML renderizado NO contiene etiquetas <img>")
+        
         # ✅ CORREGIR RUTAS DE IMÁGENES
         datos_template = corregir_rutas_imagenes_cartas(datos_template)
         
@@ -1299,6 +1335,40 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         import traceback
         traceback.print_exc()
         return None
+        
+@app.route('/test/debug_archivos_unicos/<especialidad>')
+def debug_archivos_unicos(especialidad):
+    """Debug específico para archivos_unicos"""
+    try:
+        # Simular creación de archivos_unicos
+        archivos_unicos = crear_archivos_unicos_testing(especialidad)
+        
+        # Verificar existencia de archivos
+        archivos_verificados = {}
+        for key, ruta in archivos_unicos.items():
+            if isinstance(ruta, str) and os.path.exists(ruta):
+                archivos_verificados[key] = {
+                    'ruta': ruta,
+                    'existe': True,
+                    'tamaño': os.path.getsize(ruta)
+                }
+            else:
+                archivos_verificados[key] = {
+                    'ruta': str(ruta),
+                    'existe': False,
+                    'valor': ruta
+                }
+        
+        return jsonify({
+            'especialidad': especialidad,
+            'archivos_unicos_generados': archivos_unicos,
+            'verificacion_existencia': archivos_verificados,
+            'total_archivos': len(archivos_unicos),
+            'archivos_existentes': sum(1 for v in archivos_verificados.values() if v.get('existe', False))
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def convertir_html_a_pdf(archivo_html, archivo_pdf):
     """Convertir HTML a PDF usando Playwright"""

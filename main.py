@@ -6734,15 +6734,26 @@ def generar_pdfs_todas_especialidades():
         return jsonify({'status': 'error', 'mensaje': str(e)}), 500
 
 def generar_solo_pdf(datos_cliente, tipo_servicio):
-    """Generar solo PDF sin enviar email"""
+    """Generar solo PDF sin enviar email - CON IMÁGENES DE PRUEBA"""
     try:
         from informes import generar_informe_html, convertir_html_a_pdf, generar_nombre_archivo_unico
         import os
         
         print(f"📄 Generando PDF para {tipo_servicio}")
         
-        # Generar HTML
-        archivo_html = generar_informe_html(datos_cliente, tipo_servicio, {}, "Resumen de prueba para testing")
+        # 🔥 CREAR ARCHIVOS_UNICOS DE PRUEBA (en lugar de diccionario vacío)
+        archivos_unicos_prueba = crear_archivos_unicos_testing(tipo_servicio)
+        
+        # 🔥 DEBUG: Imprimir qué se está pasando
+        print(f"🔥 DEBUG archivos_unicos_prueba: {archivos_unicos_prueba}")
+        
+        # Generar HTML CON archivos_unicos
+        archivo_html = generar_informe_html(
+            datos_cliente, 
+            tipo_servicio, 
+            archivos_unicos_prueba,  # 🔥 CAMBIO: No más diccionario vacío
+            "Resumen de prueba para testing - Generado en Railway"
+        )
         
         if not archivo_html:
             print("❌ Error generando HTML")
@@ -6766,7 +6777,156 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
         
     except Exception as e:
         print(f"❌ Error en generar_solo_pdf: {e}")
+        import traceback
+        traceback.print_exc()
         return None
+
+# ===================================
+# 2. NUEVA FUNCIÓN EN main.py - Crear archivos testing
+# ===================================
+
+def crear_archivos_unicos_testing(tipo_servicio):
+    """Crear archivos_unicos para testing con imágenes reales o dummy"""
+    import os
+    from datetime import datetime
+    
+    # Timestamp único para archivos
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    archivos_unicos = {}
+    
+    if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
+        # Buscar imágenes existentes o crear referencias dummy
+        archivos_unicos = {
+            'carta_natal_img': buscar_o_crear_imagen_dummy('carta_natal', timestamp),
+            'progresiones_img': buscar_o_crear_imagen_dummy('progresiones', timestamp),
+            'transitos_img': buscar_o_crear_imagen_dummy('transitos', timestamp)
+        }
+        
+    elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
+        archivos_unicos = {
+            'carta_natal_img': buscar_o_crear_imagen_dummy('carta_natal', timestamp),
+            'revolucion_img': buscar_o_crear_imagen_dummy('revolucion_solar', timestamp),
+            'revolucion_natal_img': buscar_o_crear_imagen_dummy('revolucion_natal', timestamp)
+        }
+        
+    elif tipo_servicio in ['sinastria_ia', 'sinastria']:
+        archivos_unicos = {
+            'sinastria_img': buscar_o_crear_imagen_dummy('sinastria', timestamp)
+        }
+        
+    elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
+        archivos_unicos = {
+            'carta_horaria_img': buscar_o_crear_imagen_dummy('carta_horaria', timestamp)
+        }
+        
+    elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
+        archivos_unicos = {
+            'mano_izquierda_img': buscar_o_crear_imagen_dummy('mano_izquierda', timestamp),
+            'mano_derecha_img': buscar_o_crear_imagen_dummy('mano_derecha', timestamp),
+            'lineas_anotadas_img': buscar_o_crear_imagen_dummy('lineas_anotadas', timestamp)
+        }
+        
+    elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
+        archivos_unicos = {
+            'cara_frontal_img': buscar_o_crear_imagen_dummy('cara_frontal', timestamp),
+            'cara_izquierda_img': buscar_o_crear_imagen_dummy('cara_izquierda', timestamp),
+            'cara_derecha_img': buscar_o_crear_imagen_dummy('cara_derecha', timestamp)
+        }
+        
+    elif tipo_servicio in ['grafologia_ia', 'grafologia']:
+        archivos_unicos = {
+            'muestra_escritura_img': buscar_o_crear_imagen_dummy('muestra_escritura', timestamp),
+            'confianza': 85,
+            'puntuaciones': {
+                'precision': 90,
+                'estabilidad': 80,
+                'creatividad': 75
+            }
+        }
+    
+    return archivos_unicos
+
+def buscar_o_crear_imagen_dummy(tipo_imagen, timestamp):
+    """Buscar imagen existente o usar una dummy"""
+    import os
+    import glob
+    
+    # 1. Buscar en static/ archivos recientes (últimas 2 horas)
+    patterns = [
+        f"static/{tipo_imagen}_*.png",
+        f"static/*{tipo_imagen}*.png"
+    ]
+    
+    archivos_encontrados = []
+    for pattern in patterns:
+        archivos_encontrados.extend(glob.glob(pattern))
+    
+    if archivos_encontrados:
+        # Usar el más reciente
+        archivo_mas_reciente = max(archivos_encontrados, key=os.path.getmtime)
+        print(f"✅ Usando imagen existente: {archivo_mas_reciente}")
+        return archivo_mas_reciente
+    
+    # 2. Buscar en img/ (imágenes estáticas)
+    img_patterns = [
+        f"img/{tipo_imagen}*.jpg",
+        f"img/{tipo_imagen}*.JPG",
+        f"img/{tipo_imagen}*.png",
+        f"img/*{tipo_imagen}*.jpg",
+        f"img/*{tipo_imagen}*.JPG"
+    ]
+    
+    for pattern in img_patterns:
+        archivos_img = glob.glob(pattern)
+        if archivos_img:
+            print(f"✅ Usando imagen estática: {archivos_img[0]}")
+            return archivos_img[0]
+    
+    # 3. Crear imagen dummy si no existe
+    dummy_path = f"static/{tipo_imagen}_dummy_{timestamp}.png"
+    crear_imagen_dummy(dummy_path, tipo_imagen)
+    return dummy_path
+
+def crear_imagen_dummy(ruta_archivo, tipo_imagen):
+    """Crear imagen dummy simple para testing"""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        import os
+        
+        # Crear directorio si no existe
+        os.makedirs(os.path.dirname(ruta_archivo), exist_ok=True)
+        
+        # Crear imagen base
+        img = Image.new('RGB', (800, 600), color='white')
+        draw = ImageDraw.Draw(img)
+        
+        # Añadir texto
+        try:
+            font = ImageFont.load_default()
+        except:
+            font = None
+            
+        texto = f"IMAGEN DUMMY\n{tipo_imagen.upper()}\nGenerada para testing"
+        
+        # Dibujar rectángulo de fondo
+        draw.rectangle([50, 50, 750, 550], outline='black', width=3)
+        
+        # Dibujar texto centrado
+        if font:
+            draw.text((400, 300), texto, fill='black', font=font, anchor='mm')
+        else:
+            draw.text((400, 300), texto, fill='black', anchor='mm')
+        
+        # Guardar imagen
+        img.save(ruta_archivo, 'PNG')
+        print(f"✅ Imagen dummy creada: {ruta_archivo}")
+        
+    except Exception as e:
+        print(f"❌ Error creando imagen dummy: {e}")
+        # Crear archivo vacío como fallback
+        with open(ruta_archivo, 'w') as f:
+            f.write("")
 
 @app.route('/test/generar_pdf_especialidad/<especialidad>')
 def generar_pdf_especialidad(especialidad):
