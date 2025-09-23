@@ -10622,6 +10622,62 @@ def corregir_busqueda_archivos():
         
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+@app.route('/test/generar_y_usar_inmediato')
+def generar_y_usar_inmediato():
+    try:
+        from datetime import datetime
+        import os
+        
+        # Datos de prueba
+        datos_natales = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # Convertir datos
+        dia, mes, año = map(int, datos_natales['fecha_nacimiento'].split('/'))
+        hora, minuto = map(int, datos_natales['hora_nacimiento'].split(':'))
+        
+        # Archivo temporal con timestamp único
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")  # incluir microsegundos
+        archivo_temp = f"static/temp_carta_{timestamp}.png"
+        
+        # Generar carta
+        from carta_natal import CartaAstralNatal
+        carta = CartaAstralNatal(figsize=(16, 14))
+        
+        # Configurar archivo específico
+        carta.nombre_archivo_personalizado = archivo_temp
+        
+        aspectos, posiciones = carta.crear_carta_astral_natal(
+            fecha_natal=(año, mes, dia, hora, minuto),
+            lugar_natal=(40.42, -3.70),
+            ciudad_natal="Madrid, España",
+            guardar_archivo=True,
+            directorio_salida="static"
+        )
+        
+        # Verificar inmediatamente
+        archivo_existe = os.path.exists(archivo_temp)
+        tamaño = os.path.getsize(archivo_temp) if archivo_existe else 0
+        
+        return jsonify({
+            "metodo": "generar_y_verificar_inmediato",
+            "archivo_temporal": archivo_temp,
+            "archivo_existe": archivo_existe,
+            "tamaño_bytes": tamaño,
+            "aspectos": len(aspectos) if aspectos else 0,
+            "estrategia": "usar_archivo_inmediatamente_sin_esperar"
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()[:1000]
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
