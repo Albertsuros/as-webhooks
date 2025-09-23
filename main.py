@@ -528,7 +528,7 @@ def obtener_nombres_archivos_unicos(tipo_servicio, codigo_cliente):
     
     return nombres, id_unico
 
-def limpiar_archivos_antiguos_mejorado():
+def limpiar_archivos_antiguos():
     """
     Elimina archivos antiguos con tiempos específicos por servicio
     - General: 7 días
