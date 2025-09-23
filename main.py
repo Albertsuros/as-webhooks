@@ -10256,47 +10256,53 @@ def generar_cartas_directas():
             'traceback': traceback.format_exc()
         })
         
-@app.route('/admin/agregar_logo')
-def agregar_logo():
+@app.route('/admin/recuperar_imagenes_perdidas')
+def recuperar_imagenes_perdidas():
     import os
-    from PIL import Image
+    from PIL import Image, ImageDraw, ImageFont
     
     try:
-        # Crear logo placeholder o usar uno que tengas
-        logo_path = 'static/img/logo.jpg'
-        
-        # Verificar si ya existe algún logo
-        posibles_logos = [
-            'static/img/logo.JPG',
-            'static/img/logo.png', 
-            'static/img/logo.jpeg'
+        imagenes_perdidas = [
+            'astrologia-3.jpg',
+            'Tarot y astrologia-5.jpg', 
+            'Sinastria.jpg',
+            'astrologia-1.jpg',
+            'lectura facial.jpg',
+            'coaching-4.jpg'
         ]
         
-        logo_encontrado = None
-        for posible in posibles_logos:
-            if os.path.exists(posible):
-                logo_encontrado = posible
-                break
+        resultados = []
+        directorio = 'static/img/'
         
-        if logo_encontrado:
-            # Copiar y renombrar
-            import shutil
-            shutil.copy2(logo_encontrado, logo_path)
-            return jsonify({
-                "status": "success",
-                "accion": f"Logo copiado desde {logo_encontrado}",
-                "ruta_final": logo_path
-            })
-        else:
-            # Crear logo placeholder simple
-            img = Image.new('RGB', (200, 100), color='#2c3e50')
-            img.save(logo_path)
-            return jsonify({
-                "status": "success", 
-                "accion": "Logo placeholder creado",
-                "ruta_final": logo_path
-            })
+        for imagen in imagenes_perdidas:
+            ruta_imagen = os.path.join(directorio, imagen)
             
+            if not os.path.exists(ruta_imagen):
+                # Crear imagen placeholder de 200x150 con el nombre
+                img = Image.new('RGB', (200, 150), color='#3498db')
+                draw = ImageDraw.Draw(img)
+                
+                # Texto del placeholder
+                texto = imagen.replace('.jpg', '').replace('-', ' ').title()
+                
+                try:
+                    # Intentar usar una fuente por defecto
+                    draw.text((10, 70), texto, fill='white')
+                except:
+                    # Si no hay fuentes, solo crear la imagen sólida
+                    pass
+                
+                img.save(ruta_imagen, 'JPEG')
+                resultados.append(f"✅ Recuperada: {imagen}")
+            else:
+                resultados.append(f"✅ Ya existe: {imagen}")
+        
+        return jsonify({
+            "status": "success",
+            "resultados": resultados,
+            "accion": "Imágenes placeholder creadas como emergencia"
+        })
+        
     except Exception as e:
         return jsonify({
             "status": "error",
