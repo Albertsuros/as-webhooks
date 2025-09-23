@@ -10362,6 +10362,42 @@ def debug_sofia_generacion():
             'traceback': traceback.format_exc()
         })
 
+@app.route('/debug/ver_archivos')
+def ver_archivos():
+    import os
+    import glob
+    
+    try:
+        resultado = {
+            "carpetas": {},
+            "archivos_importantes": {}
+        }
+        
+        # Verificar carpetas principales
+        carpetas = ['static', 'informes', 'templates', 'static/img']
+        for carpeta in carpetas:
+            if os.path.exists(carpeta):
+                archivos = os.listdir(carpeta)
+                resultado["carpetas"][carpeta] = {
+                    "existe": True,
+                    "archivos": archivos[:10],  # solo primeros 10
+                    "total": len(archivos)
+                }
+            else:
+                resultado["carpetas"][carpeta] = {"existe": False}
+        
+        # Buscar archivos específicos
+        resultado["archivos_importantes"] = {
+            "pdfs": glob.glob("informes/*.pdf")[-5:],  # últimos 5 PDFs
+            "imagenes_static": glob.glob("static/*.png")[-5:],  # últimas 5 imágenes
+            "imagenes_fijas": glob.glob("static/img/*")
+        }
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
 
