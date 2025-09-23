@@ -10442,6 +10442,61 @@ def ejecutar_carta_natal():
             "error": str(e),
             "traceback": traceback.format_exc()[:1000]
         })
+        
+@app.route('/test/ejecutar_carta_natal_con_error')
+def ejecutar_carta_natal_con_error():
+    try:
+        from datetime import datetime
+        import os
+        
+        # Capturar cualquier error de importación
+        try:
+            from carta_natal import main as carta_main
+            importacion_ok = True
+            error_importacion = None
+        except Exception as e:
+            importacion_ok = False
+            error_importacion = str(e)
+        
+        if not importacion_ok:
+            return jsonify({
+                "paso": "error_importacion",
+                "error": error_importacion,
+                "solucion": "Revisar dependencias"
+            })
+        
+        # Intentar ejecutar
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archivo_salida = f"static/test_carta_error_{timestamp}.png"
+        
+        try:
+            resultado = carta_main(archivo_salida)
+            ejecucion_ok = True
+            error_ejecucion = None
+        except Exception as e:
+            ejecucion_ok = False
+            error_ejecucion = str(e)
+            import traceback
+            traceback_completo = traceback.format_exc()
+        
+        # Verificar archivo
+        archivo_existe = os.path.exists(archivo_salida)
+        
+        return jsonify({
+            "importacion_ok": importacion_ok,
+            "ejecucion_ok": ejecucion_ok,
+            "error_ejecucion": error_ejecucion if not ejecucion_ok else None,
+            "traceback": traceback_completo[:1500] if not ejecucion_ok else None,
+            "archivo_creado": archivo_existe,
+            "archivo_objetivo": archivo_salida,
+            "timestamp": timestamp
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "error_critico": str(e),
+            "paso": "error_general"
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
