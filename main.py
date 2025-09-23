@@ -10317,6 +10317,73 @@ def fix_extensions_v2():
             "error": str(e),
             "estado_actual": estado_actual if 'estado_actual' in locals() else []
         })
+        
+@app.route('/admin/reset_imagenes_limpiar')
+def reset_imagenes_limpiar():
+    import os
+    import shutil
+    import glob
+    
+    try:
+        directorio = 'static/img/'
+        
+        # 1. ELIMINAR TODO lo que no sea necesario
+        archivos_actuales = glob.glob('static/img/*')
+        
+        # 2. LISTA DE ARCHIVOS QUE NECESITAMOS (con extensión correcta)
+        archivos_necesarios = {
+            'astrologia-1.jpg': 'astrologia-1.JPG',  # source -> target
+            'astrologia-3.jpg': 'astrologia-3.JPG',
+            'coaching-4.jpg': 'coaching-4.JPG', 
+            'Tarot y astrologia-5.jpg': 'Tarot y astrologia-5.JPG',
+            'Sinastria.jpg': 'Sinastria.JPG',
+            'lectura facial.jpg': 'lectura facial.JPG',
+            'Lectura-de-manos-p.jpg': 'Lectura-de-manos-p.jpg',  # Ya está bien
+            'grafologia_2.jpeg': 'grafologia_2.jpeg'  # Ya está bien
+        }
+        
+        acciones = []
+        
+        # 3. COPIAR los archivos necesarios con nombre correcto
+        for target, source in archivos_necesarios.items():
+            source_path = os.path.join(directorio, source)
+            target_path = os.path.join(directorio, target)
+            
+            if os.path.exists(source_path) and source != target:
+                shutil.copy2(source_path, target_path)
+                acciones.append(f"✅ Copiado: {source} → {target}")
+            elif os.path.exists(target_path):
+                acciones.append(f"✅ Ya existe: {target}")
+            else:
+                acciones.append(f"❌ Fuente no encontrada: {source}")
+        
+        # 4. ELIMINAR archivos innecesarios
+        archivos_permitidos = set(archivos_necesarios.keys())
+        
+        for archivo_path in archivos_actuales:
+            archivo_name = os.path.basename(archivo_path)
+            if archivo_name not in archivos_permitidos:
+                try:
+                    os.remove(archivo_path)
+                    acciones.append(f"🗑️ Eliminado: {archivo_name}")
+                except Exception as e:
+                    acciones.append(f"❌ Error eliminando {archivo_name}: {e}")
+        
+        # 5. VERIFICAR resultado final
+        archivos_finales = [os.path.basename(f) for f in glob.glob('static/img/*')]
+        
+        return jsonify({
+            "status": "success",
+            "acciones": acciones,
+            "archivos_finales": archivos_finales,
+            "total_archivos": len(archivos_finales)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
