@@ -10409,6 +10409,39 @@ def crear_informes():
         })
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+@app.route('/test/ejecutar_carta_natal')
+def ejecutar_carta_natal():
+    try:
+        # Importar y ejecutar directamente la función main
+        from carta_natal import main as carta_main
+        
+        # Ejecutar con archivo de salida específico
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archivo_salida = f"static/test_carta_natal_{timestamp}.png"
+        
+        # Llamar la función main del archivo
+        resultado = carta_main(archivo_salida)
+        
+        # Verificar si se creó el archivo
+        import os
+        archivo_existe = os.path.exists(archivo_salida)
+        tamaño = os.path.getsize(archivo_salida) if archivo_existe else 0
+        
+        return jsonify({
+            "funcion_ejecutada": "carta_natal.main()",
+            "archivo_objetivo": archivo_salida,
+            "archivo_creado": archivo_existe,
+            "tamaño_bytes": tamaño,
+            "timestamp": timestamp
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()[:1000]
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
