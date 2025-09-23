@@ -129,16 +129,6 @@ class GestorEmpresasSimple:
         conn.commit()
         conn.close()
         print("Base de datos empresas inicializada")
-        
-@app.route('/debug/archivos')
-def debug_archivos():
-    import glob
-    img_files = glob.glob('static/img/*')
-    return {
-        "img_files": [f.replace('static/img/', '') for f in img_files],
-        "img_count": len(img_files),
-        "estructura_correcta": len(img_files) > 0
-    }
     
     def esta_en_robinson_local(self, cif=None, telefono=None, email=None):
         """Verificar en lista Robinson local"""
