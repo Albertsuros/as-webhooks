@@ -10256,129 +10256,47 @@ def generar_cartas_directas():
             'traceback': traceback.format_exc()
         })
         
-@app.route('/admin/fix_extensions_v2')
-def fix_extensions_v2():
+@app.route('/admin/agregar_logo')
+def agregar_logo():
     import os
-    import shutil
-    import glob
+    from PIL import Image
     
     try:
-        # Primero ver qué archivos tenemos
-        archivos_actuales = glob.glob('static/img/*')
-        estado_actual = [os.path.basename(f) for f in archivos_actuales]
+        # Crear logo placeholder o usar uno que tengas
+        logo_path = 'static/img/logo.jpg'
         
-        cambios = []
-        directorio = 'static/img/'
+        # Verificar si ya existe algún logo
+        posibles_logos = [
+            'static/img/logo.JPG',
+            'static/img/logo.png', 
+            'static/img/logo.jpeg'
+        ]
         
-        # Mapeo CORRECTO (solo cambiar extensión, NO el formato)
-        cambios_necesarios = {
-            # Si están en .png, cambiar a .jpg
-            'astrologia-1.png': 'astrologia-1.jpg',
-            'astrologia-3.JPG': 'astrologia-3.jpg',  # Este quedó pendiente
-            'coaching-4.png': 'coaching-4.jpg',
-            'Tarot y astrologia-5.png': 'Tarot y astrologia-5.jpg',
-            'Sinastria.png': 'Sinastria.jpg',
-            'lectura facial.png': 'lectura facial.jpg',
+        logo_encontrado = None
+        for posible in posibles_logos:
+            if os.path.exists(posible):
+                logo_encontrado = posible
+                break
+        
+        if logo_encontrado:
+            # Copiar y renombrar
+            import shutil
+            shutil.copy2(logo_encontrado, logo_path)
+            return jsonify({
+                "status": "success",
+                "accion": f"Logo copiado desde {logo_encontrado}",
+                "ruta_final": logo_path
+            })
+        else:
+            # Crear logo placeholder simple
+            img = Image.new('RGB', (200, 100), color='#2c3e50')
+            img.save(logo_path)
+            return jsonify({
+                "status": "success", 
+                "accion": "Logo placeholder creado",
+                "ruta_final": logo_path
+            })
             
-            # Si están en .JPG, cambiar a .jpg
-            'astrologia-1.JPG': 'astrologia-1.jpg',
-            'coaching-4.JPG': 'coaching-4.jpg',
-            'Tarot y astrologia-5.JPG': 'Tarot y astrologia-5.jpg',
-            'Sinastria.JPG': 'Sinastria.jpg',
-            'lectura facial.JPG': 'lectura facial.jpg'
-        }
-        
-        for viejo, nuevo in cambios_necesarios.items():
-            ruta_vieja = os.path.join(directorio, viejo)
-            ruta_nueva = os.path.join(directorio, nuevo)
-            
-            if os.path.exists(ruta_vieja):
-                # Usar temp para forzar cambio de extensión
-                temp_path = ruta_nueva + '.temp'
-                shutil.copy2(ruta_vieja, temp_path)  # Copiar primero
-                os.remove(ruta_vieja)  # Eliminar original
-                shutil.move(temp_path, ruta_nueva)  # Renombrar temp
-                cambios.append(f"✅ {viejo} → {nuevo}")
-        
-        # Ver el resultado final
-        archivos_finales = glob.glob('static/img/*')
-        estado_final = [os.path.basename(f) for f in archivos_finales]
-        
-        return jsonify({
-            "status": "success",
-            "estado_inicial": estado_actual,
-            "cambios_aplicados": cambios,
-            "estado_final": estado_final
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "status": "error", 
-            "error": str(e),
-            "estado_actual": estado_actual if 'estado_actual' in locals() else []
-        })
-        
-@app.route('/admin/reset_imagenes_limpiar')
-def reset_imagenes_limpiar():
-    import os
-    import shutil
-    import glob
-    
-    try:
-        directorio = 'static/img/'
-        
-        # 1. ELIMINAR TODO lo que no sea necesario
-        archivos_actuales = glob.glob('static/img/*')
-        
-        # 2. LISTA DE ARCHIVOS QUE NECESITAMOS (con extensión correcta)
-        archivos_necesarios = {
-            'astrologia-1.jpg': 'astrologia-1.JPG',  # source -> target
-            'astrologia-3.jpg': 'astrologia-3.JPG',
-            'coaching-4.jpg': 'coaching-4.JPG', 
-            'Tarot y astrologia-5.jpg': 'Tarot y astrologia-5.JPG',
-            'Sinastria.jpg': 'Sinastria.JPG',
-            'lectura facial.jpg': 'lectura facial.JPG',
-            'Lectura-de-manos-p.jpg': 'Lectura-de-manos-p.jpg',  # Ya está bien
-            'grafologia_2.jpeg': 'grafologia_2.jpeg'  # Ya está bien
-        }
-        
-        acciones = []
-        
-        # 3. COPIAR los archivos necesarios con nombre correcto
-        for target, source in archivos_necesarios.items():
-            source_path = os.path.join(directorio, source)
-            target_path = os.path.join(directorio, target)
-            
-            if os.path.exists(source_path) and source != target:
-                shutil.copy2(source_path, target_path)
-                acciones.append(f"✅ Copiado: {source} → {target}")
-            elif os.path.exists(target_path):
-                acciones.append(f"✅ Ya existe: {target}")
-            else:
-                acciones.append(f"❌ Fuente no encontrada: {source}")
-        
-        # 4. ELIMINAR archivos innecesarios
-        archivos_permitidos = set(archivos_necesarios.keys())
-        
-        for archivo_path in archivos_actuales:
-            archivo_name = os.path.basename(archivo_path)
-            if archivo_name not in archivos_permitidos:
-                try:
-                    os.remove(archivo_path)
-                    acciones.append(f"🗑️ Eliminado: {archivo_name}")
-                except Exception as e:
-                    acciones.append(f"❌ Error eliminando {archivo_name}: {e}")
-        
-        # 5. VERIFICAR resultado final
-        archivos_finales = [os.path.basename(f) for f in glob.glob('static/img/*')]
-        
-        return jsonify({
-            "status": "success",
-            "acciones": acciones,
-            "archivos_finales": archivos_finales,
-            "total_archivos": len(archivos_finales)
-        })
-        
     except Exception as e:
         return jsonify({
             "status": "error",
