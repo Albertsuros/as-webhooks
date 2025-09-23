@@ -10255,6 +10255,49 @@ def generar_cartas_directas():
             'error': str(e),
             'traceback': traceback.format_exc()
         })
+        
+@app.route('/admin/fix_extensions')
+def fix_extensions():
+    import os
+    import shutil
+    
+    try:
+        cambios = []
+        directorio = 'static/img/'
+        
+        # Mapeo de cambios necesarios
+        cambios_necesarios = {
+            'astrologia-1.JPG': 'astrologia-1.jpg',
+            'astrologia-3.JPG': 'astrologia-3.jpg', 
+            'coaching-4.JPG': 'coaching-4.jpg',
+            'Tarot y astrologia-5.JPG': 'Tarot y astrologia-5.jpg',
+            'Sinastria.JPG': 'Sinastria.jpg',
+            'lectura facial.JPG': 'lectura facial.jpg'
+        }
+        
+        for viejo, nuevo in cambios_necesarios.items():
+            ruta_vieja = os.path.join(directorio, viejo)
+            ruta_nueva = os.path.join(directorio, nuevo)
+            
+            if os.path.exists(ruta_vieja):
+                # Renombrar usando temp para forzar cambio
+                temp_path = ruta_nueva + '.temp'
+                shutil.move(ruta_vieja, temp_path)
+                shutil.move(temp_path, ruta_nueva)
+                cambios.append(f"✅ {viejo} → {nuevo}")
+            else:
+                cambios.append(f"❌ No encontrado: {viejo}")
+        
+        return jsonify({
+            "status": "success",
+            "cambios": cambios
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error", 
+            "error": str(e)
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
