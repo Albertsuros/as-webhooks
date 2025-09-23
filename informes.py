@@ -196,7 +196,7 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         'psico_coaching': 'static/img/coaching-4.JPG',
         'grafologia_ia': 'static/img/grafologia_2.jpeg',            # jpeg
         'grafologia': 'static/img/grafologia_2.jpeg',
-        logo_path = 'static/img/logo.JPG'
+        'logo_path = 'static/img/logo.JPG'
     }
     
     titulos_servicios = {
