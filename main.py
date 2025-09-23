@@ -10397,6 +10397,18 @@ def ver_archivos():
         
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+@app.route('/admin/crear_informes')
+def crear_informes():
+    import os
+    try:
+        os.makedirs('informes', exist_ok=True)
+        return jsonify({
+            "carpeta_informes_creada": os.path.exists('informes'),
+            "status": "ok"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
