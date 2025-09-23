@@ -10308,6 +10308,28 @@ def recuperar_imagenes_perdidas():
             "status": "error",
             "error": str(e)
         })
+        
+@app.route('/admin/recuperar_solo_logo')
+def recuperar_solo_logo():
+    import os
+    from PIL import Image, ImageDraw
+    
+    try:
+        logo_path = 'static/img/logo.jpg'
+        
+        # Crear logo simple
+        img = Image.new('RGB', (200, 100), color='#2c3e50')
+        draw = ImageDraw.Draw(img)
+        draw.text((60, 40), "AS CARTASTRAL", fill='white')
+        img.save(logo_path, 'JPEG')
+        
+        return jsonify({
+            "status": "success",
+            "accion": "Logo recreado"
+        })
+        
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
