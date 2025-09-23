@@ -10678,6 +10678,45 @@ def generar_y_usar_inmediato():
             "error": str(e),
             "traceback": traceback.format_exc()[:1000]
         })
+        
+@app.route('/debug/quien_borra_archivos')
+def quien_borra_archivos():
+    try:
+        import os
+        import time
+        from datetime import datetime
+        
+        # Crear archivo de prueba
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archivo_test = f"static/test_duracion_{timestamp}.png"
+        
+        # Escribir archivo
+        with open(archivo_test, 'w') as f:
+            f.write("archivo de prueba")
+        
+        # Verificar inmediatamente
+        existe_inmediato = os.path.exists(archivo_test)
+        
+        # Esperar 5 segundos
+        time.sleep(5)
+        existe_5_seg = os.path.exists(archivo_test)
+        
+        # Información de sistemas de limpieza
+        info_limpieza = {
+            "limpiar_cartas_py": os.path.exists("limpiar_cartas.py"),
+            "funcion_limpieza_main": "limpiar_archivos_antiguos" in open("main.py").read(),
+        }
+        
+        return jsonify({
+            "archivo_creado": archivo_test,
+            "existe_inmediato": existe_inmediato,
+            "existe_despues_5_seg": existe_5_seg,
+            "sistemas_limpieza": info_limpieza,
+            "problema": "archivo_borrado_inmediatamente" if existe_inmediato and not existe_5_seg else "archivo_persiste"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
