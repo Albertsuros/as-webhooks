@@ -10717,6 +10717,23 @@ def quien_borra_archivos():
         
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+@app.route('/test/verificar_extensiones_reales')
+def verificar_extensiones_reales():
+    import glob
+    
+    archivos_img = glob.glob('static/img/*')
+    extensiones = {}
+    
+    for archivo in archivos_img:
+        nombre = archivo.split('/')[-1]
+        ext = nombre.split('.')[-1]
+        extensiones[nombre] = ext
+    
+    return jsonify({
+        "archivos_en_static_img": extensiones,
+        "solucion": "Actualizar informes.py con extensiones reales"
+    })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
