@@ -10497,6 +10497,60 @@ def ejecutar_carta_natal_con_error():
             "error_critico": str(e),
             "paso": "error_general"
         })
+        
+@app.route('/test/debug_carta_natal_detallado')
+def debug_carta_natal_detallado():
+    try:
+        from datetime import datetime
+        import os
+        import matplotlib
+        matplotlib.use('Agg')  # Backend sin pantalla
+        
+        # Intentar ejecutar paso por paso
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archivo_objetivo = f"static/debug_carta_{timestamp}.png"
+        
+        # Importar la clase directamente
+        from carta_natal import CartaAstralNatal
+        
+        # Crear instancia
+        carta = CartaAstralNatal(figsize=(16, 14))
+        
+        # Datos de prueba
+        fecha_natal = (1985, 7, 15, 10, 30)
+        lugar_natal = (40.42, -3.70)  # Madrid
+        ciudad_natal = "Madrid, España"
+        
+        # Intentar generar
+        aspectos, posiciones = carta.crear_carta_astral_natal(
+            fecha_natal=fecha_natal,
+            lugar_natal=lugar_natal,
+            ciudad_natal=ciudad_natal,
+            guardar_archivo=True,
+            directorio_salida="static"
+        )
+        
+        # Verificar archivos creados
+        import glob
+        archivos_nuevos = glob.glob(f"static/*{timestamp}*")
+        todos_los_png = glob.glob("static/*.png")
+        
+        return jsonify({
+            "proceso": "manual_paso_a_paso",
+            "aspectos_calculados": len(aspectos) if aspectos else 0,
+            "archivo_objetivo": archivo_objetivo,
+            "archivos_con_timestamp": archivos_nuevos,
+            "total_png_en_static": len(todos_los_png),
+            "ultimos_png": todos_los_png[-3:] if todos_los_png else [],
+            "matplotlib_backend": matplotlib.get_backend()
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()[:1500]
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
