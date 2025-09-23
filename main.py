@@ -10589,6 +10589,39 @@ def verificar_patron_nombres():
         
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+@app.route('/test/corregir_busqueda_archivos')
+def corregir_busqueda_archivos():
+    try:
+        import glob
+        from datetime import datetime
+        
+        # Datos de prueba como usa Sofia
+        datos_natales = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30'
+        }
+        
+        # Convertir a formato que usa carta_natal
+        dia, mes, año = map(int, datos_natales['fecha_nacimiento'].split('/'))
+        hora, minuto = map(int, datos_natales['hora_nacimiento'].split(':'))
+        
+        # Patrón que realmente se genera
+        patron_real = f"static/carta_natal_{año}{mes:02d}{dia:02d}_{hora:02d}{minuto:02d}.png"
+        
+        # Buscar archivos con este patrón
+        archivos_encontrados = glob.glob(f"static/carta_natal_{año}{mes:02d}{dia:02d}_*.png")
+        
+        return jsonify({
+            "datos_natales": datos_natales,
+            "patron_esperado_sofia": f"static/carta_natal_test_{datetime.now().strftime('%Y%m%d%H%M%S')}.png",
+            "patron_real_generado": patron_real,
+            "archivos_encontrados": archivos_encontrados,
+            "solucion": "Sofia debe buscar archivos con patrón fecha_nacimiento"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
