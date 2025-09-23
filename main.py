@@ -10309,27 +10309,58 @@ def recuperar_imagenes_perdidas():
             "error": str(e)
         })
         
-@app.route('/admin/recuperar_solo_logo')
-def recuperar_solo_logo():
-    import os
-    from PIL import Image, ImageDraw
-    
+@app.route('/debug/sofia_generacion')
+def debug_sofia_generacion():
+    """Debugar generación de Sofia"""
     try:
-        logo_path = 'static/img/logo.jpg'
+        from datetime import datetime
         
-        # Crear logo simple
-        img = Image.new('RGB', (200, 100), color='#2c3e50')
-        draw = ImageDraw.Draw(img)
-        draw.text((60, 40), "AS CARTASTRAL", fill='white')
-        img.save(logo_path, 'JPEG')
+        # Datos de prueba
+        datos_natales = {
+            'nombre': 'Test Cliente',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'residencia_actual': 'Madrid, España'
+        }
+        
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        archivos_unicos = {
+            'carta_natal_img': f'static/carta_natal_test_{timestamp}.png',
+            'progresiones_img': f'static/progresiones_test_{timestamp}.png',
+            'transitos_img': f'static/transitos_test_{timestamp}.png'
+        }
+        
+        print(f"🔧 DEBUG: Probando generación con archivos: {archivos_unicos}")
+        
+        # IMPORTAR Y LLAMAR LA FUNCIÓN
+        from agents.sofia import generar_cartas_astrales_completas
+        exito, datos = generar_cartas_astrales_completas(datos_natales, archivos_unicos)
+        
+        # Verificar si se crearon archivos
+        import os
+        archivos_creados = {}
+        for key, path in archivos_unicos.items():
+            archivos_creados[key] = {
+                'path': path,
+                'exists': os.path.exists(path),
+                'size': os.path.getsize(path) if os.path.exists(path) else 0
+            }
         
         return jsonify({
-            "status": "success",
-            "accion": "Logo recreado"
+            'exito': exito,
+            'datos_resultado': str(datos)[:500] if datos else None,
+            'archivos_unicos': archivos_unicos,
+            'archivos_creados': archivos_creados,
+            'timestamp': timestamp
         })
         
     except Exception as e:
-        return jsonify({"status": "error", "error": str(e)})
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
