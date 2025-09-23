@@ -14,6 +14,20 @@ from flask import redirect, url_for
 from captador_empresas_simple import captador_bp
 
 app = Flask(__name__)
+# CONFIGURACIÓN ARCHIVOS ESTÁTICOS  
+import os
+os.makedirs('static', exist_ok=True)
+os.makedirs('static/img', exist_ok=True)
+
+@app.route('/debug/archivos')
+def debug_archivos():
+    import glob
+    img_files = glob.glob('static/img/*')
+    return {
+        "img_files": [f.replace('static/img/', '') for f in img_files],
+        "img_count": len(img_files),
+        "estructura_correcta": len(img_files) > 0
+    }
 # ← LÍNEA CAMBIADA: Cambiar de empresas_bp a captador_bp
 app.register_blueprint(captador_bp, url_prefix='/api')
 # app.register_blueprint(grafologia_bp, url_prefix="/grafologia")

@@ -129,6 +129,16 @@ class GestorEmpresasSimple:
         conn.commit()
         conn.close()
         print("Base de datos empresas inicializada")
+        
+@app.route('/debug/archivos')
+def debug_archivos():
+    import glob
+    img_files = glob.glob('static/img/*')
+    return {
+        "img_files": [f.replace('static/img/', '') for f in img_files],
+        "img_count": len(img_files),
+        "estructura_correcta": len(img_files) > 0
+    }
     
     def esta_en_robinson_local(self, cif=None, telefono=None, email=None):
         """Verificar en lista Robinson local"""
@@ -528,42 +538,64 @@ def obtener_nombres_archivos_unicos(tipo_servicio, codigo_cliente):
     
     return nombres, id_unico
 
-def limpiar_archivos_antiguos():
+def limpiar_archivos_antiguos_mejorado():
     """
-    Elimina archivos de informes y cartas que tengan más de 7 días
+    Elimina archivos antiguos con tiempos específicos por servicio
+    - General: 7 días
+    - Psico-coaching: 3 meses (90 días)
     """
     try:
+        from datetime import datetime, timedelta
+        import glob
+        
         hace_7_dias = datetime.now() - timedelta(days=7)
+        hace_90_dias = datetime.now() - timedelta(days=90)  # 3 meses
         archivos_eliminados = 0
         
-        # Limpiar templates
-        for archivo in glob.glob("templates/informe_*_*.html"):
+        # Limpiar templates HTML
+        for archivo in glob.glob("templates/informe_*.html"):
             try:
-                # Usar fecha de modificación del archivo en lugar de parsear nombre
                 fecha_archivo = datetime.fromtimestamp(os.path.getmtime(archivo))
                 
-                if fecha_archivo < hace_7_dias:
-                    os.remove(archivo)
-                    archivos_eliminados += 1
-                    print(f"Eliminado archivo antiguo: {archivo}")
+                # Psico-coaching: 3 meses
+                if 'psico_coaching' in archivo:
+                    if fecha_archivo < hace_90_dias:
+                        os.remove(archivo)
+                        archivos_eliminados += 1
+                        print(f"Eliminado archivo psico-coaching antiguo (3 meses): {archivo}")
+                # Otros servicios: 7 días
+                else:
+                    if fecha_archivo < hace_7_dias:
+                        os.remove(archivo)
+                        archivos_eliminados += 1
+                        print(f"Eliminado archivo antiguo (7 días): {archivo}")
+                        
             except (OSError, ValueError) as e:
                 print(f"Error procesando archivo {archivo}: {e}")
                 continue
         
-        # Limpiar static (imágenes de cartas)
+        # Limpiar imágenes dinámicas en static/
         for archivo in glob.glob("static/*.png"):
             try:
-                # Usar fecha de modificación del archivo
                 fecha_archivo = datetime.fromtimestamp(os.path.getmtime(archivo))
                 
-                if fecha_archivo < hace_7_dias:
-                    os.remove(archivo)
-                    archivos_eliminados += 1
-                    print(f"Eliminada imagen antigua: {archivo}")
+                # Psico-coaching: 3 meses
+                if 'psico_coaching' in archivo:
+                    if fecha_archivo < hace_90_dias:
+                        os.remove(archivo)
+                        archivos_eliminados += 1
+                        print(f"Eliminada imagen psico-coaching antigua (3 meses): {archivo}")
+                # Otros servicios: 7 días
+                else:
+                    if fecha_archivo < hace_7_dias:
+                        os.remove(archivo)
+                        archivos_eliminados += 1
+                        print(f"Eliminada imagen antigua (7 días): {archivo}")
+                        
             except (OSError, ValueError) as e:
                 print(f"Error procesando imagen {archivo}: {e}")
                 continue
-                
+        
         print(f"Limpieza completada. Archivos eliminados: {archivos_eliminados}")
         
     except Exception as e:
