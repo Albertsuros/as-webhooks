@@ -180,22 +180,23 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
     
     # MAPEO IMÁGENES (mantenido igual)
     imagenes_servicios = {
-        'carta_astral_ia': 'astrologia-3.jpg',
-        'carta_natal': 'astrologia-3.jpg',
-        'revolucion_solar_ia': 'Tarot y astrologia-5.jpg', 
-        'revolucion_solar': 'Tarot y astrologia-5.jpg',
-        'sinastria_ia': 'Sinastria.jpg',
-        'sinastria': 'Sinastria.jpg',
-        'astrologia_horaria_ia': 'astrologia-1.jpg',
-        'astrol_horaria': 'astrologia-1.jpg',
-        'lectura_manos_ia': 'Lectura-de-manos-p.jpg',
-        'lectura_manos': 'Lectura-de-manos-p.jpg',
-        'lectura_facial_ia': 'lectura facial.jpg',
-        'lectura_facial': 'lectura facial.jpg',
-        'psico_coaching_ia': 'coaching-4.jpg',
-        'psico_coaching': 'coaching-4.jpg',
-        'grafologia_ia': 'grafologia_2.jpeg',
-        'grafologia': 'grafologia_2.jpeg'
+        'carta_astral_ia': 'static/img/astrologia-3.JPG',
+        'carta_natal': 'static/img/astrologia-3.JPG',
+        'revolucion_solar_ia': 'static/img/Tarot y astrologia-5.JPG', 
+        'revolucion_solar': 'static/img/Tarot y astrologia-5.JPG',
+        'sinastria_ia': 'static/img/Sinastria.JPG',
+        'sinastria': 'static/img/Sinastria.JPG',
+        'astrologia_horaria_ia': 'static/img/astrologia-1.JPG',
+        'astrol_horaria': 'static/img/astrologia-1.JPG',
+        'lectura_manos_ia': 'static/img/Lectura-de-manos-p.jpg',    # jpg minúscula
+        'lectura_manos': 'static/img/Lectura-de-manos-p.jpg',
+        'lectura_facial_ia': 'static/img/lectura facial.JPG',
+        'lectura_facial': 'static/img/lectura facial.JPG',
+        'psico_coaching_ia': 'static/img/coaching-4.JPG',
+        'psico_coaching': 'static/img/coaching-4.JPG',
+        'grafologia_ia': 'static/img/grafologia_2.jpeg',            # jpeg
+        'grafologia': 'static/img/grafologia_2.jpeg',
+        logo_path = 'static/img/logo.JPG'
     }
     
     titulos_servicios = {
