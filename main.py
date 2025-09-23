@@ -10256,19 +10256,32 @@ def generar_cartas_directas():
             'traceback': traceback.format_exc()
         })
         
-@app.route('/admin/fix_extensions')
-def fix_extensions():
+@app.route('/admin/fix_extensions_v2')
+def fix_extensions_v2():
     import os
     import shutil
+    import glob
     
     try:
+        # Primero ver qué archivos tenemos
+        archivos_actuales = glob.glob('static/img/*')
+        estado_actual = [os.path.basename(f) for f in archivos_actuales]
+        
         cambios = []
         directorio = 'static/img/'
         
-        # Mapeo de cambios necesarios
+        # Mapeo CORRECTO (solo cambiar extensión, NO el formato)
         cambios_necesarios = {
+            # Si están en .png, cambiar a .jpg
+            'astrologia-1.png': 'astrologia-1.jpg',
+            'astrologia-3.JPG': 'astrologia-3.jpg',  # Este quedó pendiente
+            'coaching-4.png': 'coaching-4.jpg',
+            'Tarot y astrologia-5.png': 'Tarot y astrologia-5.jpg',
+            'Sinastria.png': 'Sinastria.jpg',
+            'lectura facial.png': 'lectura facial.jpg',
+            
+            # Si están en .JPG, cambiar a .jpg
             'astrologia-1.JPG': 'astrologia-1.jpg',
-            'astrologia-3.JPG': 'astrologia-3.jpg', 
             'coaching-4.JPG': 'coaching-4.jpg',
             'Tarot y astrologia-5.JPG': 'Tarot y astrologia-5.jpg',
             'Sinastria.JPG': 'Sinastria.jpg',
@@ -10280,23 +10293,29 @@ def fix_extensions():
             ruta_nueva = os.path.join(directorio, nuevo)
             
             if os.path.exists(ruta_vieja):
-                # Renombrar usando temp para forzar cambio
+                # Usar temp para forzar cambio de extensión
                 temp_path = ruta_nueva + '.temp'
-                shutil.move(ruta_vieja, temp_path)
-                shutil.move(temp_path, ruta_nueva)
+                shutil.copy2(ruta_vieja, temp_path)  # Copiar primero
+                os.remove(ruta_vieja)  # Eliminar original
+                shutil.move(temp_path, ruta_nueva)  # Renombrar temp
                 cambios.append(f"✅ {viejo} → {nuevo}")
-            else:
-                cambios.append(f"❌ No encontrado: {viejo}")
+        
+        # Ver el resultado final
+        archivos_finales = glob.glob('static/img/*')
+        estado_final = [os.path.basename(f) for f in archivos_finales]
         
         return jsonify({
             "status": "success",
-            "cambios": cambios
+            "estado_inicial": estado_actual,
+            "cambios_aplicados": cambios,
+            "estado_final": estado_final
         })
         
     except Exception as e:
         return jsonify({
             "status": "error", 
-            "error": str(e)
+            "error": str(e),
+            "estado_actual": estado_actual if 'estado_actual' in locals() else []
         })
 
 if __name__ == "__main__":
