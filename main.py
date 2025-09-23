@@ -10551,6 +10551,44 @@ def debug_carta_natal_detallado():
             "error": str(e),
             "traceback": traceback.format_exc()[:1500]
         })
+        
+@app.route('/test/verificar_patron_nombres')
+def verificar_patron_nombres():
+    try:
+        import glob
+        import os
+        from datetime import datetime
+        
+        # Ver TODOS los archivos antes
+        archivos_antes = glob.glob("static/*.png")
+        
+        # Ejecutar carta natal
+        from carta_natal import CartaAstralNatal
+        carta = CartaAstralNatal(figsize=(16, 14))
+        
+        aspectos, posiciones = carta.crear_carta_astral_natal(
+            fecha_natal=(1990, 12, 25, 15, 45),  # Fecha específica
+            lugar_natal=(40.42, -3.70),
+            ciudad_natal="Madrid",
+            guardar_archivo=True,
+            directorio_salida="static"
+        )
+        
+        # Ver archivos DESPUÉS
+        archivos_despues = glob.glob("static/*.png")
+        
+        # Encontrar archivo nuevo
+        archivos_nuevos = list(set(archivos_despues) - set(archivos_antes))
+        
+        return jsonify({
+            "archivos_antes": len(archivos_antes),
+            "archivos_despues": len(archivos_despues), 
+            "archivos_nuevos": archivos_nuevos,
+            "patron_descubierto": archivos_nuevos[0] if archivos_nuevos else None
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
