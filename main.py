@@ -10776,6 +10776,34 @@ def verificar_imagenes_fix():
         'detalles': resultados,
         'siguiente_paso': 'Generar un PDF de prueba en /test/generar_pdf_especialidad/carta_astral_ia'
     })
+    
+@app.route('/test/comparar_entornos')
+def comparar_entornos():
+    """Comparar configuración Replit vs Railway"""
+    import os
+    import platform
+    
+    return jsonify({
+        'entorno': {
+            'plataforma': platform.platform(),
+            'python_version': platform.python_version(),
+            'directorio_actual': os.getcwd(),
+            'usuario': os.environ.get('USER', 'unknown'),
+            'home': os.environ.get('HOME', 'unknown'),
+            'railway_env': 'RAILWAY_ENVIRONMENT' in os.environ
+        },
+        'estructura_directorios': {
+            'existe_img': os.path.exists('./img/'),
+            'existe_static': os.path.exists('./static/'),
+            'existe_static_img': os.path.exists('./static/img/'),
+            'archivos_en_img': os.listdir('./img/') if os.path.exists('./img/') else [],
+            'archivos_en_static_img': os.listdir('./static/img/') if os.path.exists('./static/img/') else []
+        },
+        'permisos': {
+            'puede_escribir_static': os.access('./static/', os.W_OK) if os.path.exists('./static/') else False,
+            'puede_leer_img': os.access('./img/', os.R_OK) if os.path.exists('./img/') else False
+        }
+    })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")

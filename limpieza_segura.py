@@ -1,0 +1,61 @@
+import os
+import time
+from datetime import datetime
+
+# Archivos que NUNCA se deben borrar
+ARCHIVOS_PROTEGIDOS = [
+    'logo.JPG', 'logo.jpg',
+    'astrologia-3.JPG', 'astrologia-3.jpg',
+    'Tarot y astrologia-5.JPG',
+    'Sinastria.JPG', 'Sinastria.jpg',
+    'astrologia-1.JPG', 'astrologia-1.jpg',
+    'Lectura-de-manos-p.jpg',
+    'lectura facial.JPG',
+    'coaching-4.JPG', 'coaching-4.jpg',
+    'grafologia_2.jpeg'
+]
+
+def limpiar_archivos_temporales():
+    """Limpiar solo archivos temporales, NO las imágenes fijas"""
+    
+    # Limpiar en static/ (NO en static/img/)
+    carpeta_static = './static/'
+    tiempo_limite = 7 * 24 * 60 * 60  # 7 días
+    ahora = time.time()
+    
+    if os.path.exists(carpeta_static):
+        for archivo in os.listdir(carpeta_static):
+            ruta = os.path.join(carpeta_static, archivo)
+            
+            # Solo procesar archivos, no carpetas
+            if os.path.isfile(ruta):
+                nombre_archivo = os.path.basename(archivo)
+                
+                # NO borrar archivos protegidos
+                if nombre_archivo in ARCHIVOS_PROTEGIDOS:
+                    print(f"✅ Protegido: {nombre_archivo}")
+                    continue
+                
+                # Solo borrar archivos temporales antiguos (carta_natal_*, etc)
+                if any(archivo.startswith(prefijo) for prefijo in 
+                      ['carta_natal_', 'progresiones_', 'transitos_', 
+                       'revolucion_', 'sinastria_', 'horaria_']):
+                    
+                    if ahora - os.path.getmtime(ruta) > tiempo_limite:
+                        print(f"🗑️ Borrando temporal antiguo: {archivo}")
+                        os.remove(ruta)
+                    else:
+                        print(f"⏰ Manteniendo temporal reciente: {archivo}")
+    
+    # Limpiar PDFs antiguos en informes/
+    carpeta_informes = './informes/'
+    if os.path.exists(carpeta_informes):
+        for archivo in os.listdir(carpeta_informes):
+            if archivo.endswith('.pdf'):
+                ruta = os.path.join(carpeta_informes, archivo)
+                if ahora - os.path.getmtime(ruta) > tiempo_limite:
+                    print(f"🗑️ Borrando PDF antiguo: {archivo}")
+                    os.remove(ruta)
+
+if __name__ == "__main__":
+    limpiar_archivos_temporales()

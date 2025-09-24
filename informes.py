@@ -209,31 +209,31 @@ def obtener_template_anexo_medio_tiempo(tipo_servicio):
 def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
     """Generar portada con logo AS Cartastral + imagen del servicio - CORREGIDA"""
     
-    # 🔥 DICCIONARIO CORREGIDO CON EXTENSIONES CORRECTAS
+    # DICCIONARIO CORREGIDO - SIN ERRORES DE SINTAXIS
     imagenes_servicios = {
         # CARTA ASTRAL
-        'carta_astral_ia': 'astrologia-3.JPG',  # Solo el nombre, sin path
+        'carta_astral_ia': 'astrologia-3.JPG',
         'carta_natal': 'astrologia-3.JPG',
-        'carta_astral_ia_half': 'astrologia-3.JPG',  # Producto M
+        'carta_astral_ia_half': 'astrologia-3.JPG',
         
         # REVOLUCIÓN SOLAR  
         'revolucion_solar_ia': 'Tarot y astrologia-5.JPG',
         'revolucion_solar': 'Tarot y astrologia-5.JPG',
-        'revolucion_solar_ia_half': 'Tarot y astrologia-5.JPG',  # Producto M
+        'revolucion_solar_ia_half': 'Tarot y astrologia-5.JPG',
         
         # SINASTRÍA
         'sinastria_ia': 'Sinastria.JPG',
         'sinastria': 'Sinastria.JPG',
-        'sinastria_ia_half': 'Sinastria.JPG',  # Producto M
+        'sinastria_ia_half': 'Sinastria.JPG',
         
         # ASTROLOGÍA HORARIA
         'astrologia_horaria_ia': 'astrologia-1.JPG',
         'astrol_horaria': 'astrologia-1.JPG',
         
         # LECTURA DE MANOS
-        'lectura_manos_ia': 'Lectura-de-manos-p.jpg',  # Minúscula
+        'lectura_manos_ia': 'Lectura-de-manos-p.jpg',
         'lectura_manos': 'Lectura-de-manos-p.jpg',
-        'lectura_manos_ia_half': 'Lectura-de-manos-p.jpg',  # Producto M
+        'lectura_manos_ia_half': 'Lectura-de-manos-p.jpg',
         
         # LECTURA FACIAL
         'lectura_facial_ia': 'lectura facial.JPG',
@@ -242,40 +242,46 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         # PSICO-COACHING
         'psico_coaching_ia': 'coaching-4.JPG',
         'psico_coaching': 'coaching-4.JPG',
-        'psico_coaching_ia_half': 'coaching-4.JPG',  # Producto M
+        'psico_coaching_ia_half': 'coaching-4.JPG',
         
         # GRAFOLOGÍA
         'grafologia_ia': 'grafologia_2.jpeg',
         'grafologia': 'grafologia_2.jpeg'
-    }
-
-        'logo': 'static/img/logo.JPG'
-    }
+    }  # Solo UNA llave de cierre aquí
     
     titulos_servicios = {
         'carta_astral_ia': '🌟 CARTA ASTRAL PERSONALIZADA 🌟',
         'carta_natal': '🌟 CARTA ASTRAL PERSONALIZADA 🌟',
+        'carta_astral_ia_half': '🌟 CARTA ASTRAL - CONTINUACIÓN 🌟',
         'revolucion_solar_ia': '🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟',
         'revolucion_solar': '🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟',
+        'revolucion_solar_ia_half': '🌟 REVOLUCIÓN SOLAR - CONTINUACIÓN 🌟',
         'sinastria_ia': '💕 SINASTRÍA ASTROLÓGICA 💕',
         'sinastria': '💕 SINASTRÍA ASTROLÓGICA 💕',
+        'sinastria_ia_half': '💕 SINASTRÍA - CONTINUACIÓN 💕',
         'astrologia_horaria_ia': '⏰ ASTROLOGÍA HORARIA ⏰',
         'astrol_horaria': '⏰ ASTROLOGÍA HORARIA ⏰',
-        'lectura_manos_ia': '👋 LECTURA DE MANOS PERSONALIZADA 👋',
-        'lectura_manos': '👋 LECTURA DE MANOS PERSONALIZADA 👋',
+        'lectura_manos_ia': '🤚 LECTURA DE MANOS PERSONALIZADA 🤚',
+        'lectura_manos': '🤚 LECTURA DE MANOS PERSONALIZADA 🤚',
+        'lectura_manos_ia_half': '🤚 LECTURA DE MANOS - CONTINUACIÓN 🤚',
         'lectura_facial_ia': '😊 LECTURA FACIAL PERSONALIZADA 😊',
         'lectura_facial': '😊 LECTURA FACIAL PERSONALIZADA 😊',
         'psico_coaching_ia': '🧠 SESIÓN DE PSICO-COACHING 🧠',
-        'psico_coaching': '🧠 SESIÓN DE PSICO-COACHING 🧠'
+        'psico_coaching': '🧠 SESIÓN DE PSICO-COACHING 🧠',
+        'psico_coaching_ia_half': '🧠 PSICO-COACHING - CONTINUACIÓN 🧠',
+        'grafologia_ia': '✍️ ANÁLISIS GRAFOLÓGICO ✍️',
+        'grafologia': '✍️ ANÁLISIS GRAFOLÓGICO ✍️'
     }
     
-    # ✅ USAR BÚSQUEDA MEJORADA
-    imagen_servicio = imagenes_servicios.get(tipo_servicio, 'logo.jpg')
+    # PRIMERO: Obtener los valores del diccionario
+    imagen_servicio = imagenes_servicios.get(tipo_servicio, 'astrologia-3.JPG')
     titulo_servicio = titulos_servicios.get(tipo_servicio, '🌟 INFORME PERSONALIZADO 🌟')
     
-    ruta_logo = obtener_ruta_imagen_absoluta('logo.jpg')
+    # SEGUNDO: Obtener las rutas usando la función
+    ruta_logo = obtener_ruta_imagen_absoluta('logo.JPG')
     ruta_imagen_servicio = obtener_ruta_imagen_absoluta(imagen_servicio)
     
+    # TERCERO: Retornar el HTML con las variables ya definidas
     return """
     <div class="portada">
         <div class="logo-header">
@@ -305,13 +311,6 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         nombre_cliente,
         datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d de %B de %Y')
     )
-    
-    # Obtener imagen del servicio (sin path, solo nombre)
-    imagen_servicio = imagenes_servicios.get(tipo_servicio, 'astrologia-3.JPG')
-    
-    # Usar la función obtener_ruta_imagen_absoluta para las rutas
-    ruta_logo = obtener_ruta_imagen_absoluta('logo.JPG')  # Con mayúscula
-    ruta_imagen_servicio = obtener_ruta_imagen_absoluta(imagen_servicio)
 
 # ========================================
 # ACTUALIZAR ESTILOS CON LOGO DORADO E ITALICS
