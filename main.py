@@ -10734,6 +10734,48 @@ def verificar_extensiones_reales():
         "archivos_en_static_img": extensiones,
         "solucion": "Actualizar informes.py con extensiones reales"
     })
+    
+@app.route('/test/verificar_imagenes_fix')
+def verificar_imagenes_fix():
+    """Verificar que el fix de imágenes funciona"""
+    from informes import obtener_ruta_imagen_absoluta
+    import os
+    
+    imagenes_criticas = {
+        'logo': 'logo.JPG',
+        'carta_astral': 'astrologia-3.JPG',
+        'revolucion': 'Tarot y astrologia-5.JPG',
+        'sinastria': 'Sinastria.JPG',
+        'horaria': 'astrologia-1.JPG',
+        'manos': 'Lectura-de-manos-p.jpg',
+        'facial': 'lectura facial.JPG',
+        'coaching': 'coaching-4.JPG',
+        'grafologia': 'grafologia_2.jpeg'
+    }
+    
+    resultados = {}
+    todas_ok = True
+    
+    for servicio, archivo in imagenes_criticas.items():
+        ruta = obtener_ruta_imagen_absoluta(archivo)
+        existe = os.path.exists(ruta) if not ruta.startswith('data:') else False
+        
+        resultados[servicio] = {
+            'archivo': archivo,
+            'ruta_obtenida': ruta,
+            'existe': existe,
+            'es_placeholder': ruta.startswith('data:')
+        }
+        
+        if not existe or ruta.startswith('data:'):
+            todas_ok = False
+    
+    return jsonify({
+        'estado': '✅ TODO OK' if todas_ok else '⚠️ FALTAN IMÁGENES',
+        'todas_imagenes_ok': todas_ok,
+        'detalles': resultados,
+        'siguiente_paso': 'Generar un PDF de prueba en /test/generar_pdf_especialidad/carta_astral_ia'
+    })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")

@@ -19,41 +19,72 @@ from jinja2 import Template
 # ========================================
 
 def obtener_ruta_imagen_absoluta(nombre_imagen):
-    """Obtener ruta accesible para Playwright/navegador"""
+    """Obtener ruta accesible para Playwright/navegador - VERSIÓN MEJORADA"""
     import os
     import shutil
     
-    # Crear variaciones del nombre
+    print(f"🔍 Buscando imagen: {nombre_imagen}")
+    
+    # Si viene con path, extraer solo el nombre
+    if '/' in nombre_imagen:
+        nombre_imagen = os.path.basename(nombre_imagen)
+    
+    # Lista de directorios donde buscar
+    directorios_busqueda = [
+        './img/',
+        './static/img/',
+        '/app/img/',
+        '/app/static/img/',
+        '.',
+        './static/'
+    ]
+    
+    # Buscar el archivo exacto primero
+    for directorio in directorios_busqueda:
+        ruta_completa = os.path.join(directorio, nombre_imagen)
+        if os.path.exists(ruta_completa):
+            print(f"✅ Encontrada en: {ruta_completa}")
+            
+            # Copiar a static/img si no está ahí
+            destino = f'static/img/{nombre_imagen}'
+            os.makedirs('static/img', exist_ok=True)
+            
+            if not os.path.exists(destino) or ruta_completa != destino:
+                try:
+                    shutil.copy2(ruta_completa, destino)
+                    print(f"📋 Copiada a: {destino}")
+                except Exception as e:
+                    print(f"⚠️ Error copiando: {e}")
+            
+            return destino
+    
+    # Si no se encontró exacto, buscar variaciones de extensión
     nombre_base = os.path.splitext(nombre_imagen)[0]
     extensiones = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG']
     
-    # Buscar en img/
-    for ext in extensiones:
-        archivo_completo = nombre_base + ext
-        ruta_img = os.path.join('./img/', archivo_completo)
-        
-        if os.path.exists(ruta_img):
-            # ✅ CAMBIO CLAVE: Copiar a static/ y devolver URL relativa
-            try:
-                # Crear directorio static/img si no existe
+    for directorio in directorios_busqueda:
+        for ext in extensiones:
+            archivo_variante = nombre_base + ext
+            ruta_variante = os.path.join(directorio, archivo_variante)
+            
+            if os.path.exists(ruta_variante):
+                print(f"✅ Encontrada variante: {ruta_variante}")
+                
+                # Copiar a static/img
+                destino = f'static/img/{archivo_variante}'
                 os.makedirs('static/img', exist_ok=True)
                 
-                # Copiar imagen a static/
-                destino = f'static/img/{archivo_completo}'
                 if not os.path.exists(destino):
-                    shutil.copy2(ruta_img, destino)
+                    try:
+                        shutil.copy2(ruta_variante, destino)
+                        print(f"📋 Copiada a: {destino}")
+                    except Exception as e:
+                        print(f"⚠️ Error copiando: {e}")
                 
-                # Devolver ruta relativa que Playwright puede acceder
-                print(f"✅ Imagen copiada a static: {nombre_imagen} → {destino}")
-                return f"static/img/{archivo_completo}"
-                
-            except Exception as e:
-                print(f"⚠️ Error copiando {nombre_imagen}: {e}")
-                # Fallback a data URL
-                return crear_placeholder_svg(nombre_imagen)
+                return destino
     
     # Si no existe, crear placeholder
-    print(f"⚠️ Imagen no encontrada: {nombre_imagen} - usando placeholder")
+    print(f"⚠️ No encontrada: {nombre_imagen} - Creando placeholder")
     return crear_placeholder_svg(nombre_imagen)
 
 def crear_placeholder_svg(nombre_imagen):
@@ -178,24 +209,46 @@ def obtener_template_anexo_medio_tiempo(tipo_servicio):
 def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
     """Generar portada con logo AS Cartastral + imagen del servicio - CORREGIDA"""
     
-    # MAPEO IMÁGENES (mantenido igual)
+    # 🔥 DICCIONARIO CORREGIDO CON EXTENSIONES CORRECTAS
     imagenes_servicios = {
-        'carta_astral_ia': 'static/img/astrologia-3.JPG',
-        'carta_natal': 'static/img/astrologia-3.JPG',
-        'revolucion_solar_ia': 'static/img/Tarot y astrologia-5.JPG', 
-        'revolucion_solar': 'static/img/Tarot y astrologia-5.JPG',
-        'sinastria_ia': 'static/img/Sinastria.JPG',
-        'sinastria': 'static/img/Sinastria.JPG',
-        'astrologia_horaria_ia': 'static/img/astrologia-1.JPG',
-        'astrol_horaria': 'static/img/astrologia-1.JPG',
-        'lectura_manos_ia': 'static/img/Lectura-de-manos-p.jpg',    # jpg minúscula
-        'lectura_manos': 'static/img/Lectura-de-manos-p.jpg',
-        'lectura_facial_ia': 'static/img/lectura facial.JPG',
-        'lectura_facial': 'static/img/lectura facial.JPG',
-        'psico_coaching_ia': 'static/img/coaching-4.JPG',
-        'psico_coaching': 'static/img/coaching-4.JPG',
-        'grafologia_ia': 'static/img/grafologia_2.jpeg',            # jpeg
-        'grafologia': 'static/img/grafologia_2.jpeg',
+        # CARTA ASTRAL
+        'carta_astral_ia': 'astrologia-3.JPG',  # Solo el nombre, sin path
+        'carta_natal': 'astrologia-3.JPG',
+        'carta_astral_ia_half': 'astrologia-3.JPG',  # Producto M
+        
+        # REVOLUCIÓN SOLAR  
+        'revolucion_solar_ia': 'Tarot y astrologia-5.JPG',
+        'revolucion_solar': 'Tarot y astrologia-5.JPG',
+        'revolucion_solar_ia_half': 'Tarot y astrologia-5.JPG',  # Producto M
+        
+        # SINASTRÍA
+        'sinastria_ia': 'Sinastria.JPG',
+        'sinastria': 'Sinastria.JPG',
+        'sinastria_ia_half': 'Sinastria.JPG',  # Producto M
+        
+        # ASTROLOGÍA HORARIA
+        'astrologia_horaria_ia': 'astrologia-1.JPG',
+        'astrol_horaria': 'astrologia-1.JPG',
+        
+        # LECTURA DE MANOS
+        'lectura_manos_ia': 'Lectura-de-manos-p.jpg',  # Minúscula
+        'lectura_manos': 'Lectura-de-manos-p.jpg',
+        'lectura_manos_ia_half': 'Lectura-de-manos-p.jpg',  # Producto M
+        
+        # LECTURA FACIAL
+        'lectura_facial_ia': 'lectura facial.JPG',
+        'lectura_facial': 'lectura facial.JPG',
+        
+        # PSICO-COACHING
+        'psico_coaching_ia': 'coaching-4.JPG',
+        'psico_coaching': 'coaching-4.JPG',
+        'psico_coaching_ia_half': 'coaching-4.JPG',  # Producto M
+        
+        # GRAFOLOGÍA
+        'grafologia_ia': 'grafologia_2.jpeg',
+        'grafologia': 'grafologia_2.jpeg'
+    }
+
         'logo': 'static/img/logo.JPG'
     }
     
@@ -252,6 +305,13 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         nombre_cliente,
         datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d de %B de %Y')
     )
+    
+    # Obtener imagen del servicio (sin path, solo nombre)
+    imagen_servicio = imagenes_servicios.get(tipo_servicio, 'astrologia-3.JPG')
+    
+    # Usar la función obtener_ruta_imagen_absoluta para las rutas
+    ruta_logo = obtener_ruta_imagen_absoluta('logo.JPG')  # Con mayúscula
+    ruta_imagen_servicio = obtener_ruta_imagen_absoluta(imagen_servicio)
 
 # ========================================
 # ACTUALIZAR ESTILOS CON LOGO DORADO E ITALICS
