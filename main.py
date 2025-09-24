@@ -10806,6 +10806,370 @@ def estado_limpieza_archivos():
         'limite_dias': 7,
         'solucion': 'Aplicar /test/proteger_imagenes_criticas'
     })
+    
+# ========================================
+# 🚨 SOLUCIÓN DE EMERGENCIA - MAIN.PY
+# AÑADIR AL FINAL (antes del if __name__)
+# ========================================
+
+def crear_archivos_unicos_emergency(tipo_servicio):
+    """Función de emergencia para crear archivos únicos - AUTOCONTENIDA"""
+    import uuid
+    from datetime import datetime
+    
+    try:
+        print(f"🆘 EMERGENCY: Creando archivos para {tipo_servicio}")
+        
+        id_unico = str(uuid.uuid4())[:8]
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # ✅ TODOS LOS PRODUCTOS (NORMALES + M)
+        productos_config = {
+            # NORMALES
+            'carta_astral_ia': {'duracion': 40, 'img_count': 3},
+            'revolucion_solar_ia': {'duracion': 50, 'img_count': 4},
+            'sinastria_ia': {'duracion': 30, 'img_count': 1}, 
+            'psico_coaching_ia': {'duracion': 40, 'img_count': 0},
+            'lectura_manos_ia': {'duracion': 30, 'img_count': 0},
+            'lectura_facial_ia': {'duracion': 25, 'img_count': 0},
+            'grafologia_ia': {'duracion': 35, 'img_count': 0},
+            'astrologia_horaria_ia': {'duracion': 30, 'img_count': 1},
+            # ✅ PRODUCTOS M
+            'carta_astral_ia_half': {'duracion': 20, 'img_count': 0, 'es_anexo': True},
+            'revolucion_solar_ia_half': {'duracion': 25, 'img_count': 0, 'es_anexo': True},
+            'sinastria_ia_half': {'duracion': 15, 'img_count': 0, 'es_anexo': True},
+            'lectura_manos_ia_half': {'duracion': 15, 'img_count': 0, 'es_anexo': True},
+            'psico_coaching_ia_half': {'duracion': 20, 'img_count': 0, 'es_anexo': True}
+        }
+        
+        config = productos_config.get(tipo_servicio, {'duracion': 30, 'img_count': 0})
+        
+        archivos_unicos = {
+            'informe_html': f"templates/emergency_{tipo_servicio}_{id_unico}.html",
+            'es_producto_m': config.get('es_anexo', False),
+            'duracion_minutos': config['duracion'],
+            'id_unico': id_unico,
+            'timestamp': timestamp
+        }
+        
+        # Añadir imágenes solo si las necesita
+        if config['img_count'] > 0:
+            if 'carta_astral' in tipo_servicio:
+                archivos_unicos.update({
+                    'carta_natal_img': f"static/carta_natal_{id_unico}.png",
+                    'progresiones_img': f"static/progresiones_{id_unico}.png", 
+                    'transitos_img': f"static/transitos_{id_unico}.png"
+                })
+            elif 'sinastria' in tipo_servicio:
+                archivos_unicos['sinastria_img'] = f"static/sinastria_{id_unico}.png"
+            elif 'horaria' in tipo_servicio:
+                archivos_unicos['carta_horaria_img'] = f"static/carta_horaria_{id_unico}.png"
+        
+        print(f"✅ EMERGENCY: Archivos creados: {archivos_unicos}")
+        return archivos_unicos
+        
+    except Exception as e:
+        print(f"❌ EMERGENCY ERROR: {e}")
+        return {}
+
+def generar_html_emergency(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=""):
+    """Generar HTML directamente - FUNCIÓN DE EMERGENCIA"""
+    from datetime import datetime
+    import pytz
+    import os
+    
+    try:
+        print(f"🆘 EMERGENCY HTML: Generando para {tipo_servicio}")
+        
+        # ✅ DETECTAR SI ES PRODUCTO M
+        es_producto_m = tipo_servicio.endswith('_half')
+        
+        # Datos básicos
+        fecha_actual = datetime.now(pytz.timezone('Europe/Madrid'))
+        fecha_generacion = fecha_actual.strftime('%d de %B de %Y')
+        hora_generacion = fecha_actual.strftime('%H:%M')
+        
+        if es_producto_m:
+            # ✅ TEMPLATE ANEXO (SIN PORTADA)
+            html_content = f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ANEXO - {datos_cliente.get('nombre', 'Cliente')} - AS Cartastral</title>
+    <style>
+        body {{ font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }}
+        .encabezado-anexo {{ background: linear-gradient(135deg, #f57c00, #ff9800); color: white; padding: 25px; border-radius: 10px; text-align: center; margin-bottom: 30px; }}
+        .encabezado-anexo h1 {{ color: white; font-size: 24px; margin: 0 0 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }}
+        .badge-continuacion {{ background: #4caf50; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 10px; }}
+        h2 {{ font-size: 20px; margin-top: 30px; border-bottom: 2px solid #ff9800; padding-bottom: 8px; color: #f57c00; }}
+        .interpretacion {{ background: #fff8e1; padding: 20px; border-left: 4px solid #ff9800; margin: 20px 0; border-radius: 4px; }}
+        .footer {{ text-align: center; margin-top: 60px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }}
+    </style>
+</head>
+<body>
+    <div class="encabezado-anexo">
+        <h1>📋 ANEXO - CONTINUACIÓN {tipo_servicio.replace('_half', '').replace('_', ' ').upper()}</h1>
+        <p><strong>Cliente:</strong> {datos_cliente.get('nombre', 'Cliente')}</p>
+        <p><strong>Email:</strong> {datos_cliente.get('email', 'email@test.com')}</p>
+        <p><strong>Duración:</strong> {archivos_unicos.get('duracion_minutos', 20)} minutos (½ tiempo)</p>
+        <div class="badge-continuacion">✨ SESIÓN DE SEGUIMIENTO</div>
+    </div>
+
+    <div class="interpretacion">
+        <h2>📞 Continuación de tu Consulta</h2>
+        <p>Esta es la continuación de tu sesión anterior, con análisis adicional personalizado.</p>
+        {f'<div>{resumen_sesion}</div>' if resumen_sesion else '<p>Contenido de la sesión de seguimiento.</p>'}
+    </div>
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {fecha_generacion} a las {hora_generacion}</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+        <p><em>Este anexo complementa tu informe principal</em></p>
+    </div>
+</body>
+</html>"""
+        else:
+            # ✅ TEMPLATE COMPLETO (CON PORTADA)
+            html_content = f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{datos_cliente.get('nombre', 'Cliente')} - {tipo_servicio.replace('_', ' ').title()} - AS Cartastral</title>
+    <style>
+        body {{ font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }}
+        
+        .portada {{ 
+            text-align: center; margin: 30px 0; page-break-after: always; position: relative; 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 40px 20px; border-radius: 10px;
+            border-top: 8px solid #DAA520; border-left: 8px solid #DAA520; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }}
+        
+        .logo-header {{ position: absolute; top: 20px; left: 20px; display: flex; align-items: center; gap: 15px; }}
+        .logo-esquina {{ height: 60px; width: auto; border: 2px solid #DAA520; border-radius: 8px; }}
+        .nombre-empresa {{ font-size: 20px; font-weight: bold; color: #DAA520; font-style: italic; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }}
+        
+        .titulo-principal {{ font-size: 28px; margin: 80px 0 30px 0; color: #2c5aa0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }}
+        .nombre-cliente {{ font-size: 24px; color: #DAA520; font-weight: bold; margin: 20px 0; text-transform: uppercase; }}
+        .subtitulo {{ font-size: 16px; color: #666; font-style: italic; }}
+        
+        h1 {{ font-size: 24px; text-align: center; margin: 40px 0 20px 0; color: #2c5aa0; }}
+        h2 {{ font-size: 20px; margin-top: 30px; border-bottom: 2px solid #2c5aa0; padding-bottom: 8px; color: #2c5aa0; }}
+        .dato {{ font-weight: bold; color: #2c5aa0; }}
+        .interpretacion {{ background: #f8f9fa; padding: 20px; border-left: 4px solid #2c5aa0; margin: 20px 0; border-radius: 4px; }}
+        .footer {{ text-align: center; margin-top: 60px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }}
+        .imagen-carta {{ text-align: center; margin: 30px 0; }}
+        .imagen-carta img {{ max-width: 100%; height: auto; border: 2px solid #2c5aa0; border-radius: 8px; }}
+    </style>
+</head>
+<body>
+    <div class="portada">
+        <div class="logo-header">
+            <div class="logo-esquina" style="width:60px; height:60px; background:#DAA520; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">AS</div>
+            <span class="nombre-empresa">AS Cartastral</span>
+        </div>
+        
+        <h1 class="titulo-principal">🌟 {tipo_servicio.replace('_', ' ').upper()} 🌟</h1>
+        <h2 class="nombre-cliente">{datos_cliente.get('nombre', 'Cliente')}</h2>
+        <h3 class="subtitulo">Tu análisis personalizado</h3>
+        
+        <div style="margin-top: 40px;">
+            <p>Generado el {fecha_generacion}</p>
+        </div>
+    </div>
+    
+    <div style="background: white; padding: 30px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h1>✨ {tipo_servicio.replace('_', ' ').upper()} ✨</h1>
+        <p><span class="dato">Cliente:</span> {datos_cliente.get('nombre', 'Cliente')}</p>
+        <p><span class="dato">Email:</span> {datos_cliente.get('email', 'email@test.com')}</p>
+        <p><span class="dato">Fecha de nacimiento:</span> {datos_cliente.get('fecha_nacimiento', 'No especificada')}</p>
+        <p><span class="dato">Hora de nacimiento:</span> {datos_cliente.get('hora_nacimiento', 'No especificada')}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {datos_cliente.get('lugar_nacimiento', 'No especificado')}</p>
+    </div>
+
+    {f'<div class="interpretacion"><h2>📞 Resumen de tu Sesión</h2><div>{resumen_sesion}</div></div>' if resumen_sesion else ''}
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {fecha_generacion} a las {hora_generacion}</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+    </div>
+</body>
+</html>"""
+        
+        # Guardar archivo HTML
+        archivo_html = archivos_unicos.get('informe_html', f"templates/emergency_{tipo_servicio}_{archivos_unicos.get('id_unico', 'test')}.html")
+        
+        os.makedirs('templates', exist_ok=True)
+        with open(archivo_html, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+            
+        print(f"✅ EMERGENCY HTML: Guardado en {archivo_html}")
+        return archivo_html
+        
+    except Exception as e:
+        print(f"❌ EMERGENCY HTML ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def convertir_html_a_pdf_emergency(archivo_html, archivo_pdf):
+    """Conversión PDF de emergencia - Compatible Railway"""
+    try:
+        print(f"🆘 EMERGENCY PDF: {archivo_html} → {archivo_pdf}")
+        
+        # Importar solo lo necesario
+        from playwright.sync_api import sync_playwright
+        import os
+        
+        if not os.path.exists(archivo_html):
+            print(f"❌ Archivo HTML no existe: {archivo_html}")
+            return False
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-setuid-sandbox'])
+            page = browser.new_page()
+            
+            # Convertir path a URL file://
+            html_path = os.path.abspath(archivo_html)
+            page.goto(f"file://{html_path}")
+            
+            # Esperar que cargue completamente
+            page.wait_for_load_state('networkidle')
+            
+            # Generar PDF con configuración optimizada
+            page.pdf(
+                path=archivo_pdf,
+                format='A4',
+                margin={'top': '20px', 'right': '20px', 'bottom': '20px', 'left': '20px'},
+                print_background=True,
+                prefer_css_page_size=True
+            )
+            
+            browser.close()
+        
+        # Verificar que se creó
+        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
+            print(f"✅ EMERGENCY PDF: Creado exitosamente - {os.path.getsize(archivo_pdf)} bytes")
+            return True
+        else:
+            print(f"❌ EMERGENCY PDF: Archivo no creado o muy pequeño")
+            return False
+            
+    except Exception as e:
+        print(f"❌ EMERGENCY PDF ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+# ========================================
+# 🆘 ENDPOINTS DE EMERGENCIA
+# ========================================
+
+@app.route('/emergency/generar_pdf/<especialidad>')
+def emergency_generar_pdf(especialidad):
+    """ENDPOINT DE EMERGENCIA - Generar PDF usando funciones autocontenidas"""
+    try:
+        from datetime import datetime
+        import os
+        
+        print(f"🆘 EMERGENCY ENDPOINT: {especialidad}")
+        
+        # ✅ VALIDAR ESPECIALIDAD (NORMALES + M)
+        especialidades_validas = [
+            'carta_astral_ia', 'revolucion_solar_ia', 'sinastria_ia', 'psico_coaching_ia',
+            'lectura_manos_ia', 'lectura_facial_ia', 'grafologia_ia', 'astrologia_horaria_ia',
+            'carta_astral_ia_half', 'revolucion_solar_ia_half', 'sinastria_ia_half', 
+            'lectura_manos_ia_half', 'psico_coaching_ia_half'
+        ]
+        
+        if especialidad not in especialidades_validas:
+            return jsonify({
+                'status': 'error',
+                'mensaje': f'Especialidad no válida. Opciones: {especialidades_validas}'
+            }), 400
+        
+        # Datos de prueba
+        datos_cliente = {
+            'nombre': f'Cliente Emergency {especialidad.upper()}',
+            'email': f'emergency_{especialidad}@ascartastral.com',
+            'codigo_servicio': f'EMERG_{especialidad.upper()[:3]}',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # ✅ PASO 1: Crear archivos únicos
+        archivos_unicos = crear_archivos_unicos_emergency(especialidad)
+        if not archivos_unicos:
+            return jsonify({'status': 'error', 'mensaje': 'Error creando archivos únicos'}), 500
+        
+        # ✅ PASO 2: Generar HTML
+        resumen_test = "Sesión de prueba generada con funciones de emergencia. Sistema funcionando correctamente en Railway."
+        if especialidad.endswith('_half'):
+            resumen_test = f"<h3>Continuación {especialidad.replace('_half', '').replace('_', ' ')}</h3><p>Esta es una sesión de seguimiento (½ tiempo) con análisis personalizado adicional.</p>"
+        
+        archivo_html = generar_html_emergency(datos_cliente, especialidad, archivos_unicos, resumen_test)
+        if not archivo_html:
+            return jsonify({'status': 'error', 'mensaje': 'Error generando HTML'}), 500
+        
+        # ✅ PASO 3: Generar PDF
+        nombre_pdf = f"emergency_{especialidad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        archivo_pdf = f"informes/{nombre_pdf}"
+        
+        os.makedirs('informes', exist_ok=True)
+        
+        exito_pdf = convertir_html_a_pdf_emergency(archivo_html, archivo_pdf)
+        
+        if exito_pdf:
+            return jsonify({
+                'status': 'success',
+                'mensaje': f'✅ PDF Emergency generado: {especialidad}',
+                'especialidad': especialidad,
+                'es_producto_m': especialidad.endswith('_half'),
+                'tipo_template': 'Anexo (½ tiempo)' if especialidad.endswith('_half') else 'Completo con portada dorada',
+                'archivo': archivo_pdf,
+                'download_url': f"/test/descargar_pdf/{nombre_pdf}",
+                'metodo': 'Funciones de emergencia autocontenidas'
+            })
+        else:
+            return jsonify({'status': 'error', 'mensaje': 'Error generando PDF'}), 500
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'status': 'error', 
+            'mensaje': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+@app.route('/emergency/test_all')
+def emergency_test_all():
+    """Probar todos los productos (normales + M) con funciones de emergencia"""
+    resultados = {}
+    
+    productos = [
+        'carta_astral_ia', 'carta_astral_ia_half',
+        'psico_coaching_ia', 'psico_coaching_ia_half', 
+        'sinastria_ia', 'sinastria_ia_half'
+    ]
+    
+    for producto in productos:
+        try:
+            import requests
+            response = requests.get(f"http://localhost:5000/emergency/generar_pdf/{producto}", timeout=30)
+            resultados[producto] = {
+                'status': response.status_code,
+                'resultado': response.json() if response.headers.get('content-type') == 'application/json' else 'No JSON'
+            }
+        except Exception as e:
+            resultados[producto] = {'status': 'error', 'error': str(e)}
+    
+    return jsonify({
+        'test_completo': 'Funciones de emergencia',
+        'productos_probados': len(productos),
+        'resultados': resultados
+    })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
