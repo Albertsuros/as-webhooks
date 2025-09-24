@@ -10633,6 +10633,285 @@ def diagnostico_listar_archivos_static():
         
     except Exception as e:
         return jsonify({'status': 'error', 'mensaje': str(e)})
+        
+# ========================================
+# DIAGNÓSTICO: ¿Por qué no se generan cartas dinámicas?
+# AÑADIR A main.py
+# ========================================
+
+@app.route('/diagnostico/test_carta_natal_real')
+def test_carta_natal_real():
+    """Probar crear una carta natal real con timestamp único"""
+    try:
+        from datetime import datetime
+        import os
+        
+        # Datos de test
+        datos_natales = {
+            'fecha_nacimiento': '1985-07-15',
+            'hora_nacimiento': '10:30', 
+            'lugar_nacimiento': 'Madrid, España',
+            'pais_nacimiento': 'España'
+        }
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        nombre_esperado = f"carta_natal_test_{timestamp}.png"
+        ruta_esperada = f"static/{nombre_esperado}"
+        
+        resultado = {
+            'timestamp': timestamp,
+            'archivo_esperado': nombre_esperado,
+            'ruta_esperada': ruta_esperada,
+            'paso_1_imports': {},
+            'paso_2_ejecucion': {},
+            'paso_3_archivo_creado': {}
+        }
+        
+        # PASO 1: Probar imports
+        try:
+            # Intentar importar carta_natal
+            import carta_natal
+            resultado['paso_1_imports']['carta_natal'] = 'success'
+            
+            # Listar funciones disponibles en el módulo
+            funciones = [attr for attr in dir(carta_natal) if not attr.startswith('_')]
+            resultado['paso_1_imports']['funciones_disponibles'] = funciones
+            
+        except Exception as e:
+            resultado['paso_1_imports']['carta_natal'] = f'error: {str(e)}'
+            return jsonify(resultado)
+        
+        # PASO 2: Intentar crear carta
+        try:
+            # Buscar la función correcta para generar carta
+            if hasattr(carta_natal, 'generar_carta_natal'):
+                resultado['paso_2_ejecucion']['funcion_encontrada'] = 'generar_carta_natal'
+                # Intentar ejecutar
+                carta_result = carta_natal.generar_carta_natal(datos_natales, ruta_esperada)
+                resultado['paso_2_ejecucion']['resultado'] = carta_result
+                
+            elif hasattr(carta_natal, 'crear_carta_natal'):
+                resultado['paso_2_ejecucion']['funcion_encontrada'] = 'crear_carta_natal'
+                carta_result = carta_natal.crear_carta_natal(datos_natales, ruta_esperada)
+                resultado['paso_2_ejecucion']['resultado'] = carta_result
+                
+            else:
+                # Intentar usar la primera función que no sea privada
+                funciones_publicas = [f for f in funciones if callable(getattr(carta_natal, f))]
+                if funciones_publicas:
+                    primera_funcion = funciones_publicas[0]
+                    resultado['paso_2_ejecucion']['funcion_encontrada'] = primera_funcion
+                    resultado['paso_2_ejecucion']['intento'] = 'usando primera función pública'
+                else:
+                    resultado['paso_2_ejecucion']['error'] = 'No se encontraron funciones ejecutables'
+                    
+        except Exception as e:
+            resultado['paso_2_ejecucion']['error'] = str(e)
+            import traceback
+            resultado['paso_2_ejecucion']['traceback'] = traceback.format_exc()
+        
+        # PASO 3: Verificar si se creó el archivo
+        if os.path.exists(ruta_esperada):
+            stats = os.stat(ruta_esperada)
+            resultado['paso_3_archivo_creado'] = {
+                'creado': True,
+                'tamaño_bytes': stats.st_size,
+                'url': f"https://as-webhooks-production.up.railway.app/{ruta_esperada}"
+            }
+        else:
+            resultado['paso_3_archivo_creado'] = {'creado': False}
+            
+            # Listar archivos en static para ver si se creó con otro nombre
+            archivos_static = os.listdir('./static/')
+            archivos_nuevos = [f for f in archivos_static if timestamp in f]
+            resultado['paso_3_archivo_creado']['archivos_con_timestamp'] = archivos_nuevos
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error_general': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/diagnostico/probar_imports_swisseph') 
+def probar_imports_swisseph():
+    """Probar si las dependencias astrológicas funcionan"""
+    resultado = {'imports': {}}
+    
+    # Lista de módulos que podrían ser necesarios
+    modulos_necesarios = [
+        'swisseph',
+        'pyephem', 
+        'carta_natal',
+        'progresiones',
+        'transitos',
+        'revolucion_solar',
+        'revolucion_natal',
+        'sinastria'
+    ]
+    
+    for modulo in modulos_necesarios:
+        try:
+            imported_module = __import__(modulo)
+            resultado['imports'][modulo] = {
+                'status': 'success',
+                'file': getattr(imported_module, '__file__', 'unknown'),
+                'functions': [attr for attr in dir(imported_module) if not attr.startswith('_')][:10]
+            }
+        except ImportError as e:
+            resultado['imports'][modulo] = {
+                'status': 'import_error', 
+                'error': str(e)
+            }
+        except Exception as e:
+            resultado['imports'][modulo] = {
+                'status': 'other_error',
+                'error': str(e)
+            }
+    
+    # Verificar si swisseph funciona básicamente
+    try:
+        import swisseph as swe
+        # Test básico de swisseph
+        jd = swe.julday(2025, 9, 24, 12.0)
+        resultado['swisseph_test'] = {
+            'julian_day_test': jd,
+            'working': True
+        }
+    except:
+        resultado['swisseph_test'] = {'working': False}
+    
+    return jsonify(resultado)
+
+@app.route('/diagnostico/simular_llamada_sofia')
+def simular_llamada_sofia():
+    """Simular el proceso completo que hace Sofia cuando llama un cliente"""
+    try:
+        from datetime import datetime
+        
+        # Datos de test como los que pasaría Sofia
+        datos_cliente = {
+            'nombre': 'Test Cliente Diagnóstico',
+            'email': 'diagnostico@ascartastral.com',
+            'codigo_servicio': 'AI_DIAG123',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'pais_nacimiento': 'España'
+        }
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Archivos que Sofia intentaría crear
+        archivos_esperados = {
+            'carta_natal_img': f'static/carta_natal_{timestamp}.png',
+            'progresiones_img': f'static/progresiones_{timestamp}.png',
+            'transitos_img': f'static/transitos_{timestamp}.png'
+        }
+        
+        resultado = {
+            'datos_cliente': datos_cliente,
+            'archivos_esperados': archivos_esperados,
+            'proceso_sofia': {}
+        }
+        
+        # Intentar importar la función que usa Sofia
+        try:
+            # Esto debería estar en sofia.py
+            from sofia import generar_cartas_astrales_completas
+            resultado['proceso_sofia']['import_sofia'] = 'success'
+            
+            # Llamar la función como lo haría Sofia
+            datos_natales = {
+                'fecha_nacimiento': datos_cliente['fecha_nacimiento'], 
+                'hora_nacimiento': datos_cliente['hora_nacimiento'],
+                'lugar_nacimiento': datos_cliente['lugar_nacimiento'],
+                'pais_nacimiento': datos_cliente['pais_nacimiento']
+            }
+            
+            exito, datos_interpretacion = generar_cartas_astrales_completas(datos_natales, archivos_esperados)
+            
+            resultado['proceso_sofia']['exito'] = exito
+            resultado['proceso_sofia']['datos_interpretacion'] = str(datos_interpretacion)[:200] + "..."
+            
+        except ImportError as e:
+            resultado['proceso_sofia']['import_error'] = str(e)
+        except Exception as e:
+            resultado['proceso_sofia']['execution_error'] = str(e)
+            import traceback
+            resultado['proceso_sofia']['traceback'] = traceback.format_exc()
+        
+        # Verificar archivos creados
+        archivos_creados = {}
+        import os
+        for nombre, ruta in archivos_esperados.items():
+            if os.path.exists(ruta):
+                stats = os.stat(ruta) 
+                archivos_creados[nombre] = {
+                    'creado': True,
+                    'tamaño': stats.st_size,
+                    'url': f"https://as-webhooks-production.up.railway.app/{ruta}"
+                }
+            else:
+                archivos_creados[nombre] = {'creado': False}
+        
+        resultado['archivos_resultado'] = archivos_creados
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/diagnostico/verificar_dependencias')
+def verificar_dependencias():
+    """Verificar todas las dependencias necesarias"""
+    import subprocess
+    import sys
+    
+    resultado = {
+        'python_version': sys.version,
+        'pip_packages': {},
+        'system_info': {}
+    }
+    
+    # Paquetes críticos para astrología
+    paquetes_criticos = [
+        'swisseph',
+        'pyephem',
+        'matplotlib',
+        'PIL', 
+        'Pillow',
+        'numpy',
+        'flask',
+        'playwright'
+    ]
+    
+    for paquete in paquetes_criticos:
+        try:
+            # Intentar importar
+            __import__(paquete)
+            resultado['pip_packages'][paquete] = 'installed'
+        except ImportError:
+            resultado['pip_packages'][paquete] = 'missing'
+        except Exception as e:
+            resultado['pip_packages'][paquete] = f'error: {str(e)}'
+    
+    # Info del sistema
+    import os
+    resultado['system_info'] = {
+        'cwd': os.getcwd(),
+        'PATH': os.environ.get('PATH', '')[:200] + "...",
+        'PYTHONPATH': os.environ.get('PYTHONPATH', 'not_set'),
+        'platform': sys.platform
+    }
+    
+    return jsonify(resultado)
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
