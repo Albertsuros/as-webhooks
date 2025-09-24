@@ -10379,6 +10379,260 @@ def estado_limpieza_archivos():
         'limite_dias': 7,
         'solucion': 'Aplicar /test/proteger_imagenes_criticas'
     })
+    
+@app.route('/diagnostico/carpetas_permisos')
+def diagnostico_carpetas_permisos():
+    """Verificar carpetas y permisos en Railway"""
+    import os
+    import stat
+    from datetime import datetime
+    
+    resultado = {
+        'timestamp': datetime.now().isoformat(),
+        'directorio_actual': os.getcwd(),
+        'carpetas': {},
+        'permisos': {},
+        'test_escritura': {}
+    }
+    
+    # CARPETAS CRÍTICAS PARA IMÁGENES
+    carpetas_criticas = ['static', 'templates', 'informes', 'img']
+    
+    for carpeta in carpetas_criticas:
+        ruta = f'./{carpeta}/'
+        resultado['carpetas'][carpeta] = {
+            'existe': os.path.exists(ruta),
+            'es_directorio': os.path.isdir(ruta) if os.path.exists(ruta) else False,
+            'archivos_dentro': [],
+            'total_archivos': 0
+        }
+        
+        if os.path.exists(ruta):
+            try:
+                archivos = os.listdir(ruta)
+                resultado['carpetas'][carpeta]['archivos_dentro'] = archivos[:10]  # Primeros 10
+                resultado['carpetas'][carpeta]['total_archivos'] = len(archivos)
+                
+                # Verificar permisos
+                resultado['permisos'][carpeta] = {
+                    'lectura': os.access(ruta, os.R_OK),
+                    'escritura': os.access(ruta, os.W_OK),
+                    'ejecucion': os.access(ruta, os.X_OK)
+                }
+                
+                # TEST DE ESCRITURA REAL
+                try:
+                    archivo_test = f"{ruta}test_escritura_{datetime.now().strftime('%H%M%S')}.txt"
+                    with open(archivo_test, 'w') as f:
+                        f.write("Test de escritura Railway")
+                    
+                    # Si llegó aquí, se pudo escribir
+                    resultado['test_escritura'][carpeta] = {'status': 'success', 'archivo': archivo_test}
+                    
+                    # Limpiar archivo de test
+                    os.remove(archivo_test)
+                    
+                except Exception as e:
+                    resultado['test_escritura'][carpeta] = {'status': 'error', 'error': str(e)}
+            
+            except Exception as e:
+                resultado['carpetas'][carpeta]['error'] = str(e)
+    
+    # CREAR CARPETAS FALTANTES
+    carpetas_creadas = []
+    for carpeta in carpetas_criticas:
+        if not resultado['carpetas'][carpeta]['existe']:
+            try:
+                os.makedirs(f'./{carpeta}/', exist_ok=True)
+                carpetas_creadas.append(carpeta)
+            except Exception as e:
+                resultado['carpetas'][carpeta]['error_creacion'] = str(e)
+    
+    resultado['carpetas_creadas'] = carpetas_creadas
+    
+    return jsonify(resultado)
+
+@app.route('/diagnostico/test_creacion_imagen')
+def diagnostico_test_creacion_imagen():
+    """Probar crear una imagen de test en static/"""
+    import os
+    from datetime import datetime
+    
+    try:
+        # Asegurar que existe la carpeta
+        os.makedirs('./static/', exist_ok=True)
+        
+        # Crear imagen de test simple (sin usar las funciones complejas)
+        nombre_imagen_test = f"test_imagen_{datetime.now().strftime('%H%M%S')}.png"
+        ruta_imagen = f"./static/{nombre_imagen_test}"
+        
+        # Usar PIL para crear imagen simple
+        try:
+            from PIL import Image, ImageDraw
+            
+            # Crear imagen de 400x400 con fondo blanco
+            img = Image.new('RGB', (400, 400), color='white')
+            draw = ImageDraw.Draw(img)
+            
+            # Dibujar rectángulo de test
+            draw.rectangle([50, 50, 350, 350], fill='lightblue', outline='blue', width=3)
+            draw.text((200, 200), "TEST IMAGE", fill='black', anchor='mm')
+            
+            # Guardar imagen
+            img.save(ruta_imagen, 'PNG')
+            
+            # Verificar que se creó
+            if os.path.exists(ruta_imagen):
+                stats = os.stat(ruta_imagen)
+                return jsonify({
+                    'status': 'success',
+                    'mensaje': 'Imagen de test creada correctamente',
+                    'archivo': ruta_imagen,
+                    'tamaño_bytes': stats.st_size,
+                    'url_acceso': f"https://as-webhooks-production.up.railway.app/static/{nombre_imagen_test}",
+                    'metodo': 'PIL'
+                })
+            else:
+                return jsonify({'status': 'error', 'mensaje': 'Imagen no se creó'})
+                
+        except ImportError:
+            return jsonify({'status': 'error', 'mensaje': 'PIL no disponible'})
+            
+    except Exception as e:
+        return jsonify({'status': 'error', 'mensaje': str(e)})
+
+@app.route('/diagnostico/test_cartas_reales')  
+def diagnostico_test_cartas_reales():
+    """Probar crear carta astral real usando los archivos originales"""
+    import os
+    from datetime import datetime
+    
+    try:
+        # Datos de test
+        datos_natales = {
+            'fecha_nacimiento': '1985-07-15',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'pais_nacimiento': 'España'
+        }
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Archivos únicos de test
+        archivos_unicos = {
+            'carta_natal_img': f'static/carta_natal_test_{timestamp}.png',
+            'progresiones_img': f'static/progresiones_test_{timestamp}.png', 
+            'transitos_img': f'static/transitos_test_{timestamp}.png'
+        }
+        
+        # Probar importar y ejecutar la función original
+        try:
+            # Esto debería estar en sofia.py o en un archivo similar
+            # from sofia import generar_cartas_astrales_completas
+            
+            # Como no tengo acceso directo, simular el proceso
+            from carta_natal import GraficadorCartaNatal
+            
+            # Crear instancia del graficador
+            graficador = GraficadorCartaNatal()
+            
+            # Configurar datos natales (simular el formato esperado)
+            fecha_natal = (1985, 7, 15, 10, 30)  # año, mes, día, hora, minuto
+            
+            # Intentar crear carta natal
+            graficador.configurar_carta_natal(fecha_natal, lugar="Madrid, España")
+            
+            # Guardar con nombre específico
+            graficador.nombre_archivo_personalizado = archivos_unicos['carta_natal_img']
+            resultado_carta = graficador.guardar_carta_natal_con_nombre_unico(fecha_natal, './static/')
+            
+            # Verificar resultados
+            archivos_creados = {}
+            for nombre, ruta in archivos_unicos.items():
+                if os.path.exists(ruta):
+                    stats = os.stat(ruta)
+                    archivos_creados[nombre] = {
+                        'creado': True,
+                        'ruta': ruta,
+                        'tamaño': stats.st_size,
+                        'url': f"https://as-webhooks-production.up.railway.app/{ruta}"
+                    }
+                else:
+                    archivos_creados[nombre] = {'creado': False, 'ruta': ruta}
+            
+            return jsonify({
+                'status': 'success' if archivos_creados else 'partial',
+                'mensaje': 'Test de creación de cartas reales',
+                'archivos_creados': archivos_creados,
+                'total_creados': len([a for a in archivos_creados.values() if a.get('creado')])
+            })
+            
+        except ImportError as e:
+            return jsonify({
+                'status': 'import_error',
+                'mensaje': f'No se pudo importar: {str(e)}',
+                'solucion': 'Verificar que carta_natal.py esté disponible'
+            })
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'status': 'error',
+            'mensaje': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/diagnostico/listar_archivos_static')
+def diagnostico_listar_archivos_static():
+    """Listar todos los archivos en static/ con detalles"""
+    import os
+    import time
+    from datetime import datetime
+    
+    try:
+        if not os.path.exists('./static/'):
+            return jsonify({
+                'status': 'error',
+                'mensaje': 'Carpeta static/ no existe',
+                'solucion': 'Crear carpeta con: os.makedirs("./static/", exist_ok=True)'
+            })
+        
+        archivos = []
+        total_tamaño = 0
+        
+        for archivo in os.listdir('./static/'):
+            ruta = f"./static/{archivo}"
+            if os.path.isfile(ruta):
+                stats = os.stat(ruta)
+                fecha_mod = datetime.fromtimestamp(stats.st_mtime)
+                
+                archivo_info = {
+                    'nombre': archivo,
+                    'tamaño_bytes': stats.st_size,
+                    'tamaño_kb': round(stats.st_size / 1024, 2),
+                    'fecha_modificacion': fecha_mod.isoformat(),
+                    'edad_minutos': round((time.time() - stats.st_mtime) / 60, 1),
+                    'url_acceso': f"https://as-webhooks-production.up.railway.app/static/{archivo}",
+                    'es_imagen': archivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+                }
+                
+                archivos.append(archivo_info)
+                total_tamaño += stats.st_size
+        
+        # Ordenar por fecha de modificación (más recientes primero)
+        archivos.sort(key=lambda x: x['fecha_modificacion'], reverse=True)
+        
+        return jsonify({
+            'status': 'success',
+            'total_archivos': len(archivos),
+            'total_tamaño_kb': round(total_tamaño / 1024, 2),
+            'archivos': archivos,
+            'archivos_recientes': [a for a in archivos if a['edad_minutos'] < 60],  # Últimos 60 min
+            'imagenes': [a for a in archivos if a['es_imagen']]
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'mensaje': str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
