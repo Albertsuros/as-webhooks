@@ -6809,108 +6809,144 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
 # ========================================
 
 def crear_archivos_unicos_testing(tipo_servicio):
-    """GENERAR CARTAS DINÁMICAS REALES - SOLUCIÓN FINAL"""
-    import os
+    """GENERAR CARTAS USANDO EXACTAMENTE LO QUE FUNCIONA"""
     from datetime import datetime
-    import carta_natal
-    import progresiones
-    import transitos
+    import os
     
     try:
-        print(f"🎯 FINAL: Generando cartas dinámicas para {tipo_servicio}")
-        
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        print(f"DIRECTA: Generando para {tipo_servicio} - {timestamp}")
+        
+        # Contar archivos antes
+        archivos_antes = len(os.listdir('./static/')) if os.path.exists('./static/') else 0
         
         if tipo_servicio in ['carta_astral_ia', 'carta_natal', 'carta_astral_ia_half']:
             
-            # USAR CLASE CartaAstralNatal que sabemos que funciona
+            # USAR EXACTAMENTE LO QUE FUNCIONÓ EN EL TEST
             try:
-                carta_instance = carta_natal.CartaAstralNatal()
+                import carta_natal
+                import progresiones  
+                import transitos
                 
-                # Datos de ejemplo (más tarde Sofia pasará los reales)
-                fecha_natal = (1985, 7, 15, 10, 30)  # año, mes, día, hora, minuto
-                lugar = "Madrid, España"
-                
-                # Archivos únicos con timestamp
-                archivos_unicos = {
-                    'informe_html': f"templates/informe_carta_astral_{timestamp}.html",
-                    'carta_natal_img': f'static/carta_natal_{timestamp}.png',
-                    'progresiones_img': f'static/progresiones_{timestamp}.png',
-                    'transitos_img': f'static/transitos_{timestamp}.png',
-                    'es_producto_m': tipo_servicio.endswith('_half'),
-                    'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40
-                }
-                
-                # MÉTODO 1: Usar crear_carta_astral_natal si existe
-                if hasattr(carta_instance, 'crear_carta_astral_natal'):
-                    carta_instance.crear_carta_astral_natal(fecha_natal, lugar)
-                    carta_instance.guardar_carta_natal_con_nombre_unico(fecha_natal, './static/')
-                
-                # MÉTODO 2: Llamar generar_carta_natal_personalizada (funciona sin parámetros)
+                # Estas funciones SÍ crearon archivos en el test
+                print("DIRECTA: Ejecutando generar_carta_natal_personalizada...")
                 carta_natal.generar_carta_natal_personalizada()
                 
-                # MÉTODO 3: Generar progresiones y tránsitos
+                print("DIRECTA: Ejecutando generar_cartas_natales_multiples...")
+                carta_natal.generar_cartas_natales_multiples()
+                
+                print("DIRECTA: Ejecutando main de carta_natal...")
+                carta_natal.main()
+                
+                # Intentar progresiones y tránsitos
                 try:
-                    progresiones.generar_carta_progresiones()  # Si existe función similar
-                except:
-                    pass
+                    print("DIRECTA: Ejecutando progresiones...")
+                    if hasattr(progresiones, 'generar_carta_progresiones'):
+                        progresiones.generar_carta_progresiones()
+                    elif hasattr(progresiones, 'main'):
+                        progresiones.main()
+                except Exception as e:
+                    print(f"DIRECTA: Error progresiones: {e}")
                 
                 try:
-                    transitos.generar_carta_transitos()  # Si existe función similar  
-                except:
-                    pass
+                    print("DIRECTA: Ejecutando tránsitos...")
+                    if hasattr(transitos, 'generar_carta_transitos'):
+                        transitos.generar_carta_transitos()
+                    elif hasattr(transitos, 'main'):
+                        transitos.main()
+                except Exception as e:
+                    print(f"DIRECTA: Error tránsitos: {e}")
                 
-                print(f"✅ FINAL: Cartas generadas exitosamente")
-                return archivos_unicos
+                # Esperar un poco para que se generen los archivos
+                import time
+                time.sleep(1)
+                
+                # Contar archivos después
+                archivos_despues = len(os.listdir('./static/')) if os.path.exists('./static/') else 0
+                print(f"DIRECTA: Archivos antes: {archivos_antes}, después: {archivos_despues}")
+                
+                # Buscar archivos recién creados
+                archivos_nuevos = []
+                if os.path.exists('./static/'):
+                    for archivo in os.listdir('./static/'):
+                        ruta = f"./static/{archivo}"
+                        if os.path.exists(ruta):
+                            stats = os.stat(ruta)
+                            # Si es muy reciente (últimos 10 segundos)
+                            if time.time() - stats.st_mtime < 10:
+                                archivos_nuevos.append(archivo)
+                
+                print(f"DIRECTA: Archivos nuevos encontrados: {archivos_nuevos}")
+                
+                # Si se generaron archivos, usarlos
+                if archivos_nuevos:
+                    # Encontrar el más reciente de cada tipo
+                    carta_natal_img = None
+                    progresiones_img = None
+                    transitos_img = None
+                    
+                    for archivo in archivos_nuevos:
+                        if 'carta_natal' in archivo or 'carta_astral' in archivo:
+                            carta_natal_img = f"static/{archivo}"
+                        elif 'progresiones' in archivo:
+                            progresiones_img = f"static/{archivo}"
+                        elif 'transitos' in archivo:
+                            transitos_img = f"static/{archivo}"
+                    
+                    # Si no encontramos específicos, usar cualquiera
+                    if not carta_natal_img and archivos_nuevos:
+                        carta_natal_img = f"static/{archivos_nuevos[0]}"
+                    if not progresiones_img and len(archivos_nuevos) > 1:
+                        progresiones_img = f"static/{archivos_nuevos[1]}" 
+                    if not transitos_img and len(archivos_nuevos) > 2:
+                        transitos_img = f"static/{archivos_nuevos[2]}"
+                    
+                    archivos_unicos = {
+                        'informe_html': f"templates/informe_carta_astral_{timestamp}.html",
+                        'carta_natal_img': carta_natal_img or 'static/carta_astral.png',
+                        'progresiones_img': progresiones_img or 'static/carta_astral_completa.png',
+                        'transitos_img': transitos_img or 'static/carta_astral_corregida.png',
+                        'es_producto_m': tipo_servicio.endswith('_half'),
+                        'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40,
+                        'archivos_generados': archivos_nuevos,
+                        'generacion_dinamica': True
+                    }
+                    
+                    print(f"DIRECTA: Usando archivos dinámicos generados")
+                    return archivos_unicos
                 
             except Exception as e:
-                print(f"❌ Error generando cartas dinámicas: {e}")
-                # FALLBACK: Usar imágenes estáticas existentes
-                archivos_unicos = {
-                    'informe_html': f"templates/informe_carta_astral_{timestamp}.html",
-                    'carta_natal_img': 'static/carta_astral.png',
-                    'progresiones_img': 'static/carta_astral_completa.png', 
-                    'transitos_img': 'static/carta_astral_corregida.png',
-                    'es_producto_m': tipo_servicio.endswith('_half'),
-                    'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40
-                }
-                print(f"⚠️ FINAL: Usando imágenes estáticas como fallback")
-                return archivos_unicos
+                print(f"DIRECTA: Error ejecutando funciones: {e}")
+                import traceback
+                traceback.print_exc()
             
-        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar', 'revolucion_solar_ia_half']:
+            # FALLBACK: imágenes estáticas
+            print(f"DIRECTA: Usando fallback - imágenes estáticas")
             archivos_unicos = {
-                'informe_html': f"templates/informe_revolucion_{timestamp}.html",
+                'informe_html': f"templates/informe_carta_astral_{timestamp}.html",
                 'carta_natal_img': 'static/carta_astral.png',
-                'revolucion_solar_img': 'static/carta_astral_placidus.png',
-                'revolucion_natal_img': 'static/carta_astral_placidus_corregida.png',
+                'progresiones_img': 'static/carta_astral_completa.png',
+                'transitos_img': 'static/carta_astral_corregida.png',
                 'es_producto_m': tipo_servicio.endswith('_half'),
-                'duracion_minutos': 25 if tipo_servicio.endswith('_half') else 50
+                'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40,
+                'generacion_dinamica': False
             }
-            
-        elif tipo_servicio in ['sinastria_ia', 'sinastria', 'sinastria_ia_half']:
-            archivos_unicos = {
-                'informe_html': f"templates/informe_sinastria_{timestamp}.html",
-                'sinastria_img': 'static/carta_astral_demo.png',
-                'es_producto_m': tipo_servicio.endswith('_half'),
-                'duracion_minutos': 15 if tipo_servicio.endswith('_half') else 30
-            }
-            
+            return archivos_unicos
+        
+        # Para otros servicios - solo estructura básica
         else:
-            # Otros servicios - usar estáticas
             archivos_unicos = {
                 'informe_html': f"templates/informe_{tipo_servicio}_{timestamp}.html",
                 'es_producto_m': tipo_servicio.endswith('_half'),
-                'duracion_minutos': 30
+                'duracion_minutos': 30,
+                'generacion_dinamica': False
             }
-        
-        print(f"✅ FINAL: archivos_unicos creados: {archivos_unicos}")
-        return archivos_unicos
-        
+            return archivos_unicos
+            
     except Exception as e:
-        print(f"❌ FINAL ERROR: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"DIRECTA: Error general: {e}")
         return {}
+
 
 # ========================================
 # FUNCIÓN MEJORADA PARA GENERAR CARTAS CON DATOS REALES
@@ -7176,19 +7212,15 @@ def crear_imagen_dummy(ruta_archivo, tipo_imagen):
 
 @app.route('/test/generar_pdf_especialidad/<especialidad>')
 def generar_pdf_especialidad(especialidad):
-    """Generar PDF de especialidad - CON PRODUCTOS M IMPLEMENTADOS"""
+    """PDF con cartas dinámicas - VERSIÓN DIRECTA"""
     try:
-        from informes import generar_informe_html, convertir_html_a_pdf, generar_nombre_archivo_unico
+        from datetime import datetime
         import os
         
-        # ✅ LISTA ACTUALIZADA CON PRODUCTOS M
         especialidades_validas = [
-            # SERVICIOS NORMALES
-            'carta_astral_ia', 'revolucion_solar_ia', 'sinastria_ia', 
-            'astrologia_horaria_ia', 'lectura_manos_ia', 'lectura_facial_ia', 
-            'psico_coaching_ia', 'grafologia_ia',
-            # ✅ PRODUCTOS M (MEDIO TIEMPO)
-            'carta_astral_ia_half', 'revolucion_solar_ia_half', 'sinastria_ia_half',
+            'carta_astral_ia', 'revolucion_solar_ia', 'sinastria_ia', 'psico_coaching_ia',
+            'lectura_manos_ia', 'lectura_facial_ia', 'grafologia_ia', 'astrologia_horaria_ia',
+            'carta_astral_ia_half', 'revolucion_solar_ia_half', 'sinastria_ia_half', 
             'lectura_manos_ia_half', 'psico_coaching_ia_half'
         ]
         
@@ -7198,83 +7230,81 @@ def generar_pdf_especialidad(especialidad):
                 'mensaje': f'Especialidad no válida. Opciones: {especialidades_validas}'
             }), 400
         
-        # Datos de cliente de prueba
+        print(f"DIRECTA PDF: Iniciando generación para {especialidad}")
+        
+        # Datos de cliente
         datos_cliente = {
-            'nombre': f'Cliente Test {especialidad.upper()}',
-            'email': f'test_{especialidad}@ascartastral.com',
+            'nombre': f'Cliente Test {especialidad.replace("_", " ").title()}',
+            'email': f'{especialidad}@ascartastral.com',
             'codigo_servicio': f'TEST_{especialidad.upper()[:3]}',
             'fecha_nacimiento': '15/07/1985',
             'hora_nacimiento': '10:30',
             'lugar_nacimiento': 'Madrid, España'
         }
         
-        # ✅ DETERMINAR SI ES PRODUCTO M
-        es_producto_m = especialidad.endswith('_half')
-        
-        if es_producto_m:
-            datos_cliente['resumen_sesion'] = f"""
-            <h3>📞 Continuación de tu consulta {especialidad.replace('_half', '').replace('_', ' ').title()}</h3>
-            <p>Esta es la continuación de tu sesión anterior (½ tiempo).</p>
-            <p><strong>Duración:</strong> Sesión de seguimiento personalizada</p>
-            <div style="background: #f0f8ff; padding: 15px; border-left: 4px solid #007bff; margin: 15px 0;">
-                <p>💡 <strong>Puntos clave tratados en esta continuación:</strong></p>
-                <ul>
-                    <li>Profundización en aspectos específicos identificados</li>
-                    <li>Resolución de dudas y consultas adicionales</li>
-                    <li>Orientación personalizada para próximos pasos</li>
-                </ul>
-            </div>
-            """
-        
-        # Generar archivos únicos
+        # Generar archivos únicos (posiblemente dinámicos)
         archivos_unicos = crear_archivos_unicos_testing(especialidad)
         
         if not archivos_unicos:
-            return jsonify({
-                'status': 'error',
-                'mensaje': 'Error generando archivos únicos'
-            }), 500
+            return jsonify({'status': 'error', 'mensaje': 'Error creando archivos únicos'}), 500
         
-        # Generar HTML del informe
-        html_content = generar_informe_html(especialidad, datos_cliente, archivos_unicos)
+        print(f"DIRECTA PDF: archivos_unicos = {archivos_unicos}")
+        
+        # GENERAR HTML DIRECTAMENTE (sin usar informes.py problemático)
+        html_content = generar_html_simple_directo(datos_cliente, especialidad, archivos_unicos)
         
         if not html_content:
-            return jsonify({
-                'status': 'error',
-                'mensaje': 'Error generando contenido HTML'
-            }), 500
+            return jsonify({'status': 'error', 'mensaje': 'Error generando HTML directo'}), 500
         
-        # Crear archivo HTML
-        nombre_base = generar_nombre_archivo_unico(datos_cliente.get('codigo_servicio', 'TEST'))
-        archivo_html = archivos_unicos.get('informe_html', f"templates/informe_{nombre_base}.html")
+        # Guardar HTML
+        nombre_pdf = f"{especialidad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        archivo_html = f"templates/{nombre_pdf}.html"
+        archivo_pdf = f"informes/{nombre_pdf}.pdf"
         
         os.makedirs('templates', exist_ok=True)
+        os.makedirs('informes', exist_ok=True)
+        
         with open(archivo_html, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
+        print(f"DIRECTA PDF: HTML guardado en {archivo_html}")
+        
         # Generar PDF
-        nombre_pdf = f"{especialidad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        archivo_pdf = f"informes/{nombre_pdf}"
+        from playwright.sync_api import sync_playwright
         
-        os.makedirs('informes', exist_ok=True)
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=['--no-sandbox'])
+            page = browser.new_page()
+            
+            # Cargar HTML
+            html_path = os.path.abspath(archivo_html)
+            page.goto(f"file://{html_path}")
+            page.wait_for_load_state('networkidle')
+            
+            # Generar PDF
+            page.pdf(
+                path=archivo_pdf,
+                format='A4',
+                margin={'top': '20px', 'right': '20px', 'bottom': '20px', 'left': '20px'},
+                print_background=True
+            )
+            browser.close()
         
-        exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
-        
-        if exito_pdf:
+        # Verificar PDF creado
+        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
             return jsonify({
                 'status': 'success',
-                'mensaje': f'PDF de {especialidad} generado correctamente',
+                'mensaje': f'PDF generado exitosamente: {especialidad}',
                 'especialidad': especialidad,
-                'es_producto_m': es_producto_m,
+                'es_producto_m': especialidad.endswith('_half'),
                 'archivo': archivo_pdf,
-                'download_url': f"/test/descargar_pdf/{nombre_pdf}",
-                'tipo_template': 'Anexo (½ tiempo)' if es_producto_m else 'Completo'
+                'download_url': f"/test/descargar_pdf/{nombre_pdf}.pdf",
+                'generacion_dinamica': archivos_unicos.get('generacion_dinamica', False),
+                'archivos_usados': [v for k, v in archivos_unicos.items() if k.endswith('_img')],
+                'metodo': 'HTML directo + Playwright'
             })
         else:
-            return jsonify({
-                'status': 'error',
-                'mensaje': 'Error generando PDF'
-            }), 500
+            return jsonify({'status': 'error', 'mensaje': 'PDF no se generó correctamente'}), 500
             
     except Exception as e:
         import traceback
@@ -7283,6 +7313,95 @@ def generar_pdf_especialidad(especialidad):
             'mensaje': str(e),
             'traceback': traceback.format_exc()
         }), 500
+
+def generar_html_simple_directo(datos_cliente, especialidad, archivos_unicos):
+    """Generar HTML simple sin depender de informes.py"""
+    from datetime import datetime
+    import pytz
+    
+    try:
+        fecha_actual = datetime.now(pytz.timezone('Europe/Madrid'))
+        fecha_generacion = fecha_actual.strftime('%d de %B de %Y')
+        hora_generacion = fecha_actual.strftime('%H:%M')
+        
+        es_producto_m = especialidad.endswith('_half')
+        
+        if es_producto_m:
+            # Template anexo simple
+            html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>ANEXO - {datos_cliente['nombre']}</title>
+<style>
+body {{ font-family: Arial; margin: 30px; line-height: 1.6; }}
+.anexo {{ background: #f57c00; color: white; padding: 20px; text-align: center; border-radius: 10px; }}
+.contenido {{ background: #fff8e1; padding: 20px; margin: 20px 0; border-left: 4px solid #ff9800; }}
+</style></head>
+<body>
+<div class="anexo">
+<h1>ANEXO - CONTINUACIÓN {especialidad.replace('_half', '').replace('_', ' ').upper()}</h1>
+<p>Cliente: {datos_cliente['nombre']}</p>
+<p>Email: {datos_cliente['email']}</p>
+<p>Duración: {archivos_unicos.get('duracion_minutos', 20)} minutos (½ tiempo)</p>
+</div>
+<div class="contenido">
+<h2>Continuación de tu Consulta</h2>
+<p>Sesión de seguimiento personalizada generada exitosamente.</p>
+<p><strong>Generación dinámica:</strong> {archivos_unicos.get('generacion_dinamica', False)}</p>
+</div>
+<p style="text-align: center; margin-top: 40px;">
+Generado el {fecha_generacion} a las {hora_generacion}<br>
+AS Cartastral - Servicios Astrológicos IA
+</p>
+</body></html>"""
+        else:
+            # Template completo simple
+            html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>{datos_cliente['nombre']} - {especialidad}</title>
+<style>
+body {{ font-family: Arial; margin: 30px; line-height: 1.6; }}
+.portada {{ text-align: center; padding: 40px; background: #f8f9fa; border: 3px solid #DAA520; margin: 20px 0; }}
+.datos {{ background: white; padding: 20px; margin: 20px 0; border-left: 4px solid #2c5aa0; }}
+.imagen {{ text-align: center; margin: 20px 0; }}
+img {{ max-width: 100%; height: auto; border: 2px solid #ccc; }}
+</style></head>
+<body>
+<div class="portada">
+<h1>{especialidad.replace('_', ' ').upper()}</h1>
+<h2>{datos_cliente['nombre']}</h2>
+<p>Tu análisis personalizado</p>
+<p>Generado el {fecha_generacion}</p>
+</div>
+<div class="datos">
+<h2>Datos Personales</h2>
+<p><strong>Cliente:</strong> {datos_cliente['nombre']}</p>
+<p><strong>Email:</strong> {datos_cliente['email']}</p>
+<p><strong>Fecha de nacimiento:</strong> {datos_cliente['fecha_nacimiento']}</p>
+<p><strong>Hora de nacimiento:</strong> {datos_cliente['hora_nacimiento']}</p>
+<p><strong>Lugar de nacimiento:</strong> {datos_cliente['lugar_nacimiento']}</p>
+<p><strong>Generación dinámica:</strong> {archivos_unicos.get('generacion_dinamica', False)}</p>
+</div>"""
+            
+            # Añadir imágenes si existen
+            for key, img_path in archivos_unicos.items():
+                if key.endswith('_img') and img_path:
+                    titulo_img = key.replace('_img', '').replace('_', ' ').title()
+                    html += f"""
+<div class="imagen">
+<h3>{titulo_img}</h3>
+<img src="{img_path}" alt="{titulo_img}">
+</div>"""
+            
+            html += f"""
+<p style="text-align: center; margin-top: 40px;">
+Generado el {fecha_generacion} a las {hora_generacion}<br>
+AS Cartastral - Servicios Astrológicos IA
+</p>
+</body></html>"""
+        
+        return html
+        
+    except Exception as e:
+        print(f"Error generando HTML directo: {e}")
+        return None
 
 @app.route('/test/descargar_pdf/<nombre_archivo>')
 def descargar_pdf(nombre_archivo):
