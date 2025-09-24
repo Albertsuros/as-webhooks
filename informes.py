@@ -782,92 +782,177 @@ def obtener_template_html(tipo_servicio):
 # ========================================
 
 def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=""):
-    """FUNCIÓN DEFINITIVA - Reemplaza la función rota"""
+    """Generar informe HTML - VERSIÓN CORREGIDA PARA AS CARTASTRAL"""
     from datetime import datetime
     import pytz
     import os
+    from jinja2 import Template
     
     try:
-        print(f"🔥 DEFINITIVO: Generando HTML para {tipo_servicio}")
+        print(f"🔄 generando HTML para AS Cartastral: {tipo_servicio}")
         
-        # Detectar si es producto M
-        es_producto_m = tipo_servicio.endswith('_half')
+        # Si archivos_unicos está vacío o es None, crear estructura básica
+        if not archivos_unicos or not isinstance(archivos_unicos, dict):
+            import uuid
+            id_unico = str(uuid.uuid4())[:8]
+            archivos_unicos = {
+                'informe_html': f"templates/informe_{tipo_servicio}_{id_unico}.html",
+                'es_producto_m': tipo_servicio.endswith('_half'),
+                'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40
+            }
+            print(f"⚠️ archivos_unicos estaba vacío, creado: {archivos_unicos}")
         
-        # Datos básicos
+        # Detectar si es producto M (extensión de ½ tiempo)
+        es_producto_m = tipo_servicio.endswith('_half') or archivos_unicos.get('es_producto_m', False)
+        
+        # Datos de fecha y hora
         fecha_actual = datetime.now(pytz.timezone('Europe/Madrid'))
         fecha_generacion = fecha_actual.strftime('%d de %B de %Y')
         hora_generacion = fecha_actual.strftime('%H:%M')
         
+        # Datos base para el template
+        datos_template = {
+            'nombre': datos_cliente.get('nombre', 'Cliente'),
+            'email': datos_cliente.get('email', 'email@ejemplo.com'),
+            'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', 'No especificada'),
+            'hora_nacimiento': datos_cliente.get('hora_nacimiento', 'No especificada'),
+            'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', 'No especificado'),
+            'fecha_generacion': fecha_generacion,
+            'hora_generacion': hora_generacion,
+            'resumen_sesion': resumen_sesion,
+            'tipo_servicio': tipo_servicio
+        }
+        
+        # Añadir archivos de imágenes si existen
+        datos_template.update(archivos_unicos)
+        
         if es_producto_m:
-            # TEMPLATE ANEXO (SIN PORTADA)
-            html_content = f"""
+            # TEMPLATE ANEXO (productos M - continuación)
+            template_html = """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>ANEXO - {datos_cliente.get('nombre', 'Cliente')} - AS Cartastral</title>
+    <title>ANEXO - {{ nombre }} - AS Cartastral</title>
     <style>
-        body {{ font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }}
-        .encabezado-anexo {{ background: linear-gradient(135deg, #f57c00, #ff9800); color: white; padding: 25px; border-radius: 10px; text-align: center; margin-bottom: 30px; }}
-        .encabezado-anexo h1 {{ color: white; font-size: 24px; margin: 0 0 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }}
-        .badge-continuacion {{ background: #4caf50; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 10px; }}
-        h2 {{ font-size: 20px; margin-top: 30px; border-bottom: 2px solid #ff9800; padding-bottom: 8px; color: #f57c00; }}
-        .interpretacion {{ background: #fff8e1; padding: 20px; border-left: 4px solid #ff9800; margin: 20px 0; border-radius: 4px; }}
-        .footer {{ text-align: center; margin-top: 60px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }}
+        body { font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }
+        .encabezado-anexo { 
+            background: linear-gradient(135deg, #f57c00, #ff9800); 
+            color: white; padding: 25px; border-radius: 10px; text-align: center; margin-bottom: 30px; 
+        }
+        .encabezado-anexo h1 { 
+            color: white; font-size: 24px; margin: 0 0 15px 0; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3); 
+        }
+        .badge-continuacion { 
+            background: #4caf50; color: white; padding: 8px 16px; 
+            border-radius: 20px; font-size: 12px; font-weight: bold; 
+            display: inline-block; margin-top: 10px; 
+        }
+        h2 { 
+            font-size: 20px; margin-top: 30px; border-bottom: 2px solid #ff9800; 
+            padding-bottom: 8px; color: #f57c00; 
+        }
+        .interpretacion { 
+            background: #fff8e1; padding: 20px; border-left: 4px solid #ff9800; 
+            margin: 20px 0; border-radius: 4px; 
+        }
+        .footer { 
+            text-align: center; margin-top: 60px; padding: 20px; 
+            background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; 
+        }
+        .dato { font-weight: bold; color: #f57c00; }
     </style>
 </head>
 <body>
     <div class="encabezado-anexo">
-        <h1>📋 ANEXO - CONTINUACIÓN {tipo_servicio.replace('_half', '').replace('_', ' ').upper()}</h1>
-        <p><strong>Cliente:</strong> {datos_cliente.get('nombre', 'Cliente')}</p>
-        <p><strong>Email:</strong> {datos_cliente.get('email', 'email@test.com')}</p>
-        <p><strong>Duración:</strong> {archivos_unicos.get('duracion_minutos', 20)} minutos (½ tiempo)</p>
+        <h1>📋 ANEXO - CONTINUACIÓN {{ tipo_servicio.replace('_half', '').replace('_', ' ').upper() }}</h1>
+        <p><strong>Cliente:</strong> {{ nombre }}</p>
+        <p><strong>Email:</strong> {{ email }}</p>
+        <p><strong>Duración:</strong> {{ duracion_minutos|default(20) }} minutos (½ tiempo)</p>
         <div class="badge-continuacion">✨ SESIÓN DE SEGUIMIENTO</div>
     </div>
 
     <div class="interpretacion">
         <h2>📞 Continuación de tu Consulta</h2>
         <p>Esta es la continuación de tu sesión anterior, con análisis adicional personalizado.</p>
-        {f'<div>{resumen_sesion}</div>' if resumen_sesion else '<p>Contenido de la sesión de seguimiento.</p>'}
+        {% if resumen_sesion %}
+        <div>{{ resumen_sesion }}</div>
+        {% else %}
+        <p>Contenido de la sesión de seguimiento personalizado.</p>
+        {% endif %}
     </div>
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {fecha_generacion} a las {hora_generacion}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
         <p><em>Este anexo complementa tu informe principal</em></p>
     </div>
 </body>
 </html>"""
         else:
-            # TEMPLATE COMPLETO (CON PORTADA DORADA)
-            html_content = f"""
+            # TEMPLATE COMPLETO (servicios normales con portada)
+            template_html = """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>{datos_cliente.get('nombre', 'Cliente')} - {tipo_servicio.replace('_', ' ').title()} - AS Cartastral</title>
+    <title>{{ nombre }} - {{ tipo_servicio.replace('_', ' ').title() }} - AS Cartastral</title>
     <style>
-        body {{ font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }}
+        body { font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }
         
-        .portada {{ 
-            text-align: center; margin: 30px 0; page-break-after: always; position: relative; 
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 40px 20px; border-radius: 10px;
-            border-top: 8px solid #DAA520; border-left: 8px solid #DAA520; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }}
+        .portada { 
+            text-align: center; margin: 30px 0; page-break-after: always; position: relative; min-height: 80vh;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+            padding: 40px 20px; border-radius: 10px;
+            border-top: 8px solid #DAA520; border-left: 8px solid #DAA520; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
         
-        .logo-header {{ position: absolute; top: 20px; left: 20px; display: flex; align-items: center; gap: 15px; }}
-        .logo-esquina {{ width: 60px; height: 60px; background: #DAA520; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; }}
-        .nombre-empresa {{ font-size: 20px; font-weight: bold; color: #DAA520; font-style: italic; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }}
+        .logo-header { 
+            position: absolute; top: 20px; left: 20px; 
+            display: flex; align-items: center; gap: 15px; 
+        }
+        .logo-esquina { 
+            width: 60px; height: 60px; background: #DAA520; color: white; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border-radius: 8px; font-size: 18px;
+        }
+        .nombre-empresa { 
+            font-size: 20px; font-weight: bold; color: #DAA520; 
+            font-style: italic; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); 
+        }
         
-        .titulo-principal {{ font-size: 28px; margin: 80px 0 30px 0; color: #2c5aa0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }}
-        .nombre-cliente {{ font-size: 24px; color: #DAA520; font-weight: bold; margin: 20px 0; text-transform: uppercase; }}
-        .subtitulo {{ font-size: 16px; color: #666; font-style: italic; }}
+        .titulo-principal { 
+            font-size: 28px; margin: 80px 0 30px 0; color: #2c5aa0; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1); font-weight: bold;
+        }
+        .nombre-cliente { 
+            font-size: 24px; color: #DAA520; font-weight: bold; 
+            margin: 20px 0; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .subtitulo { font-size: 16px; color: #666; font-style: italic; margin-bottom: 40px; }
         
-        h1 {{ font-size: 24px; text-align: center; margin: 40px 0 20px 0; color: #2c5aa0; }}
-        h2 {{ font-size: 20px; margin-top: 30px; border-bottom: 2px solid #2c5aa0; padding-bottom: 8px; color: #2c5aa0; }}
-        .dato {{ font-weight: bold; color: #2c5aa0; }}
-        .interpretacion {{ background: #f8f9fa; padding: 20px; border-left: 4px solid #2c5aa0; margin: 20px 0; border-radius: 4px; }}
-        .footer {{ text-align: center; margin-top: 60px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }}
+        h1 { font-size: 24px; text-align: center; margin: 40px 0 20px 0; color: #2c5aa0; }
+        h2 { font-size: 20px; margin-top: 30px; border-bottom: 2px solid #2c5aa0; padding-bottom: 8px; color: #2c5aa0; }
+        .dato { font-weight: bold; color: #2c5aa0; }
+        .interpretacion { 
+            background: #f8f9fa; padding: 20px; border-left: 4px solid #2c5aa0; 
+            margin: 20px 0; border-radius: 4px; 
+        }
+        .footer { 
+            text-align: center; margin-top: 60px; padding: 20px; 
+            background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; 
+        }
+        .imagen-carta { text-align: center; margin: 30px 0; }
+        .imagen-carta img { 
+            max-width: 100%; height: auto; border: 2px solid #2c5aa0; 
+            border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+        }
+        .section { 
+            margin-bottom: 40px; padding: 20px; background: white; 
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
     </style>
 </head>
 <body>
@@ -877,45 +962,87 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
             <span class="nombre-empresa">AS Cartastral</span>
         </div>
         
-        <h1 class="titulo-principal">🌟 {tipo_servicio.replace('_', ' ').upper()} 🌟</h1>
-        <h2 class="nombre-cliente">{datos_cliente.get('nombre', 'Cliente')}</h2>
+        <h1 class="titulo-principal">🌟 {{ tipo_servicio.replace('_', ' ').upper() }} 🌟</h1>
+        <h2 class="nombre-cliente">{{ nombre }}</h2>
         <h3 class="subtitulo">Tu análisis personalizado</h3>
         
         <div style="margin-top: 40px;">
-            <p>Generado el {fecha_generacion}</p>
+            <p>Generado el {{ fecha_generacion }}</p>
         </div>
     </div>
     
-    <div style="background: white; padding: 30px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h1>✨ {tipo_servicio.replace('_', ' ').upper()} ✨</h1>
-        <p><span class="dato">Cliente:</span> {datos_cliente.get('nombre', 'Cliente')}</p>
-        <p><span class="dato">Email:</span> {datos_cliente.get('email', 'email@test.com')}</p>
-        <p><span class="dato">Fecha de nacimiento:</span> {datos_cliente.get('fecha_nacimiento', 'No especificada')}</p>
-        <p><span class="dato">Hora de nacimiento:</span> {datos_cliente.get('hora_nacimiento', 'No especificada')}</p>
-        <p><span class="dato">Lugar de nacimiento:</span> {datos_cliente.get('lugar_nacimiento', 'No especificado')}</p>
+    <div class="section">
+        <h1>✨ {{ tipo_servicio.replace('_', ' ').upper() }} ✨</h1>
+        <p><span class="dato">Cliente:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
+        <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}</p>
+        <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}</p>
     </div>
 
-    {f'<div class="interpretacion"><h2>📞 Resumen de tu Sesión</h2><div>{resumen_sesion}</div></div>' if resumen_sesion else ''}
+    {% if carta_natal_img %}
+    <div class="imagen-carta">
+        <h2>🗺️ Tu Carta Natal</h2>
+        <img src="{{ carta_natal_img }}" alt="Carta Natal">
+        <p>Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento.</p>
+    </div>
+    {% endif %}
+
+    {% if progresiones_img %}
+    <div class="imagen-carta">
+        <h2>📈 Progresiones Secundarias</h2>
+        <img src="{{ progresiones_img }}" alt="Progresiones">
+    </div>
+    {% endif %}
+
+    {% if transitos_img %}
+    <div class="imagen-carta">
+        <h2>🌊 Tránsitos Actuales</h2>
+        <img src="{{ transitos_img }}" alt="Tránsitos">
+    </div>
+    {% endif %}
+
+    {% if sinastria_img %}
+    <div class="imagen-carta">
+        <h2>💞 Análisis de Compatibilidad</h2>
+        <img src="{{ sinastria_img }}" alt="Sinastría">
+    </div>
+    {% endif %}
+
+    {% if resumen_sesion %}
+    <div class="section">
+        <h2>📞 Resumen de tu Sesión</h2>
+        <p><strong>Duración:</strong> {{ duracion_minutos|default(40) }} minutos</p>
+        <div class="interpretacion">{{ resumen_sesion }}</div>
+    </div>
+    {% endif %}
 
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {fecha_generacion} a las {hora_generacion}</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
 </body>
 </html>"""
         
-        # Guardar archivo HTML
-        archivo_html = archivos_unicos.get('informe_html', f"templates/definitivo_{tipo_servicio}_{datos_cliente.get('codigo_servicio', 'test')}.html")
+        # Renderizar template
+        template = Template(template_html)
+        html_content = template.render(**datos_template)
         
+        # Generar archivo HTML
+        archivo_html = archivos_unicos.get('informe_html', f"templates/informe_{tipo_servicio}_{datos_cliente.get('codigo_servicio', 'test')}.html")
+        
+        # Crear directorio si no existe
         os.makedirs('templates', exist_ok=True)
+        
+        # Guardar archivo HTML
         with open(archivo_html, 'w', encoding='utf-8') as f:
             f.write(html_content)
-            
-        print(f"✅ DEFINITIVO: HTML guardado en {archivo_html}")
+        
+        print(f"✅ AS Cartastral - HTML generado: {archivo_html}")
         return archivo_html
         
     except Exception as e:
-        print(f"❌ DEFINITIVO ERROR: {e}")
+        print(f"❌ Error generando HTML para AS Cartastral: {e}")
         import traceback
         traceback.print_exc()
         return None
