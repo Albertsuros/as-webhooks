@@ -10912,6 +10912,288 @@ def verificar_dependencias():
     }
     
     return jsonify(resultado)
+    
+# ========================================
+# 🔧 TEST EJECUTAR FUNCIÓN REAL - MAIN.PY
+# ========================================
+
+@app.route('/test/ejecutar_carta_natal_directo')
+def ejecutar_carta_natal_directo():
+    """Ejecutar directamente las funciones que sabemos que existen"""
+    try:
+        from datetime import datetime
+        import os
+        
+        # Importar carta_natal (sabemos que funciona)
+        import carta_natal
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        resultado = {
+            'timestamp': timestamp,
+            'intentos': [],
+            'archivos_creados': []
+        }
+        
+        # INTENTO 1: generar_carta_natal_personalizada
+        try:
+            datos_natales = {
+                'fecha_nacimiento': '1985-07-15',
+                'hora_nacimiento': '10:30',
+                'lugar_nacimiento': 'Madrid',
+                'pais_nacimiento': 'España'
+            }
+            
+            archivo_salida = f"static/carta_test_personalizada_{timestamp}.png"
+            
+            # Llamar la función
+            resultado_carta = carta_natal.generar_carta_natal_personalizada(
+                datos_natales, archivo_salida
+            )
+            
+            resultado['intentos'].append({
+                'metodo': 'generar_carta_natal_personalizada',
+                'resultado': str(resultado_carta),
+                'archivo_esperado': archivo_salida
+            })
+            
+            # Verificar si se creó
+            if os.path.exists(archivo_salida):
+                stats = os.stat(archivo_salida)
+                resultado['archivos_creados'].append({
+                    'archivo': archivo_salida,
+                    'tamaño': stats.st_size,
+                    'url': f"https://as-webhooks-production.up.railway.app/{archivo_salida}",
+                    'metodo': 'generar_carta_natal_personalizada'
+                })
+            
+        except Exception as e:
+            resultado['intentos'].append({
+                'metodo': 'generar_carta_natal_personalizada',
+                'error': str(e)
+            })
+        
+        # INTENTO 2: CartaAstralNatal (clase)
+        try:
+            # Crear instancia de la clase
+            carta_instance = carta_natal.CartaAstralNatal()
+            
+            # Datos en formato que podría esperar la clase
+            fecha_natal = (1985, 7, 15, 10, 30)  # año, mes, día, hora, minuto
+            lugar = "Madrid, España"
+            
+            archivo_clase = f"static/carta_test_clase_{timestamp}.png"
+            
+            # Si la clase tiene método para generar carta
+            if hasattr(carta_instance, 'generar_carta'):
+                resultado_clase = carta_instance.generar_carta(fecha_natal, lugar, archivo_clase)
+            elif hasattr(carta_instance, 'crear_carta'):
+                resultado_clase = carta_instance.crear_carta(fecha_natal, lugar, archivo_clase)
+            elif hasattr(carta_instance, 'guardar_carta'):
+                # Podría necesitar configurar primero
+                carta_instance.configurar_datos(fecha_natal, lugar)
+                resultado_clase = carta_instance.guardar_carta(archivo_clase)
+            else:
+                resultado_clase = "Clase existe pero no tiene métodos obvios"
+            
+            resultado['intentos'].append({
+                'metodo': 'CartaAstralNatal (clase)',
+                'resultado': str(resultado_clase),
+                'archivo_esperado': archivo_clase,
+                'metodos_disponibles': [m for m in dir(carta_instance) if not m.startswith('_')]
+            })
+            
+            # Verificar archivo
+            if os.path.exists(archivo_clase):
+                stats = os.stat(archivo_clase)
+                resultado['archivos_creados'].append({
+                    'archivo': archivo_clase,
+                    'tamaño': stats.st_size,
+                    'url': f"https://as-webhooks-production.up.railway.app/{archivo_clase}",
+                    'metodo': 'CartaAstralNatal'
+                })
+            
+        except Exception as e:
+            resultado['intentos'].append({
+                'metodo': 'CartaAstralNatal (clase)',
+                'error': str(e)
+            })
+        
+        # INTENTO 3: main function (si existe)
+        try:
+            if hasattr(carta_natal, 'main'):
+                # Algunas veces main() genera archivos de ejemplo
+                main_result = carta_natal.main()
+                
+                resultado['intentos'].append({
+                    'metodo': 'main()',
+                    'resultado': str(main_result)
+                })
+                
+                # Buscar archivos nuevos en static/
+                archivos_static = os.listdir('./static/')
+                archivos_con_timestamp = [f for f in archivos_static if timestamp in f]
+                
+                for archivo in archivos_con_timestamp:
+                    ruta = f"static/{archivo}"
+                    if os.path.exists(ruta):
+                        stats = os.stat(ruta)
+                        resultado['archivos_creados'].append({
+                            'archivo': ruta,
+                            'tamaño': stats.st_size,
+                            'url': f"https://as-webhooks-production.up.railway.app/{ruta}",
+                            'metodo': 'main()'
+                        })
+            
+        except Exception as e:
+            resultado['intentos'].append({
+                'metodo': 'main()',
+                'error': str(e)
+            })
+        
+        # Resumen
+        resultado['resumen'] = {
+            'total_intentos': len(resultado['intentos']),
+            'archivos_creados_exitosamente': len(resultado['archivos_creados']),
+            'exito': len(resultado['archivos_creados']) > 0
+        }
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error_general': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/test/probar_todas_funciones_carta')
+def probar_todas_funciones_carta():
+    """Probar sistemáticamente todas las funciones de carta_natal.py"""
+    import carta_natal
+    from datetime import datetime
+    import os
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Obtener todas las funciones públicas
+    funciones = [attr for attr in dir(carta_natal) if not attr.startswith('_') and callable(getattr(carta_natal, attr))]
+    
+    resultado = {
+        'timestamp': timestamp,
+        'funciones_encontradas': funciones,
+        'pruebas': [],
+        'archivos_creados': []
+    }
+    
+    # Datos de test estándar
+    datos_test = {
+        'fecha': (1985, 7, 15, 10, 30),
+        'lugar': 'Madrid, España',
+        'archivo': f"static/test_funcion_{timestamp}.png"
+    }
+    
+    for func_name in funciones:
+        if 'generar' in func_name.lower() or 'crear' in func_name.lower() or 'carta' in func_name.lower():
+            try:
+                func = getattr(carta_natal, func_name)
+                
+                # Intentar diferentes combinaciones de parámetros
+                intentos = []
+                
+                # Intento 1: Solo archivo de salida
+                try:
+                    resultado_func = func(datos_test['archivo'])
+                    intentos.append({'params': 'solo_archivo', 'resultado': str(resultado_func)})
+                except: pass
+                
+                # Intento 2: Datos + archivo
+                try:
+                    resultado_func = func(datos_test, datos_test['archivo'])
+                    intentos.append({'params': 'datos_archivo', 'resultado': str(resultado_func)})
+                except: pass
+                
+                # Intento 3: Fecha, lugar, archivo
+                try:
+                    resultado_func = func(datos_test['fecha'], datos_test['lugar'], datos_test['archivo'])
+                    intentos.append({'params': 'fecha_lugar_archivo', 'resultado': str(resultado_func)})
+                except: pass
+                
+                # Intento 4: Sin parámetros (podría generar archivo por defecto)
+                try:
+                    resultado_func = func()
+                    intentos.append({'params': 'sin_params', 'resultado': str(resultado_func)})
+                except: pass
+                
+                resultado['pruebas'].append({
+                    'funcion': func_name,
+                    'intentos': intentos,
+                    'total_intentos': len(intentos)
+                })
+                
+            except Exception as e:
+                resultado['pruebas'].append({
+                    'funcion': func_name,
+                    'error': str(e)
+                })
+    
+    # Buscar archivos creados recientemente
+    try:
+        archivos_static = os.listdir('./static/')
+        for archivo in archivos_static:
+            ruta = f"./static/{archivo}"
+            if os.path.exists(ruta):
+                stats = os.stat(ruta)
+                # Si el archivo es muy reciente (últimos 30 segundos)
+                import time
+                if time.time() - stats.st_mtime < 30:
+                    resultado['archivos_creados'].append({
+                        'archivo': f"static/{archivo}",
+                        'tamaño': stats.st_size,
+                        'url': f"https://as-webhooks-production.up.railway.app/static/{archivo}",
+                        'edad_segundos': round(time.time() - stats.st_mtime, 1)
+                    })
+    except:
+        pass
+    
+    resultado['resumen'] = {
+        'funciones_probadas': len(resultado['pruebas']),
+        'archivos_nuevos': len(resultado['archivos_creados']),
+        'exito_creacion': len(resultado['archivos_creados']) > 0
+    }
+    
+    return jsonify(resultado)
+
+@app.route('/test/instalar_dependencias_faltantes')
+def instalar_dependencias_faltantes():
+    """Intentar instalar las dependencias faltantes"""
+    import subprocess
+    import sys
+    
+    dependencias_faltantes = ['Pillow', 'pyephem']
+    resultado = {'instalaciones': []}
+    
+    for dependencia in dependencias_faltantes:
+        try:
+            # Intentar instalar
+            process = subprocess.run([sys.executable, '-m', 'pip', 'install', dependencia], 
+                                   capture_output=True, text=True, timeout=60)
+            
+            resultado['instalaciones'].append({
+                'dependencia': dependencia,
+                'returncode': process.returncode,
+                'stdout': process.stdout,
+                'stderr': process.stderr,
+                'exitoso': process.returncode == 0
+            })
+            
+        except Exception as e:
+            resultado['instalaciones'].append({
+                'dependencia': dependencia,
+                'error': str(e)
+            })
+    
+    return jsonify(resultado)
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
