@@ -13,6 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from jinja2 import Template
+import sys
 
 # ========================================
 # 🔧 FIX IMÁGENES - Búsqueda mejorada
@@ -776,164 +777,145 @@ def obtener_template_html(tipo_servicio):
 </body>
 </html>"""
 
-def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=None):
-    """Generar informe HTML personalizado según el tipo de servicio"""
+# ========================================
+# 🔥 FIX DEFINITIVO - REEMPLAZAR EN informes.py
+# ========================================
+
+def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=""):
+    """FUNCIÓN DEFINITIVA - Reemplaza la función rota"""
+    from datetime import datetime
+    import pytz
+    import os
+    
     try:
-        # 🔥 DEBUG CRÍTICO: AÑADIR AL INICIO DE LA FUNCIÓN
-        print(f"🔥 DEBUG generar_informe_html:")
-        print(f"   - tipo_servicio: {tipo_servicio}")
-        print(f"   - archivos_unicos recibidos: {archivos_unicos}")
-        print(f"   - archivos_unicos tipo: {type(archivos_unicos)}")
-        print(f"   - archivos_unicos keys: {list(archivos_unicos.keys()) if archivos_unicos else 'VACÍO'}")
+        print(f"🔥 DEFINITIVO: Generando HTML para {tipo_servicio}")
         
-        # Verificar que archivos_unicos no esté vacío
-        if not archivos_unicos:
-            print(f"⚠️ WARNING: archivos_unicos está vacío para {tipo_servicio}")
+        # Detectar si es producto M
+        es_producto_m = tipo_servicio.endswith('_half')
+        
+        # Datos básicos
+        fecha_actual = datetime.now(pytz.timezone('Europe/Madrid'))
+        fecha_generacion = fecha_actual.strftime('%d de %B de %Y')
+        hora_generacion = fecha_actual.strftime('%H:%M')
+        
+        if es_producto_m:
+            # TEMPLATE ANEXO (SIN PORTADA)
+            html_content = f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ANEXO - {datos_cliente.get('nombre', 'Cliente')} - AS Cartastral</title>
+    <style>
+        body {{ font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }}
+        .encabezado-anexo {{ background: linear-gradient(135deg, #f57c00, #ff9800); color: white; padding: 25px; border-radius: 10px; text-align: center; margin-bottom: 30px; }}
+        .encabezado-anexo h1 {{ color: white; font-size: 24px; margin: 0 0 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }}
+        .badge-continuacion {{ background: #4caf50; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 10px; }}
+        h2 {{ font-size: 20px; margin-top: 30px; border-bottom: 2px solid #ff9800; padding-bottom: 8px; color: #f57c00; }}
+        .interpretacion {{ background: #fff8e1; padding: 20px; border-left: 4px solid #ff9800; margin: 20px 0; border-radius: 4px; }}
+        .footer {{ text-align: center; margin-top: 60px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }}
+    </style>
+</head>
+<body>
+    <div class="encabezado-anexo">
+        <h1>📋 ANEXO - CONTINUACIÓN {tipo_servicio.replace('_half', '').replace('_', ' ').upper()}</h1>
+        <p><strong>Cliente:</strong> {datos_cliente.get('nombre', 'Cliente')}</p>
+        <p><strong>Email:</strong> {datos_cliente.get('email', 'email@test.com')}</p>
+        <p><strong>Duración:</strong> {archivos_unicos.get('duracion_minutos', 20)} minutos (½ tiempo)</p>
+        <div class="badge-continuacion">✨ SESIÓN DE SEGUIMIENTO</div>
+    </div>
+
+    <div class="interpretacion">
+        <h2>📞 Continuación de tu Consulta</h2>
+        <p>Esta es la continuación de tu sesión anterior, con análisis adicional personalizado.</p>
+        {f'<div>{resumen_sesion}</div>' if resumen_sesion else '<p>Contenido de la sesión de seguimiento.</p>'}
+    </div>
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {fecha_generacion} a las {hora_generacion}</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+        <p><em>Este anexo complementa tu informe principal</em></p>
+    </div>
+</body>
+</html>"""
         else:
-            print(f"✅ archivos_unicos contiene {len(archivos_unicos)} elementos")
+            # TEMPLATE COMPLETO (CON PORTADA DORADA)
+            html_content = f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{datos_cliente.get('nombre', 'Cliente')} - {tipo_servicio.replace('_', ' ').title()} - AS Cartastral</title>
+    <style>
+        body {{ font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }}
         
-        # Obtener fecha y hora de generación
-        zona = pytz.timezone('Europe/Madrid')
-        ahora = datetime.now(zona)
-        fecha_generacion = ahora.strftime("%d/%m/%Y")
-        hora_generacion = ahora.strftime("%H:%M:%S")
+        .portada {{ 
+            text-align: center; margin: 30px 0; page-break-after: always; position: relative; 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 40px 20px; border-radius: 10px;
+            border-top: 8px solid #DAA520; border-left: 8px solid #DAA520; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }}
         
-        # Preparar datos base
-        datos_template = {
-            'nombre': datos_cliente.get('nombre', 'Cliente'),
-            'email': datos_cliente.get('email', ''),
-            'fecha_generacion': fecha_generacion,
-            'hora_generacion': hora_generacion,
-            'resumen_sesion': resumen_sesion
-        }
+        .logo-header {{ position: absolute; top: 20px; left: 20px; display: flex; align-items: center; gap: 15px; }}
+        .logo-esquina {{ width: 60px; height: 60px; background: #DAA520; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; }}
+        .nombre-empresa {{ font-size: 20px; font-weight: bold; color: #DAA520; font-style: italic; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }}
         
-        # Datos específicos según tipo de servicio
-        if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
-            # 🔥 DEBUG: Verificar imágenes específicas
-            carta_natal_img = archivos_unicos.get('carta_natal_img')
-            progresiones_img = archivos_unicos.get('progresiones_img')
-            transitos_img = archivos_unicos.get('transitos_img')
-            
-            print(f"🔥 DEBUG carta astral:")
-            print(f"   - carta_natal_img: {carta_natal_img}")
-            print(f"   - progresiones_img: {progresiones_img}")
-            print(f"   - transitos_img: {transitos_img}")
-            
-            datos_template.update({
-                'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
-                'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
-                'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
-                'pais_nacimiento': datos_cliente.get('pais_nacimiento', 'España'),
-                'planetas': datos_cliente.get('planetas', {}),
-                'carta_natal_img': carta_natal_img,
-                'progresiones_img': progresiones_img,
-                'transitos_img': transitos_img
-            })
-            
-        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
-            # 🔥 DEBUG: Verificar imágenes de revolución solar
-            carta_natal_img = archivos_unicos.get('carta_natal_img')
-            revolucion_img = archivos_unicos.get('revolucion_img')
-            
-            print(f"🔥 DEBUG revolución solar:")
-            print(f"   - carta_natal_img: {carta_natal_img}")
-            print(f"   - revolucion_img: {revolucion_img}")
-            
-            datos_template.update({
-                'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
-                'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
-                'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
-                'pais_nacimiento': datos_cliente.get('pais_nacimiento', 'España'),
-                'carta_natal_img': carta_natal_img,
-                'revolucion_img': revolucion_img,
-                'revolucion_natal_img': archivos_unicos.get('revolucion_natal_img')
-            })
-            
-        elif tipo_servicio in ['sinastria_ia', 'sinastria']:
-            datos_template.update({
-                'nombre_persona1': datos_cliente.get('nombre_persona1', 'Persona 1'),
-                'nombre_persona2': datos_cliente.get('nombre_persona2', 'Persona 2'),
-                'fecha_persona1': datos_cliente.get('fecha_persona1', ''),
-                'hora_persona1': datos_cliente.get('hora_persona1', ''),
-                'lugar_persona1': datos_cliente.get('lugar_persona1', ''),
-                'fecha_persona2': datos_cliente.get('fecha_persona2', ''),
-                'hora_persona2': datos_cliente.get('hora_persona2', ''),
-                'lugar_persona2': datos_cliente.get('lugar_persona2', ''),
-                'sinastria_img': archivos_unicos.get('sinastria_img')
-            })
-            
-        elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
-            datos_template.update({
-                'fecha_pregunta': datos_cliente.get('fecha_pregunta', ''),
-                'hora_pregunta': datos_cliente.get('hora_pregunta', ''),
-                'lugar_pregunta': datos_cliente.get('lugar_pregunta', ''),
-                'pregunta': datos_cliente.get('pregunta', ''),
-                'carta_horaria_img': archivos_unicos.get('carta_horaria_img')
-            })
-            
-        elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
-            datos_template.update({
-                'dominancia': datos_cliente.get('dominancia', ''),
-                'mano_derecha_img': archivos_unicos.get('mano_derecha_img'),
-                'mano_izquierda_img': archivos_unicos.get('mano_izquierda_img')
-            })
-            
-        elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
-            datos_template.update({
-                'cara_frente_img': archivos_unicos.get('cara_frente_img'),
-                'cara_izquierda_img': archivos_unicos.get('cara_izquierda_img'),
-                'cara_derecha_img': archivos_unicos.get('cara_derecha_img')
-            })
-            
-        elif tipo_servicio in ['grafologia_ia', 'grafologia']:
-            datos_template.update({
-                'confianza': archivos_unicos.get('confianza', 50),
-                'muestra_escritura_img': archivos_unicos.get('muestra_escritura_img'),
-                'puntuaciones': archivos_unicos.get('puntuaciones', {}),
-                'medidas_tecnicas': archivos_unicos.get('medidas_tecnicas', {})
-            })
+        .titulo-principal {{ font-size: 28px; margin: 80px 0 30px 0; color: #2c5aa0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }}
+        .nombre-cliente {{ font-size: 24px; color: #DAA520; font-weight: bold; margin: 20px 0; text-transform: uppercase; }}
+        .subtitulo {{ font-size: 16px; color: #666; font-style: italic; }}
         
-        # Obtener template HTML
-        template_html = obtener_template_html(tipo_servicio)
+        h1 {{ font-size: 24px; text-align: center; margin: 40px 0 20px 0; color: #2c5aa0; }}
+        h2 {{ font-size: 20px; margin-top: 30px; border-bottom: 2px solid #2c5aa0; padding-bottom: 8px; color: #2c5aa0; }}
+        .dato {{ font-weight: bold; color: #2c5aa0; }}
+        .interpretacion {{ background: #f8f9fa; padding: 20px; border-left: 4px solid #2c5aa0; margin: 20px 0; border-radius: 4px; }}
+        .footer {{ text-align: center; margin-top: 60px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }}
+    </style>
+</head>
+<body>
+    <div class="portada">
+        <div class="logo-header">
+            <div class="logo-esquina">AS</div>
+            <span class="nombre-empresa">AS Cartastral</span>
+        </div>
         
-        # 🔥 DEBUG: Verificar si template contiene condicionales de imágenes
-        if '{% if carta_natal_img %}' in template_html:
-            print(f"✅ Template contiene condicional carta_natal_img")
-        else:
-            print(f"⚠️ Template NO contiene condicional carta_natal_img")
+        <h1 class="titulo-principal">🌟 {tipo_servicio.replace('_', ' ').upper()} 🌟</h1>
+        <h2 class="nombre-cliente">{datos_cliente.get('nombre', 'Cliente')}</h2>
+        <h3 class="subtitulo">Tu análisis personalizado</h3>
         
-        # Renderizar template
-        template = Template(template_html)
-        html_content = template.render(**datos_template)
-        
-        # 🔥 DEBUG: Verificar si el HTML renderizado contiene imágenes
-        if '<img' in html_content:
-            print(f"✅ HTML renderizado contiene {html_content.count('<img')} etiquetas <img>")
-            
-            # Mostrar primeras líneas de imágenes encontradas
-            import re
-            img_tags = re.findall(r'<img[^>]+>', html_content)
-            for i, img in enumerate(img_tags[:3]):  # Mostrar solo las primeras 3
-                print(f"   IMG {i+1}: {img[:100]}...")
-        else:
-            print(f"❌ HTML renderizado NO contiene etiquetas <img>")
-        
-        # Generar nombre de archivo único
-        nombre_base = generar_nombre_archivo_unico(tipo_servicio, datos_cliente.get('codigo_servicio', ''))
-        archivo_html = f"templates/informe_{nombre_base}.html"
-        
-        # Crear directorio si no existe
-        os.makedirs('templates', exist_ok=True)
+        <div style="margin-top: 40px;">
+            <p>Generado el {fecha_generacion}</p>
+        </div>
+    </div>
+    
+    <div style="background: white; padding: 30px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h1>✨ {tipo_servicio.replace('_', ' ').upper()} ✨</h1>
+        <p><span class="dato">Cliente:</span> {datos_cliente.get('nombre', 'Cliente')}</p>
+        <p><span class="dato">Email:</span> {datos_cliente.get('email', 'email@test.com')}</p>
+        <p><span class="dato">Fecha de nacimiento:</span> {datos_cliente.get('fecha_nacimiento', 'No especificada')}</p>
+        <p><span class="dato">Hora de nacimiento:</span> {datos_cliente.get('hora_nacimiento', 'No especificada')}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {datos_cliente.get('lugar_nacimiento', 'No especificado')}</p>
+    </div>
+
+    {f'<div class="interpretacion"><h2>📞 Resumen de tu Sesión</h2><div>{resumen_sesion}</div></div>' if resumen_sesion else ''}
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {fecha_generacion} a las {hora_generacion}</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+    </div>
+</body>
+</html>"""
         
         # Guardar archivo HTML
+        archivo_html = archivos_unicos.get('informe_html', f"templates/definitivo_{tipo_servicio}_{datos_cliente.get('codigo_servicio', 'test')}.html")
+        
+        os.makedirs('templates', exist_ok=True)
         with open(archivo_html, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        
-        print(f"✅ Informe HTML generado: {archivo_html}")
+            
+        print(f"✅ DEFINITIVO: HTML guardado en {archivo_html}")
         return archivo_html
         
     except Exception as e:
-        print(f"❌ Error generando informe HTML: {e}")
+        print(f"❌ DEFINITIVO ERROR: {e}")
         import traceback
         traceback.print_exc()
         return None
