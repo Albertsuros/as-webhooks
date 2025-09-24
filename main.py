@@ -11170,6 +11170,360 @@ def emergency_test_all():
         'productos_probados': len(productos),
         'resultados': resultados
     })
+    
+# ========================================
+# 🔍 DIAGNÓSTICO PASO A PASO - MAIN.PY
+# AÑADIR AL FINAL para encontrar el problema exacto
+# ========================================
+
+@app.route('/diagnostic/test_html_only/<especialidad>')
+def diagnostic_test_html_only(especialidad):
+    """DIAGNÓSTICO: Probar SOLO generación HTML con funciones originales"""
+    try:
+        # Importar funciones originales
+        from informes import generar_informe_html, generar_nombre_archivo_unico
+        import os
+        from datetime import datetime
+        
+        print(f"🔍 DIAGNOSTIC: Probando HTML para {especialidad}")
+        
+        resultado = {'pasos': {}, 'errores': []}
+        
+        # PASO 1: Datos de cliente
+        datos_cliente = {
+            'nombre': f'Test HTML {especialidad}',
+            'email': f'htmltest_{especialidad}@test.com',
+            'codigo_servicio': f'HTML_{especialidad.upper()[:3]}',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        resultado['pasos']['paso_1_datos'] = {'status': 'success', 'datos': datos_cliente}
+        
+        # PASO 2: Crear archivos_unicos (usar función original)
+        try:
+            if hasattr(sys.modules[__name__], 'crear_archivos_unicos_testing'):
+                archivos_unicos = crear_archivos_unicos_testing(especialidad)
+            else:
+                # Crear archivos_unicos básicos si no existe la función
+                archivos_unicos = {
+                    'informe_html': f"templates/diagnostic_{especialidad}_{datetime.now().strftime('%H%M%S')}.html",
+                    'es_producto_m': especialidad.endswith('_half'),
+                    'duracion_minutos': 30
+                }
+            
+            resultado['pasos']['paso_2_archivos_unicos'] = {
+                'status': 'success' if archivos_unicos else 'error',
+                'archivos': archivos_unicos,
+                'total': len(archivos_unicos)
+            }
+            
+            if not archivos_unicos:
+                resultado['errores'].append("archivos_unicos vacío o None")
+                
+        except Exception as e:
+            resultado['pasos']['paso_2_archivos_unicos'] = {'status': 'error', 'error': str(e)}
+            resultado['errores'].append(f"Error creando archivos_unicos: {e}")
+            return jsonify(resultado)
+        
+        # PASO 3: Probar generar_informe_html ORIGINAL
+        try:
+            print(f"🔍 Llamando generar_informe_html({datos_cliente}, {especialidad}, {archivos_unicos}, resumen)")
+            
+            archivo_html = generar_informe_html(
+                datos_cliente,
+                especialidad, 
+                archivos_unicos,
+                "Resumen de prueba para diagnóstico HTML"
+            )
+            
+            resultado['pasos']['paso_3_generar_html'] = {
+                'status': 'success' if archivo_html else 'error',
+                'archivo_html': archivo_html,
+                'archivo_existe': os.path.exists(archivo_html) if archivo_html else False
+            }
+            
+            if not archivo_html:
+                resultado['errores'].append("generar_informe_html devolvió None o vacío")
+                
+        except Exception as e:
+            resultado['pasos']['paso_3_generar_html'] = {'status': 'error', 'error': str(e)}
+            resultado['errores'].append(f"Error en generar_informe_html: {e}")
+            import traceback
+            resultado['traceback'] = traceback.format_exc()
+            return jsonify(resultado)
+        
+        # PASO 4: Leer contenido HTML si se generó
+        if archivo_html and os.path.exists(archivo_html):
+            try:
+                with open(archivo_html, 'r', encoding='utf-8') as f:
+                    contenido_html = f.read()
+                
+                resultado['pasos']['paso_4_contenido_html'] = {
+                    'status': 'success',
+                    'longitud': len(contenido_html),
+                    'preview': contenido_html[:500] + "..." if len(contenido_html) > 500 else contenido_html,
+                    'img_tags': contenido_html.count('<img'),
+                    'contiene_portada': 'portada' in contenido_html.lower()
+                }
+                
+            except Exception as e:
+                resultado['pasos']['paso_4_contenido_html'] = {'status': 'error', 'error': str(e)}
+                resultado['errores'].append(f"Error leyendo HTML: {e}")
+        
+        # RESUMEN
+        resultado['resumen'] = {
+            'exito_completo': len(resultado['errores']) == 0,
+            'total_errores': len(resultado['errores']),
+            'problema_principal': resultado['errores'][0] if resultado['errores'] else 'Ninguno',
+            'html_generado_correctamente': archivo_html and os.path.exists(archivo_html) if 'archivo_html' in locals() else False
+        }
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error_general': str(e),
+            'traceback': traceback.format_exc(),
+            'conclusion': 'Error en nivel superior - revisar imports o funciones base'
+        })
+
+@app.route('/diagnostic/test_converters/<especialidad>')  
+def diagnostic_test_converters(especialidad):
+    """DIAGNÓSTICO: Probar diferentes conversores PDF"""
+    import os
+    from datetime import datetime
+    
+    resultado = {'conversores': {}}
+    
+    # Crear HTML de prueba simple
+    html_test = f"""
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Test PDF</title></head>
+    <body style="font-family: Arial; padding: 20px;">
+    <h1>Test Conversión PDF - {especialidad}</h1>
+    <p>Este es un HTML de prueba para probar diferentes conversores PDF en Railway.</p>
+    <p>Generado: {datetime.now()}</p>
+    </body></html>
+    """
+    
+    # Guardar HTML de prueba
+    os.makedirs('templates', exist_ok=True)
+    archivo_html_test = f"templates/converter_test_{especialidad}.html"
+    with open(archivo_html_test, 'w', encoding='utf-8') as f:
+        f.write(html_test)
+    
+    # CONVERSOR 1: Playwright (actual)
+    try:
+        from playwright.sync_api import sync_playwright
+        
+        archivo_pdf_playwright = f"informes/test_playwright_{especialidad}.pdf"
+        os.makedirs('informes', exist_ok=True)
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-setuid-sandbox'])
+            page = browser.new_page()
+            html_path = os.path.abspath(archivo_html_test)
+            page.goto(f"file://{html_path}")
+            page.wait_for_load_state('networkidle')
+            
+            page.pdf(
+                path=archivo_pdf_playwright,
+                format='A4',
+                margin={'top': '20px', 'right': '20px', 'bottom': '20px', 'left': '20px'},
+                print_background=True
+            )
+            browser.close()
+        
+        resultado['conversores']['playwright'] = {
+            'status': 'success' if os.path.exists(archivo_pdf_playwright) else 'error',
+            'archivo': archivo_pdf_playwright,
+            'tamaño_bytes': os.path.getsize(archivo_pdf_playwright) if os.path.exists(archivo_pdf_playwright) else 0
+        }
+        
+    except Exception as e:
+        resultado['conversores']['playwright'] = {'status': 'error', 'error': str(e)}
+    
+    # CONVERSOR 2: WeasyPrint (original de Replit)
+    try:
+        import weasyprint
+        
+        archivo_pdf_weasy = f"informes/test_weasyprint_{especialidad}.pdf"
+        
+        with open(archivo_html_test, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        pdf_document = weasyprint.HTML(string=html_content, base_url='.')
+        pdf_document.write_pdf(archivo_pdf_weasy)
+        
+        resultado['conversores']['weasyprint'] = {
+            'status': 'success' if os.path.exists(archivo_pdf_weasy) else 'error',
+            'archivo': archivo_pdf_weasy,
+            'tamaño_bytes': os.path.getsize(archivo_pdf_weasy) if os.path.exists(archivo_pdf_weasy) else 0
+        }
+        
+    except ImportError:
+        resultado['conversores']['weasyprint'] = {'status': 'not_installed', 'error': 'WeasyPrint no instalado'}
+    except Exception as e:
+        resultado['conversores']['weasyprint'] = {'status': 'error', 'error': str(e)}
+    
+    # CONVERSOR 3: pdfkit (alternativa)
+    try:
+        import pdfkit
+        
+        archivo_pdf_pdfkit = f"informes/test_pdfkit_{especialidad}.pdf"
+        
+        options = {
+            'page-size': 'A4',
+            'margin-top': '0.75in',
+            'margin-right': '0.75in', 
+            'margin-bottom': '0.75in',
+            'margin-left': '0.75in',
+            'encoding': "UTF-8",
+            'no-outline': None
+        }
+        
+        pdfkit.from_file(archivo_html_test, archivo_pdf_pdfkit, options=options)
+        
+        resultado['conversores']['pdfkit'] = {
+            'status': 'success' if os.path.exists(archivo_pdf_pdfkit) else 'error', 
+            'archivo': archivo_pdf_pdfkit,
+            'tamaño_bytes': os.path.getsize(archivo_pdf_pdfkit) if os.path.exists(archivo_pdf_pdfkit) else 0
+        }
+        
+    except ImportError:
+        resultado['conversores']['pdfkit'] = {'status': 'not_installed', 'error': 'pdfkit no instalado'}
+    except Exception as e:
+        resultado['conversores']['pdfkit'] = {'status': 'error', 'error': str(e)}
+    
+    # RESUMEN
+    conversores_exitosos = [k for k, v in resultado['conversores'].items() if v.get('status') == 'success']
+    resultado['resumen'] = {
+        'total_conversores_probados': len(resultado['conversores']),
+        'conversores_exitosos': conversores_exitosos,
+        'mejor_conversor': conversores_exitosos[0] if conversores_exitosos else None,
+        'recomendacion': 'Usar WeasyPrint si está disponible, sino Playwright'
+    }
+    
+    return jsonify(resultado)
+
+@app.route('/diagnostic/compare_functions/<especialidad>')
+def diagnostic_compare_functions(especialidad):
+    """DIAGNÓSTICO: Comparar función original vs emergencia"""
+    from datetime import datetime
+    
+    datos_cliente = {
+        'nombre': f'Compare Test {especialidad}',
+        'email': f'compare@test.com',
+        'codigo_servicio': 'COMPARE_123',
+        'fecha_nacimiento': '15/07/1985',
+        'hora_nacimiento': '10:30',
+        'lugar_nacimiento': 'Madrid, España'
+    }
+    
+    resultado = {'comparacion': {}}
+    
+    # FUNCIÓN ORIGINAL
+    try:
+        from informes import generar_informe_html
+        
+        # Usar función original de archivos_unicos 
+        archivos_unicos_original = crear_archivos_unicos_testing(especialidad) if hasattr(sys.modules[__name__], 'crear_archivos_unicos_testing') else {}
+        
+        archivo_html_original = generar_informe_html(
+            datos_cliente,
+            especialidad,
+            archivos_unicos_original, 
+            "Test original"
+        )
+        
+        resultado['comparacion']['funcion_original'] = {
+            'status': 'success' if archivo_html_original else 'error',
+            'archivo_html': archivo_html_original,
+            'archivos_unicos': archivos_unicos_original
+        }
+        
+    except Exception as e:
+        resultado['comparacion']['funcion_original'] = {'status': 'error', 'error': str(e)}
+    
+    # FUNCIÓN DE EMERGENCIA
+    try:
+        archivos_unicos_emergency = crear_archivos_unicos_emergency(especialidad)
+        archivo_html_emergency = generar_html_emergency(
+            datos_cliente, 
+            especialidad,
+            archivos_unicos_emergency,
+            "Test emergencia"
+        )
+        
+        resultado['comparacion']['funcion_emergencia'] = {
+            'status': 'success' if archivo_html_emergency else 'error',
+            'archivo_html': archivo_html_emergency,
+            'archivos_unicos': archivos_unicos_emergency
+        }
+        
+    except Exception as e:
+        resultado['comparacion']['funcion_emergencia'] = {'status': 'error', 'error': str(e)}
+    
+    # CONCLUSIÓN
+    original_ok = resultado['comparacion'].get('funcion_original', {}).get('status') == 'success'
+    emergency_ok = resultado['comparacion'].get('funcion_emergencia', {}).get('status') == 'success'
+    
+    if emergency_ok and not original_ok:
+        conclusion = "⚠️ PROBLEMA EN FUNCIONES ORIGINALES - Usar funciones de emergencia como definitivas"
+    elif original_ok and emergency_ok:
+        conclusion = "✅ AMBAS FUNCIONAN - Problema solo en conversión PDF"  
+    elif not emergency_ok and not original_ok:
+        conclusion = "🚨 PROBLEMA GRAVE - Revisar importaciones y dependencias"
+    else:
+        conclusion = "🤔 CASO EXTRAÑO - Investigar más"
+    
+    resultado['conclusion'] = conclusion
+    resultado['recomendacion'] = {
+        'usar_funciones_emergencia': not original_ok and emergency_ok,
+        'problema_es_solo_pdf': original_ok and emergency_ok,
+        'revisar_imports': not original_ok and not emergency_ok
+    }
+    
+    return jsonify(resultado)
+
+@app.route('/diagnostic/view_html/<archivo>')
+def diagnostic_view_html(archivo):
+    """Ver HTML generado en el navegador"""
+    try:
+        import os
+        
+        rutas_posibles = [
+            f"templates/{archivo}",
+            f"templates/{archivo}.html",
+            f"{archivo}",
+            f"{archivo}.html"
+        ]
+        
+        contenido = None
+        ruta_encontrada = None
+        
+        for ruta in rutas_posibles:
+            if os.path.exists(ruta):
+                with open(ruta, 'r', encoding='utf-8') as f:
+                    contenido = f.read()
+                ruta_encontrada = ruta
+                break
+        
+        if contenido:
+            return contenido  # Devolver HTML directamente para renderizar
+        else:
+            return f"""
+            <h1>Archivo no encontrado</h1>
+            <p>Buscado en:</p>
+            <ul>{''.join(f'<li>{ruta}</li>' for ruta in rutas_posibles)}</ul>
+            <p>Archivos disponibles en templates/:</p>
+            <ul>{''.join(f'<li>{f}</li>' for f in os.listdir('templates/')) if os.path.exists('templates/') else '<li>Directorio templates/ no existe</li>'}</ul>
+            """
+            
+    except Exception as e:
+        return f"<h1>Error: {e}</h1>"
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
