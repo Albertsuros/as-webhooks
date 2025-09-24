@@ -444,18 +444,13 @@ def generar_nombre_archivo_unico(tipo_servicio, codigo_cliente):
     
     return f"{prefijo}_{numero}_{timestamp}"
 
-# ========================================
-# 2. MODIFICAR LA FUNCIÓN obtener_template_html() EXISTENTE (línea 66 aprox)
-# ========================================
-
-# REEMPLAZAR TODO EL base_style POR ESTO:
 def obtener_template_html(tipo_servicio):
-    """Obtener template HTML según tipo de servicio"""
+    """Obtener template HTML según tipo de servicio - CON PRODUCTOS M"""
     
     # 🔥 DEBUG CRÍTICO
     print(f"🔥 obtener_template_html EJECUTÁNDOSE - tipo: {tipo_servicio}")
     
-    # ✅ PRODUCTOS M (MEDIO TIEMPO) - NUEVOS
+    # ✅ PRODUCTOS M (MEDIO TIEMPO) - IMPLEMENTADOS
     productos_medio_tiempo = [
         'carta_astral_ia_half', 'revolucion_solar_ia_half', 'sinastria_ia_half',
         'lectura_manos_ia_half', 'psico_coaching_ia_half'
@@ -463,6 +458,7 @@ def obtener_template_html(tipo_servicio):
     
     # Si es producto M, usar template de anexo
     if tipo_servicio in productos_medio_tiempo:
+        print(f"✅ PRODUCTO M DETECTADO: {tipo_servicio} → Usando template anexo")
         return obtener_template_anexo_medio_tiempo(tipo_servicio)
     
     # Template base común para todos - ACTUALIZADO CON NUEVOS ESTILOS
@@ -473,6 +469,7 @@ def obtener_template_html(tipo_servicio):
             margin: 40px 20px;
             line-height: 1.6;
             color: #333;
+            background: #fafafa;
         }}
         
         {obtener_estilos_portada_mejorada()}
@@ -482,6 +479,7 @@ def obtener_template_html(tipo_servicio):
             text-align: center;
             margin-top: 40px;
             color: #2c5aa0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }}
         h2 {{
             font-size: 22px;
@@ -499,40 +497,12 @@ def obtener_template_html(tipo_servicio):
             font-weight: bold;
             color: #2c5aa0;
         }}
-        .carta-img {{
-            text-align: center;
-            margin: 30px 0;
-            page-break-inside: avoid;
-        }}
-        .carta-img img {{
-            width: 100%;
-            max-width: 600px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }}
-        .section {{
-            margin-top: 30px;
-            page-break-inside: avoid;
-        }}
-        .datos-natales {{
+        .interpretacion {{
             background: #f8f9fa;
             padding: 20px;
-            border-radius: 8px;
+            border-left: 4px solid #2c5aa0;
             margin: 20px 0;
-        }}
-        .interpretacion {{
-            background: #fff8e1;
-            padding: 15px;
-            border-left: 4px solid #ff9800;
-            margin: 15px 0;
             border-radius: 4px;
-        }}
-        .resumen-sesion {{
-            background: #e8f5e8;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 30px 0;
-            border-left: 4px solid #4caf50;
         }}
         .footer {{
             text-align: center;
@@ -543,112 +513,43 @@ def obtener_template_html(tipo_servicio):
             font-size: 12px;
             color: #666;
         }}
-        ul.planetas {{
-            column-count: 2;
-            column-gap: 40px;
-            list-style-type: none;
-            padding: 0;
+        .imagen-carta {{
+            text-align: center;
+            margin: 30px 0;
         }}
-        ul.planetas li {{
-            padding: 5px 0;
-            border-bottom: 1px dotted #ddd;
+        .imagen-carta img {{
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #2c5aa0;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }}
-        @media print {{
-            body {{ margin: 20px; }}
-            .portada {{ page-break-after: always; }}
-            .carta-img {{ page-break-inside: avoid; }}
+        .section {{
+            margin-bottom: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
     </style>
     """
+
+    # TEMPLATES ESPECÍFICOS POR SERVICIO (VERSIÓN NORMAL - NO PRODUCTOS M)
     
     if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
-        return """<!DOCTYPE html>
+        return base_style + """
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Carta Astral - AS Cartastral</title>
-    <style>
-        body { 
-            font-family: 'Georgia', serif; 
-            margin: 40px; 
-            line-height: 1.6; 
-            color: #333;
-        }
-        .portada { 
-            text-align: center; 
-            margin-bottom: 30px; 
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 10px;
-        }
-        .datos-natales { 
-            background: #f8f9fa; 
-            padding: 20px; 
-            margin: 20px 0; 
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-        .section { 
-            margin: 30px 0; 
-            padding: 15px;
-        }
-        .carta-img { 
-            text-align: center; 
-            margin: 30px 0; 
-        }
-        .carta-img img { 
-            max-width: 100%; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .footer { 
-            margin-top: 50px; 
-            font-size: 0.9em; 
-            color: #666; 
-            text-align: center;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        .dato { 
-            font-weight: bold; 
-            color: #667eea; 
-        }
-        .interpretacion {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        .planetas li {
-            margin: 5px 0;
-            padding: 5px;
-            background: #f1f3f4;
-            border-radius: 3px;
-        }
-        .resumen-sesion {
-            background: #e8f4fd;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        h1, h2 { color: #667eea; }
-        @media print {
-            body { margin: 20px; }
-            .portada { background: #667eea !important; }
-        }
-    </style>
+    <title>{{ nombre }} - Carta Astral Personalizada - AS Cartastral</title>
 </head>
 <body>
-    <div class="portada">
-        <h1>🌟 CARTA ASTRAL PERSONALIZADA 🌟</h1>
-        <h2>{{ nombre }}</h2>
-        <p>AS Cartastral - Servicios Astrológicos Personalizados</p>
-    </div>
-
-    <div class="datos-natales">
-        <h2>📊 Datos Natales</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+    {{ obtener_portada_con_logo(tipo_servicio, nombre) }}
+    
+    <div class="section">
+        <h1>🌟 TU CARTA ASTRAL PERSONALIZADA 🌟</h1>
+        <p><span class="dato">Cliente:</span> {{ nombre }}</p>
         <p><span class="dato">Email:</span> {{ email }}</p>
         <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}</p>
         <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}</p>
@@ -656,587 +557,224 @@ def obtener_template_html(tipo_servicio):
     </div>
 
     {% if carta_natal_img %}
-    <div class="carta-img">
-        <h2>🌍 Tu Carta Natal</h2>
-        <img src="{{ carta_natal_img }}" alt="Carta natal completa">
-        <p><em>Tu mapa astrológico personal en el momento de tu nacimiento</em></p>
-    </div>
-    {% endif %}
-
-    <div class="section">
-        <h2>✨ Introducción</h2>
-        <div class="interpretacion">
-            <p>Bienvenido/a a tu análisis astrológico personalizado. Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento y su influencia en tu personalidad, talentos y destino.</p>
-        </div>
-    </div>
-
-    {% if planetas %}
-    <div class="section">
-        <h2>🪐 Posiciones Planetarias</h2>
-        <ul class="planetas">
-            {% for planeta, datos in planetas.items() %}
-            <li><strong>{{ planeta|capitalize }}:</strong> {{ datos.degree|round(2) }}° en {{ datos.sign }}</li>
-            {% endfor %}
-        </ul>
+    <div class="imagen-carta">
+        <h2>🗺️ Tu Carta Natal</h2>
+        <img src="{{ carta_natal_img }}" alt="Carta Natal" style="max-width: 100%; height: auto;">
+        <p>Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento.</p>
     </div>
     {% endif %}
 
     {% if progresiones_img %}
-    <div class="carta-img">
-        <h2>🔄 Progresiones Secundarias</h2>
-        <img src="{{ progresiones_img }}" alt="Progresiones secundarias">
-        <p><em>Tu evolución astrológica actual</em></p>
+    <div class="imagen-carta">
+        <h2>📈 Progresiones Secundarias</h2>
+        <img src="{{ progresiones_img }}" alt="Progresiones" style="max-width: 100%; height: auto;">
     </div>
     {% endif %}
 
     {% if transitos_img %}
-    <div class="carta-img">
+    <div class="imagen-carta">
         <h2>🌊 Tránsitos Actuales</h2>
-        <img src="{{ transitos_img }}" alt="Tránsitos actuales">
-        <p><em>Influencias planetarias presentes</em></p>
+        <img src="{{ transitos_img }}" alt="Tránsitos" style="max-width: 100%; height: auto;">
     </div>
     {% endif %}
 
     {% if resumen_sesion %}
-    <div class="resumen-sesion">
+    <div class="section">
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
         <p><strong>Duración:</strong> 40 minutos</p>
-        <div class="interpretacion">
-            {{ resumen_sesion }}
-        </div>
+        <div class="interpretacion">{{ resumen_sesion }}</div>
     </div>
     {% endif %}
 
-    <div class="section">
-        <h2>🌟 Conclusión</h2>
-        <div class="interpretacion">
-            <p>Tu carta astral es una guía para el autoconocimiento. Úsala para comprender tus patrones internos y tomar decisiones más conscientes en tu camino de crecimiento personal.</p>
-        </div>
-    </div>
-
     <div class="footer">
         <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-        <p><strong>Tipo de análisis:</strong> Carta Astral Completa con Progresiones y Tránsitos</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
 </body>
 </html>"""
-        
+
     elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
-        return """
+        return base_style + """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Carta Astral + Revolución Solar - AS Cartastral</title>
-    {{ base_style }}
+    <title>{{ nombre }} - Revolución Solar - AS Cartastral</title>
 </head>
 <body>
-    {{obtener_portada_con_logo_corregida('revolucion_solar_ia', nombre ) }}
-
-    <div class="datos-natales">
-        <h2>📊 Datos Natales</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+    {{ obtener_portada_con_logo(tipo_servicio, nombre) }}
+    
+    <div class="section">
+        <h1>🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟</h1>
+        <p><span class="dato">Cliente:</span> {{ nombre }}</p>
         <p><span class="dato">Email:</span> {{ email }}</p>
         <p><span class="dato">Fecha de nacimiento:</span> {{ fecha_nacimiento }}</p>
         <p><span class="dato">Hora de nacimiento:</span> {{ hora_nacimiento }}</p>
-        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}, {{ pais_nacimiento or 'España' }}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {{ lugar_nacimiento }}</p>
     </div>
 
     {% if carta_natal_img %}
-    <div class="carta-img">
-        <h2>🌍 Tu Carta Natal</h2>
-        <img src="{{ carta_natal_img }}" alt="Carta natal">
-        <p><em>Tu mapa astrológico base</em></p>
+    <div class="imagen-carta">
+        <h2>🗺️ Tu Carta Natal</h2>
+        <img src="{{ carta_natal_img }}" alt="Carta Natal">
     </div>
     {% endif %}
 
-    {% if revolucion_img %}
-    <div class="carta-img">
-        <h2>🎂 Tu Revolución Solar</h2>
-        <img src="{{ revolucion_img }}" alt="Revolución solar">
-        <p><em>Predicciones para tu nuevo año astrológico</em></p>
+    {% if revolucion_solar_img %}
+    <div class="imagen-carta">
+        <h2>☀️ Tu Revolución Solar</h2>
+        <img src="{{ revolucion_solar_img }}" alt="Revolución Solar">
+        <p>Predicciones y tendencias para el año que viene.</p>
     </div>
     {% endif %}
-
-    {% if revolucion_natal_img %}
-    <div class="carta-img">
-        <h2>🔄 Revolución Solar con Aspectos Natales</h2>
-        <img src="{{ revolucion_natal_img }}" alt="Revolución con aspectos natales">
-        <p><em>Cómo interactúa tu nuevo año con tu naturaleza básica</em></p>
-    </div>
-    {% endif %}
-
-    <div class="section">
-        <h2>🔮 Predicciones para tu Nuevo Año</h2>
-        <div class="interpretacion">
-            <p>Tu revolución solar marca el inicio de un nuevo ciclo anual. Las configuraciones planetarias indican las principales tendencias y oportunidades para los próximos 12 meses.</p>
-        </div>
-    </div>
 
     {% if resumen_sesion %}
-    <div class="resumen-sesion">
+    <div class="section">
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
-        <p><strong>Duración:</strong> 50 minutos</p>
-        <div class="interpretacion">
-            {{ resumen_sesion }}
-        </div>
+        <div class="interpretacion">{{ resumen_sesion }}</div>
     </div>
     {% endif %}
 
     <div class="footer">
         <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-        <p><strong>Tipo de análisis:</strong> Carta Astral + Revolución Solar</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
 </body>
-</html>
-        """
-        
+</html>"""
+
     elif tipo_servicio in ['sinastria_ia', 'sinastria']:
-        return """
+        return base_style + """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Sinastría - AS Cartastral</title>
-    {{ base_style }}
+    <title>{{ nombre }} - Sinastría Astrológica - AS Cartastral</title>
 </head>
 <body>
-    {{ obtener_portada_con_logo('sinastria_ia', (nombre_persona1 or 'Persona 1') + ' & ' + (nombre_persona2 or 'Persona 2')) }}
-
-    <div class="datos-natales">
-        <h2>📊 Datos de las Personas</h2>
-        <div style="display: flex; gap: 40px;">
-            <div style="flex: 1;">
-                <h3>👤 Persona 1: {{ nombre_persona1 }}</h3>
-                <p><span class="dato">Fecha:</span> {{ fecha_persona1 }}</p>
-                <p><span class="dato">Hora:</span> {{ hora_persona1 }}</p>
-                <p><span class="dato">Lugar:</span> {{ lugar_persona1 }}</p>
-            </div>
-            <div style="flex: 1;">
-                <h3>👤 Persona 2: {{ nombre_persona2 }}</h3>
-                <p><span class="dato">Fecha:</span> {{ fecha_persona2 }}</p>
-                <p><span class="dato">Hora:</span> {{ hora_persona2 }}</p>
-                <p><span class="dato">Lugar:</span> {{ lugar_persona2 }}</p>
-            </div>
-        </div>
-        <p><span class="dato">Email de contacto:</span> {{ email }}</p>
+    {{ obtener_portada_con_logo(tipo_servicio, nombre) }}
+    
+    <div class="section">
+        <h1>💕 SINASTRÍA ASTROLÓGICA 💕</h1>
+        <p><span class="dato">Cliente:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
     </div>
 
     {% if sinastria_img %}
-    <div class="carta-img">
-        <h2>💞 Carta de Sinastría</h2>
-        <img src="{{ sinastria_img }}" alt="Carta de sinastría">
-        <p><em>Aspectos planetarios entre ambas cartas natales</em></p>
+    <div class="imagen-carta">
+        <h2>💞 Análisis de Compatibilidad</h2>
+        <img src="{{ sinastria_img }}" alt="Sinastría">
+        <p>Análisis astrológico de la relación entre ambas personas.</p>
     </div>
     {% endif %}
 
-    <div class="section">
-        <h2>💝 Análisis de Compatibilidad</h2>
-        <div class="interpretacion">
-            <p>La sinastría analiza cómo interactúan vuestras energías astrológicas, revelando fortalezas, desafíos y el potencial de vuestra relación.</p>
-        </div>
-    </div>
-
     {% if resumen_sesion %}
-    <div class="resumen-sesion">
+    <div class="section">
         <h2>📞 Resumen de tu Sesión Telefónica</h2>
-        <p><strong>Duración:</strong> 30 minutos</p>
-        <div class="interpretacion">
-            {{ resumen_sesion }}
-        </div>
+        <div class="interpretacion">{{ resumen_sesion }}</div>
     </div>
     {% endif %}
 
     <div class="footer">
         <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-        <p><strong>Tipo de análisis:</strong> Sinastría Astrológica</p>
         <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
 </body>
-</html>
-        """
-        
-    elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
-        return """
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Informe de Astrología Horaria - AS Cartastral</title>
-    {{ base_style }}
-</head>
-<body>
-    {{obtener_portada_con_logo_corregida('astrologia_horaria_ia', nombre) }}
+</html>"""
 
-    <div class="datos-natales">
-        <h2>❓ Datos de la Consulta</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
-        <p><span class="dato">Email:</span> {{ email }}</p>
-        <p><span class="dato">Fecha de la pregunta:</span> {{ fecha_pregunta }}</p>
-        <p><span class="dato">Hora de la pregunta:</span> {{ hora_pregunta }}</p>
-        <p><span class="dato">Lugar de la pregunta:</span> {{ lugar_pregunta }}</p>
-        <div class="interpretacion">
-            <p><strong>Tu pregunta:</strong> {{ pregunta }}</p>
-        </div>
-    </div>
-
-    {% if carta_horaria_img %}
-    <div class="carta-img">
-        <h2>🎯 Carta Horaria</h2>
-        <img src="{{ carta_horaria_img }}" alt="Carta horaria">
-        <p><em>Mapa astrológico del momento de tu pregunta</em></p>
-    </div>
-    {% endif %}
-
-    <div class="section">
-        <h2>🔮 Respuesta Astrológica</h2>
-        <div class="interpretacion">
-            <p>La astrología horaria utiliza el momento exacto en que formulas tu pregunta para encontrar respuestas en las configuraciones planetarias.</p>
-        </div>
-    </div>
-
-    {% if resumen_sesion %}
-    <div class="resumen-sesion">
-        <h2>📞 Resumen de tu Sesión Telefónica</h2>
-        <p><strong>Duración:</strong> 15 minutos</p>
-        <div class="interpretacion">
-            {{ resumen_sesion }}
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-        <p><strong>Tipo de análisis:</strong> Astrología Horaria</p>
-        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
-    </div>
-</body>
-</html>
-        """
-        
-    elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
-        return """
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Informe de Lectura de Manos - AS Cartastral</title>
-    {{ base_style }}
-</head>
-<body>
-    {{obtener_portada_con_logo_corregida('lectura_manos_ia', nombre) }}
-
-    <div class="datos-natales">
-        <h2>✋ Datos de la Lectura</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
-        <p><span class="dato">Email:</span> {{ email }}</p>
-        <p><span class="dato">Dominancia:</span> {{ dominancia or 'No especificada' }}</p>
-    </div>
-
-    {% if mano_derecha_img %}
-    <div class="carta-img">
-        <h2>🤚 Mano Derecha</h2>
-        <img src="{{ mano_derecha_img }}" alt="Mano derecha">
-        <p><em>Mano derecha - Representa tu futuro y lo que construyes</em></p>
-    </div>
-    {% endif %}
-
-    {% if mano_izquierda_img %}
-    <div class="carta-img">
-        <h2>🤚 Mano Izquierda</h2>
-        <img src="{{ mano_izquierda_img }}" alt="Mano izquierda">
-        <p><em>Mano izquierda - Representa tu pasado y naturaleza innata</em></p>
-    </div>
-    {% endif %}
-
-    <div class="section">
-        <h2>🔍 Análisis Quiromántico</h2>
-        <div class="interpretacion">
-            <p>La lectura de manos revela aspectos de tu personalidad, talentos naturales, y tendencias de vida a través de las líneas, montes y formas de tus palmas.</p>
-        </div>
-    </div>
-
-    {% if resumen_sesion %}
-    <div class="resumen-sesion">
-        <h2>📞 Resumen de tu Sesión Telefónica</h2>
-        <p><strong>Duración:</strong> 30 minutos</p>
-        <div class="interpretacion">
-            {{ resumen_sesion }}
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-        <p><strong>Tipo de análisis:</strong> Lectura de Manos (Quiromancia)</p>
-        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
-    </div>
-</body>
-</html>
-        """
-        
-    elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
-        return """
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Informe de Lectura Facial - AS Cartastral</title>
-    {{ base_style }}
-</head>
-<body>
-    {{obtener_portada_con_logo_corregida('lectura_facial_ia', nombre) }}
-
-    <div class="datos-natales">
-        <h2>👤 Datos de la Lectura</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
-        <p><span class="dato">Email:</span> {{ email }}</p>
-    </div>
-
-    {% if cara_frente_img %}
-    <div class="carta-img">
-        <h2>👤 Vista Frontal</h2>
-        <img src="{{ cara_frente_img }}" alt="Cara frontal">
-        <p><em>Vista frontal - Análisis de proporciones y simetría</em></p>
-    </div>
-    {% endif %}
-
-    {% if cara_izquierda_img %}
-    <div class="carta-img">
-        <h2>👤 Perfil Izquierdo (45°)</h2>
-        <img src="{{ cara_izquierda_img }}" alt="Perfil izquierdo">
-        <p><em>Perfil izquierdo - Análisis del lado emocional</em></p>
-    </div>
-    {% endif %}
-
-    {% if cara_derecha_img %}
-    <div class="carta-img">
-        <h2>👤 Perfil Derecho (45°)</h2>
-        <img src="{{ cara_derecha_img }}" alt="Perfil derecho">
-        <p><em>Perfil derecho - Análisis del lado racional</em></p>
-    </div>
-    {% endif %}
-
-    <div class="section">
-        <h2>🔍 Análisis Fisiognómico</h2>
-        <div class="interpretacion">
-            <p>La lectura facial estudia las características de tu rostro para revelar rasgos de personalidad, tendencias emocionales y patrones de comportamiento.</p>
-        </div>
-    </div>
-
-    {% if resumen_sesion %}
-    <div class="resumen-sesion">
-        <h2>📞 Resumen de tu Sesión Telefónica</h2>
-        <p><strong>Duración:</strong> 15 minutos</p>
-        <div class="interpretacion">
-            {{ resumen_sesion }}
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-        <p><strong>Tipo de análisis:</strong> Lectura Facial (Fisiognomía)</p>
-        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
-    </div>
-</body>
-</html>
-        """
-        
     elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
-        return """
+        return base_style + """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Psico-Coaching - AS Cartastral</title>
-    {{ base_style }}
+    <title>{{ nombre }} - Sesión de Psico-Coaching - AS Cartastral</title>
 </head>
 <body>
-    {{obtener_portada_con_logo_corregida('psico_coaching_ia', nombre) }}
-
-    <div class="datos-natales">
-        <h2>👤 Datos del Cliente</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
-        <p><span class="dato">Email:</span> {{ email }}</p>
-        <p><span class="dato">Fecha de la sesión:</span> {{ fecha_generacion }}</p>
-    </div>
-
+    {{ obtener_portada_con_logo(tipo_servicio, nombre) }}
+    
     <div class="section">
-        <h2>🎯 Objetivos de la Sesión</h2>
-        <div class="interpretacion">
-            <p>El psico-coaching combina técnicas psicológicas y de coaching para ayudarte a identificar patrones, superar obstáculos y desarrollar estrategias para tu crecimiento personal.</p>
-        </div>
+        <h1>🧠 SESIÓN DE PSICO-COACHING 🧠</h1>
+        <p><span class="dato">Cliente:</span> {{ nombre }}</p>
+        <p><span class="dato">Email:</span> {{ email }}</p>
     </div>
 
     {% if resumen_sesion %}
-    <div class="resumen-sesion">
-        <h2>📞 Resumen de tu Sesión de Coaching</h2>
-        <p><strong>Duración:</strong> 45 minutos</p>
-        <p><strong>Seguimiento disponible:</strong> 3 meses</p>
-        <div class="interpretacion">
-            {{ resumen_sesion }}
-        </div>
+    <div class="section">
+        <h2>📞 Resumen de tu Sesión</h2>
+        <p><strong>Duración:</strong> 40 minutos</p>
+        <div class="interpretacion">{{ resumen_sesion }}</div>
     </div>
     {% endif %}
 
-    <div class="section">
-        <h2>📋 Plan de Acción</h2>
-        <div class="interpretacion">
-            <p>Basándome en nuestra conversación, te recomiendo seguir trabajando en las áreas identificadas y aplicar las estrategias discutidas durante nuestra sesión.</p>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>🔄 Próximos Pasos</h2>
-        <div class="interpretacion">
-            <p>Recuerda que tienes 3 meses de seguimiento disponible. Puedes contactar nuevamente para continuar trabajando en tu desarrollo personal y resolver cualquier duda que surja.</p>
-        </div>
-    </div>
-
     <div class="footer">
         <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-        <p><strong>Tipo de análisis:</strong> Sesión de Psico-Coaching</p>
-        <p><strong>Generado por:</strong> AS Cartastral - Servicios de Desarrollo Personal</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios de Psico-Coaching IA</p>
     </div>
 </body>
-</html>
-        """
-        
-    elif tipo_servicio in ['grafologia_ia', 'grafologia']:
-        return """
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <title>Informe de Análisis Grafológico - AS Cartastral</title>
-        {{ base_style }}
-    </head>
-    <body>
-        {{obtener_portada_con_logo_corregida('grafologia_ia', nombre) }}
+</html>"""
 
-        <div class="datos-natales">
-            <h2>📝 Datos del Análisis</h2>
-            <p><span class="dato">Nombre:</span> {{ nombre }}</p>
-            <p><span class="dato">Email:</span> {{ email }}</p>
-            <p><span class="dato">Muestra analizada:</span> Escritura manuscrita</p>
-            <p><span class="dato">Confianza del análisis:</span> {{ confianza }}%</p>
-        </div>
-
-        {% if muestra_escritura_img %}
-        <div class="carta-img">
-            <h2>✍️ Tu Muestra de Escritura</h2>
-            <img src="{{ muestra_escritura_img }}" alt="Muestra de escritura analizada">
-            <p><em>Muestra de escritura analizada para el informe</em></p>
-        </div>
-        {% endif %}
-
-        <div class="section">
-            <h2>🔍 Análisis de Personalidad</h2>
-            <div class="interpretacion">
-                <p>Tu escritura revela aspectos fascinantes de tu personalidad. Cada trazo, inclinación y presión nos habla de características únicas de tu forma de ser.</p>
-            </div>
-        </div>
-
-        {% if puntuaciones %}
-        <div class="section">
-            <h2>📊 Perfil Grafológico</h2>
-            {% for dimension, datos in puntuaciones.items() %}
-            <div class="datos-natales" style="margin: 15px 0;">
-                <h3>{{ dimension|title }}: {{ (datos.score * 100)|round }}%</h3>
-                <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
-                    <div style="background: #2c5aa0; height: 100%; width: {{ (datos.score * 100)|round }}%; border-radius: 10px;"></div>
-                </div>
-                <ul style="margin-top: 10px;">
-                    {% for texto in datos.textos %}
-                    <li>{{ texto }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="section">
-            <h2>🎯 Características Principales</h2>
-            <div class="interpretacion">
-                <p><strong>Sociabilidad:</strong> Tu forma de relacionarte con otros se refleja en el espaciado y márgenes de tu escritura.</p>
-                <p><strong>Autocontrol:</strong> La regularidad de tu trazo indica tu nivel de autodominio emocional.</p>
-                <p><strong>Energía:</strong> La presión de tu escritura revela tu vitalidad y determinación.</p>
-                <p><strong>Organización:</strong> La estructura de tu texto muestra tu capacidad organizativa.</p>
-            </div>
-        </div>
-
-        {% if medidas_tecnicas %}
-        <div class="section">
-            <h2>📏 Medidas Técnicas</h2>
-            <div class="datos-natales">
-                <p><span class="dato">Inclinación:</span> {{ medidas_tecnicas.inclinacion_grados }}°</p>
-                <p><span class="dato">Presión del trazo:</span> {{ medidas_tecnicas.contraste_med }} puntos</p>
-                <p><span class="dato">Grosor promedio:</span> {{ medidas_tecnicas.grosor_trazo_px }} píxeles</p>
-                <p><span class="dato">Regularidad:</span> {{ medidas_tecnicas.regularidad_tamano }} puntos</p>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if resumen_sesion %}
-        <div class="resumen-sesion">
-            <h2>📞 Resumen de tu Sesión Telefónica</h2>
-            <p><strong>Duración:</strong> 30 minutos</p>
-            <div class="interpretacion">
-                {{ resumen_sesion }}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="section">
-            <h2>✨ Recomendaciones</h2>
-            <div class="interpretacion">
-                <p>Basándome en tu análisis grafológico, te recomiendo trabajar en potenciar tus fortalezas naturales y ser consciente de las áreas donde puedes desarrollarte más.</p>
-                <p>Recuerda que la grafología es una herramienta de autoconocimiento que te ayuda a comprender mejor tu personalidad y patrones de comportamiento.</p>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-            <p><strong>Tipo de análisis:</strong> Análisis Grafológico Personalizado</p>
-            <p><strong>Generado por:</strong> AS Cartastral - Servicios de Análisis de Personalidad</p>
-        </div>
-    </body>
-    </html>
-            """
-    
-    # Template por defecto si no se encuentra el tipo
-    return """
+    elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
+        return base_style + """
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe Personalizado - AS Cartastral</title>
-    {{ base_style }}
+    <title>{{ nombre }} - Lectura de Manos - AS Cartastral</title>
 </head>
 <body>
-    {{obtener_portada_con_logo_corregida('carta_astral_ia', nombre) }}
-    <div class="datos-natales">
-        <h2>📊 Datos del Cliente</h2>
-        <p><span class="dato">Nombre:</span> {{ nombre }}</p>
+    {{ obtener_portada_con_logo(tipo_servicio, nombre) }}
+    
+    <div class="section">
+        <h1>🤚 LECTURA DE MANOS PERSONALIZADA 🤚</h1>
+        <p><span class="dato">Cliente:</span> {{ nombre }}</p>
         <p><span class="dato">Email:</span> {{ email }}</p>
     </div>
+
     {% if resumen_sesion %}
-    <div class="resumen-sesion">
+    <div class="section">
         <h2>📞 Resumen de tu Sesión</h2>
         <div class="interpretacion">{{ resumen_sesion }}</div>
     </div>
     {% endif %}
+
     <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ fecha_generacion }} a las {{ hora_generacion }}</p>
-        <p><strong>Generado por:</strong> AS Cartastral</p>
+        <p><strong>Fecha de generación:</strong> {{ fecha_generación }} a las {{ hora_generación }}</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
     </div>
 </body>
-</html>
-    """
+</html>"""
+
+    # Para otros servicios (grafología, lectura facial, astrología horaria)
+    else:
+        return base_style + f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{{{ nombre }}}} - {tipo_servicio.replace('_', ' ').title()} - AS Cartastral</title>
+</head>
+<body>
+    {{{{ obtener_portada_con_logo(tipo_servicio, nombre) }}}}
+    
+    <div class="section">
+        <h1>✨ {tipo_servicio.replace('_', ' ').upper()} ✨</h1>
+        <p><span class="dato">Cliente:</span> {{{{ nombre }}}}</p>
+        <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+    </div>
+
+    {{% if resumen_sesion %}}
+    <div class="section">
+        <h2>📞 Resumen de tu Sesión</h2>
+        <div class="interpretacion">{{{{ resumen_sesion }}}}</div>
+    </div>
+    {{% endif %}}
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+    </div>
+</body>
+</html>"""
 
 def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=None):
     """Generar informe HTML personalizado según el tipo de servicio"""

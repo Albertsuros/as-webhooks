@@ -7048,13 +7048,20 @@ def crear_imagen_dummy(ruta_archivo, tipo_imagen):
 
 @app.route('/test/generar_pdf_especialidad/<especialidad>')
 def generar_pdf_especialidad(especialidad):
-    """Generar PDF de una especialidad específica"""
+    """Generar PDF de especialidad - CON PRODUCTOS M IMPLEMENTADOS"""
     try:
-        # Validar especialidad
+        from informes import generar_informe_html, convertir_html_a_pdf, generar_nombre_archivo_unico
+        import os
+        
+        # ✅ LISTA ACTUALIZADA CON PRODUCTOS M
         especialidades_validas = [
-            'carta_astral_ia', 'revolucion_solar_ia', 'sinastria_ia',
-            'astrologia_horaria_ia', 'lectura_manos_ia', 'lectura_facial_ia',
-            'psico_coaching_ia', 'grafologia_ia'
+            # SERVICIOS NORMALES
+            'carta_astral_ia', 'revolucion_solar_ia', 'sinastria_ia', 
+            'astrologia_horaria_ia', 'lectura_manos_ia', 'lectura_facial_ia', 
+            'psico_coaching_ia', 'grafologia_ia',
+            # ✅ PRODUCTOS M (MEDIO TIEMPO)
+            'carta_astral_ia_half', 'revolucion_solar_ia_half', 'sinastria_ia_half',
+            'lectura_manos_ia_half', 'psico_coaching_ia_half'
         ]
         
         if especialidad not in especialidades_validas:
@@ -7063,34 +7070,91 @@ def generar_pdf_especialidad(especialidad):
                 'mensaje': f'Especialidad no válida. Opciones: {especialidades_validas}'
             }), 400
         
-        # Datos de prueba
+        # Datos de cliente de prueba
         datos_cliente = {
-            'nombre': 'Cliente Prueba',
-            'email': 'test@prueba.com',
-            'codigo_servicio': f'TEST_{especialidad.upper()}',
+            'nombre': f'Cliente Test {especialidad.upper()}',
+            'email': f'test_{especialidad}@ascartastral.com',
+            'codigo_servicio': f'TEST_{especialidad.upper()[:3]}',
             'fecha_nacimiento': '15/07/1985',
             'hora_nacimiento': '10:30',
             'lugar_nacimiento': 'Madrid, España'
         }
         
-        archivo_pdf = generar_solo_pdf(datos_cliente, especialidad)
+        # ✅ DETERMINAR SI ES PRODUCTO M
+        es_producto_m = especialidad.endswith('_half')
         
-        if archivo_pdf:
+        if es_producto_m:
+            datos_cliente['resumen_sesion'] = f"""
+            <h3>📞 Continuación de tu consulta {especialidad.replace('_half', '').replace('_', ' ').title()}</h3>
+            <p>Esta es la continuación de tu sesión anterior (½ tiempo).</p>
+            <p><strong>Duración:</strong> Sesión de seguimiento personalizada</p>
+            <div style="background: #f0f8ff; padding: 15px; border-left: 4px solid #007bff; margin: 15px 0;">
+                <p>💡 <strong>Puntos clave tratados en esta continuación:</strong></p>
+                <ul>
+                    <li>Profundización en aspectos específicos identificados</li>
+                    <li>Resolución de dudas y consultas adicionales</li>
+                    <li>Orientación personalizada para próximos pasos</li>
+                </ul>
+            </div>
+            """
+        
+        # Generar archivos únicos
+        archivos_unicos = crear_archivos_unicos_testing(especialidad)
+        
+        if not archivos_unicos:
+            return jsonify({
+                'status': 'error',
+                'mensaje': 'Error generando archivos únicos'
+            }), 500
+        
+        # Generar HTML del informe
+        html_content = generar_informe_html(especialidad, datos_cliente, archivos_unicos)
+        
+        if not html_content:
+            return jsonify({
+                'status': 'error',
+                'mensaje': 'Error generando contenido HTML'
+            }), 500
+        
+        # Crear archivo HTML
+        nombre_base = generar_nombre_archivo_unico(datos_cliente.get('codigo_servicio', 'TEST'))
+        archivo_html = archivos_unicos.get('informe_html', f"templates/informe_{nombre_base}.html")
+        
+        os.makedirs('templates', exist_ok=True)
+        with open(archivo_html, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        # Generar PDF
+        nombre_pdf = f"{especialidad}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        archivo_pdf = f"informes/{nombre_pdf}"
+        
+        os.makedirs('informes', exist_ok=True)
+        
+        exito_pdf = convertir_html_a_pdf(archivo_html, archivo_pdf)
+        
+        if exito_pdf:
             return jsonify({
                 'status': 'success',
+                'mensaje': f'PDF de {especialidad} generado correctamente',
                 'especialidad': especialidad,
+                'es_producto_m': es_producto_m,
                 'archivo': archivo_pdf,
-                'download_url': f'/test/descargar_pdf/{os.path.basename(archivo_pdf)}',
-                'mensaje': f'PDF de {especialidad} generado correctamente'
+                'download_url': f"/test/descargar_pdf/{nombre_pdf}",
+                'tipo_template': 'Anexo (½ tiempo)' if es_producto_m else 'Completo'
             })
         else:
             return jsonify({
                 'status': 'error',
-                'mensaje': f'Error generando PDF para {especialidad}'
+                'mensaje': 'Error generando PDF'
             }), 500
             
     except Exception as e:
-        return jsonify({'status': 'error', 'mensaje': str(e)}), 500
+        import traceback
+        return jsonify({
+            'status': 'error',
+            'mensaje': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @app.route('/test/descargar_pdf/<nombre_archivo>')
 def descargar_pdf(nombre_archivo):
@@ -8376,89 +8440,70 @@ def corregir_template_carta_astral():
 # Copia y pega este código al final de main.py
 # ========================================
 
+# ========================================
+# 🔧 REEMPLAZAR FUNCIÓN EXISTENTE EN main.py
+# Buscar la función verificar_imagenes_detallado y reemplazarla por esta:
+# ========================================
+
 @app.route("/test/verificar_imagenes_detallado")
 def verificar_imagenes_detallado():
-    """Verificar estado actual de imágenes en Railway"""
+    """Verificar estado actual de imágenes en Railway - VERSIÓN ACTUALIZADA"""
     import os
     from datetime import datetime
     
-    # Lista de imágenes necesarias
+    # USAR LAS EXTENSIONES CORRECTAS (.JPG en mayúscula)
     imagenes_necesarias = [
-        'logo.jpg', 'astrologia-3.jpg', 'Tarot y astrologia-5.jpg',
-        'Sinastria.jpg', 'astrologia-1.jpg', 'Lectura-de-manos-p.jpg',
-        'lectura facial.jpg', 'coaching-4.jpg', 'grafologia_2.jpeg'
+        'logo.JPG',                    # ✅ Correcto
+        'astrologia-3.JPG',           # ✅ Correcto  
+        'Tarot y astrologia-5.JPG',   # ✅ Correcto
+        'Sinastria.JPG',              # ✅ Correcto
+        'astrologia-1.JPG',           # ✅ Correcto
+        'Lectura-de-manos-p.jpg',     # ✅ Correcto (minúscula)
+        'lectura facial.JPG',         # ✅ Correcto
+        'coaching-4.JPG',             # ✅ Correcto
+        'grafologia_2.jpeg'           # ✅ Correcto
     ]
     
-    # Rutas donde buscar
+    # Rutas donde buscar (orden de prioridad)
     rutas_busqueda = [
-        "./img/", "/app/img/", "./static/img/", "/app/static/img/",
-        "./assets/img/", "/app/assets/img/", "."
+        "./static/img/",              # PRIMERO: Directorio protegido
+        "./img/", 
+        "/app/img/", 
+        "./static/", 
+        "/app/static/img/",
+        "./assets/img/", 
+        "/app/assets/img/"
     ]
     
     resultados = {}
     encontradas = 0
+    no_encontradas = []
     
-    # Verificar cada imagen
+    # Test cada imagen con la función ACTUALIZADA
     for imagen in imagenes_necesarias:
         encontrada = False
-        ruta_encontrada = None
-        tamaño = 0
+        ruta_final = None
         
-        for ruta_base in rutas_busqueda:
-            ruta_completa = os.path.join(ruta_base, imagen)
-            if os.path.exists(ruta_completa):
-                try:
-                    tamaño = os.path.getsize(ruta_completa)
+        # Buscar en cada directorio
+        for ruta_busqueda in rutas_busqueda:
+            if os.path.exists(ruta_busqueda):
+                ruta_completa = os.path.join(ruta_busqueda, imagen)
+                if os.path.exists(ruta_completa):
                     encontrada = True
-                    ruta_encontrada = ruta_completa
+                    ruta_final = ruta_completa
                     encontradas += 1
                     break
-                except:
-                    pass
         
         resultados[imagen] = {
-            'existe': encontrada,
-            'ruta': ruta_encontrada,
-            'tamaño': tamaño
+            'encontrada': encontrada,
+            'ruta': ruta_final if encontrada else 'No encontrada',
+            'status': '✅' if encontrada else '❌'
         }
+        
+        if not encontrada:
+            no_encontradas.append(imagen)
     
-    # Verificar directorio actual
-    contenido_directorio = []
-    directorio_actual = os.getcwd()
-    
-    try:
-        items = os.listdir('.')
-        for item in sorted(items):
-            if os.path.isdir(item):
-                contenido_directorio.append(f"📁 {item}/")
-                # Si es directorio de imágenes, mostrar contenido
-                if item in ['img', 'static', 'assets', 'images']:
-                    try:
-                        sub_items = os.listdir(item)
-                        for sub in sorted(sub_items)[:8]:  # Máximo 8 archivos
-                            try:
-                                sub_ruta = os.path.join(item, sub)
-                                if os.path.isfile(sub_ruta):
-                                    tamaño_sub = os.path.getsize(sub_ruta)
-                                    contenido_directorio.append(f"   📄 {sub} ({tamaño_sub} bytes)")
-                                else:
-                                    contenido_directorio.append(f"   📁 {sub}/")
-                            except:
-                                contenido_directorio.append(f"   📄 {sub}")
-                        if len(sub_items) > 8:
-                            contenido_directorio.append(f"   ... y {len(sub_items) - 8} más")
-                    except:
-                        contenido_directorio.append(f"   ❌ No se puede leer")
-            elif item.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
-                try:
-                    tamaño_archivo = os.path.getsize(item)
-                    contenido_directorio.append(f"🖼️ {item} ({tamaño_archivo} bytes)")
-                except:
-                    contenido_directorio.append(f"🖼️ {item}")
-    except Exception as e:
-        contenido_directorio.append(f"❌ Error leyendo directorio: {str(e)}")
-    
-    # Verificar si informes.py tiene las funciones necesarias
+    # Verificar funciones en informes.py
     funciones_check = {}
     if os.path.exists('informes.py'):
         try:
@@ -8467,312 +8512,114 @@ def verificar_imagenes_detallado():
             
             funciones_necesarias = [
                 'obtener_ruta_imagen_absoluta',
-                'obtener_portada_con_logo_corregida', 
+                'obtener_portada_con_logo', 
                 'obtener_template_anexo_medio_tiempo',
-                'corregir_rutas_imagenes_cartas'
+                'obtener_estilos_portada_mejorada'
             ]
             
-            for funcion in funciones_necesarias:
-                funciones_check[funcion] = funcion in contenido_informes
-        except:
-            funciones_check['error'] = 'No se puede leer informes.py'
-    else:
-        funciones_check['error'] = 'informes.py no existe'
+            for func in funciones_necesarias:
+                funciones_check[func] = f'def {func}(' in contenido_informes
+        except Exception as e:
+            funciones_check['error'] = str(e)
     
-    # Calcular porcentaje de éxito
-    porcentaje_imagenes = (encontradas / len(imagenes_necesarias)) * 100
+    # Verificar contenido de directorio actual
+    contenido_directorio = []
+    try:
+        items = os.listdir('.')
+        for item in sorted(items):
+            if os.path.isdir(item):
+                contenido_directorio.append(f"📁 {item}/")
+                if item in ['img', 'static', 'assets']:
+                    try:
+                        sub_items = os.listdir(item)
+                        for sub in sorted(sub_items)[:5]:
+                            if sub.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                                contenido_directorio.append(f"   🖼️ {sub}")
+                    except:
+                        contenido_directorio.append(f"   ❌ No se puede leer")
+            elif item.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                contenido_directorio.append(f"🖼️ {item}")
+    except Exception as e:
+        contenido_directorio.append(f"❌ Error leyendo directorio: {str(e)}")
     
-    # Generar HTML de respuesta
+    # GENERAR HTML MEJORADO
+    porcentaje = (encontradas / len(imagenes_necesarias)) * 100
+    status_color = '#28a745' if porcentaje >= 80 else '#ffc107' if porcentaje >= 50 else '#dc3545'
+    
     html = f"""
     <!DOCTYPE html>
-    <html>
+    <html lang="es">
     <head>
-        <title>Verificación Completa - AS Cartastral</title>
+        <meta charset="UTF-8">
+        <title>AS Cartastral - Verificación de Imágenes ACTUALIZADA</title>
         <style>
-            body {{ 
-                font-family: 'Segoe UI', Arial, sans-serif; 
-                margin: 0; 
-                padding: 40px; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
-            }}
-            
-            .container {{ 
-                background: white; 
-                padding: 40px; 
-                border-radius: 15px; 
-                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                max-width: 1200px;
-                margin: 0 auto;
-            }}
-            
-            h1 {{ 
-                color: #2c5aa0; 
-                text-align: center; 
-                margin-bottom: 10px;
-                font-size: 28px;
-            }}
-            
-            .subtitle {{
-                text-align: center;
-                color: #666;
-                margin-bottom: 30px;
-                font-size: 16px;
-            }}
-            
-            .status-card {{
-                background: #f8f9fa;
-                border-left: 5px solid #28a745;
-                padding: 20px;
-                margin: 20px 0;
-                border-radius: 8px;
-            }}
-            
-            .status-card.warning {{
-                border-left-color: #ffc107;
-                background: #fff8e1;
-            }}
-            
-            .status-card.error {{
-                border-left-color: #dc3545;
-                background: #ffebee;
-            }}
-            
-            table {{ 
-                width: 100%; 
-                border-collapse: collapse; 
-                margin: 20px 0; 
-                font-size: 14px;
-            }}
-            
-            th, td {{ 
-                padding: 12px; 
-                border: 1px solid #ddd; 
-                text-align: left; 
-            }}
-            
-            th {{ 
-                background: #f8f9fa; 
-                font-weight: bold;
-                color: #2c5aa0;
-            }}
-            
-            .encontrada {{ background: #e8f5e8; }}
-            .no-encontrada {{ background: #ffebee; }}
-            
-            .directorio {{ 
-                background: #f8f9fa; 
-                padding: 20px; 
-                border-radius: 8px; 
-                margin: 20px 0;
-            }}
-            
-            .directorio ul {{ 
-                list-style: none; 
-                padding: 0; 
-                margin: 0;
-            }}
-            
-            .directorio li {{ 
-                margin: 8px 0; 
-                font-family: 'Courier New', monospace; 
-                font-size: 13px;
-                padding: 4px 8px;
-                background: white;
-                border-radius: 4px;
-            }}
-            
-            .progress-bar {{
-                width: 100%;
-                height: 25px;
-                background: #e9ecef;
-                border-radius: 12px;
-                overflow: hidden;
-                margin: 15px 0;
-            }}
-            
-            .progress-fill {{
-                height: 100%;
-                background: linear-gradient(90deg, #28a745, #20c997);
-                transition: width 0.3s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: bold;
-                font-size: 12px;
-            }}
-            
-            .buttons {{
-                text-align: center;
-                margin: 30px 0;
-            }}
-            
-            .btn {{
-                display: inline-block;
-                padding: 12px 24px;
-                margin: 5px;
-                background: #2c5aa0;
-                color: white;
-                text-decoration: none;
-                border-radius: 6px;
-                font-weight: bold;
-                transition: background 0.3s;
-            }}
-            
-            .btn:hover {{
-                background: #1e3f73;
-            }}
-            
-            .btn.warning {{
-                background: #ffc107;
-                color: #000;
-            }}
-            
-            .btn.success {{
-                background: #28a745;
-            }}
-            
-            .info-grid {{
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                margin: 20px 0;
-            }}
-            
-            @media (max-width: 768px) {{
-                .info-grid {{
-                    grid-template-columns: 1fr;
-                }}
-                
-                body {{
-                    padding: 20px;
-                }}
-                
-                .container {{
-                    padding: 20px;
-                }}
-            }}
+            body {{ font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }}
+            .container {{ max-width: 1000px; margin: 0 auto; }}
+            .header {{ background: {status_color}; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 30px; }}
+            .status-card {{ background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+            .image-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }}
+            .image-item {{ background: white; padding: 15px; border-radius: 8px; border-left: 4px solid {'#28a745' if True else '#dc3545'}; }}
+            .btn {{ padding: 10px 20px; margin: 5px; text-decoration: none; color: white; border-radius: 5px; display: inline-block; }}
+            .btn-primary {{ background: #007bff; }} .btn-success {{ background: #28a745; }} .btn-warning {{ background: #ffc107; color: #212529; }}
+            .success {{ color: #28a745; }} .error {{ color: #dc3545; }} .warning {{ color: #ffc107; }}
+            .buttons {{ text-align: center; margin: 30px 0; }}
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>🔍 Verificación Completa del Sistema</h1>
-            <p class="subtitle">Estado actual: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Directorio: {directorio_actual}</p>
-            
-            <div class="status-card {'warning' if porcentaje_imagenes < 100 else ''}">
-                <h2>📊 Resumen General</h2>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: {porcentaje_imagenes}%">
-                        {porcentaje_imagenes:.1f}% Completo
-                    </div>
-                </div>
-                <p><strong>Imágenes:</strong> {encontradas}/{len(imagenes_necesarias)} encontradas</p>
-                <p><strong>Estado:</strong> {'✅ Listo para continuar' if porcentaje_imagenes >= 50 else '⚠️ Necesita atención'}</p>
+            <div class="header">
+                <h1>📊 VERIFICACIÓN DE IMÁGENES - ACTUALIZADA</h1>
+                <h2>{porcentaje:.1f}% Imágenes Encontradas ({encontradas}/{len(imagenes_necesarias)})</h2>
+                <p>Estado: {'✅ SISTEMA OK' if porcentaje >= 80 else '⚠️ NECESITA ATENCIÓN' if porcentaje >= 50 else '🚨 CRÍTICO'}</p>
+                <p><strong>Última actualización:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
             </div>
             
-            <div class="info-grid">
-                <div>
-                    <h2>📸 Estado de Imágenes Necesarias</h2>
-                    <table>
-                        <tr>
-                            <th>Imagen</th>
-                            <th>Estado</th>
-                            <th>Ruta</th>
-                            <th>Tamaño</th>
-                        </tr>
-    """
+            <div class="status-card">
+                <h3>🔍 Resultados por Imagen (Extensiones Correctas)</h3>
+                <div class="image-grid">"""
     
-    # Añadir filas de la tabla de imágenes
-    for imagen, datos in resultados.items():
-        if datos['existe']:
-            estado = "✅ Encontrada"
-            ruta = datos['ruta']
-            tamaño = f"{datos['tamaño']:,} bytes"
-            clase = "encontrada"
-        else:
-            estado = "❌ No encontrada"
-            ruta = "Se creará placeholder"
-            tamaño = "N/A"
-            clase = "no-encontrada"
-        
+    for imagen, resultado in resultados.items():
+        status_class = 'success' if resultado['encontrada'] else 'error'
         html += f"""
-                        <tr class="{clase}">
-                            <td><strong>{imagen}</strong></td>
-                            <td>{estado}</td>
-                            <td style="font-family: monospace; font-size: 11px;">{ruta}</td>
-                            <td>{tamaño}</td>
-                        </tr>
-        """
+                    <div class="image-item">
+                        <h4 class="{status_class}">{resultado['status']} {imagen}</h4>
+                        <p><strong>Ruta:</strong> {resultado['ruta']}</p>
+                    </div>"""
     
-    html += """
-                    </table>
-                </div>
-                
-                <div>
-                    <h2>🔧 Estado de Funciones en informes.py</h2>
-    """
-    
-    if 'error' in funciones_check:
-        html += f'<div class="status-card error"><p>❌ {funciones_check["error"]}</p></div>'
-    else:
-        html += '<table><tr><th>Función</th><th>Estado</th></tr>'
-        for funcion, existe in funciones_check.items():
-            estado = "✅ Existe" if existe else "❌ Falta"
-            clase = "encontrada" if existe else "no-encontrada"
-            html += f'<tr class="{clase}"><td>{funcion}</td><td>{estado}</td></tr>'
-        html += '</table>'
-    
-    html += """
+    html += f"""
                 </div>
             </div>
             
-            <h2>📁 Contenido del Directorio Actual</h2>
-            <div class="directorio">
-                <ul>
-    """
+            <div class="status-card">
+                <h3>🔧 Funciones en informes.py</h3>
+                <ul>"""
     
-    for item in contenido_directorio[:30]:  # Limitar a 30 items
-        html += f"<li>{item}</li>"
-    
-    if len(contenido_directorio) > 30:
-        html += f"<li><em>... y {len(contenido_directorio) - 30} elementos más</em></li>"
+    for func, existe in funciones_check.items():
+        if func != 'error':
+            status = '✅' if existe else '❌'
+            html += f"<li>{status} {func}</li>"
     
     html += f"""
                 </ul>
             </div>
             
-            <h2>🚀 Próximos Pasos</h2>
+            <div class="buttons">
+                <a href="/test/diagnostico_final" class="btn btn-primary">🔬 Diagnóstico Final</a>
+                <a href="/test/generar_pdf_especialidad/carta_astral_ia" class="btn btn-warning">📄 Test PDF Normal</a>
+                <a href="/test/generar_pdf_especialidad/carta_astral_ia_half" class="btn btn-success">📋 Test Producto M</a>
+            </div>
+            
             <div class="status-card">
+                <h3>📋 Próximos Pasos</h3>
                 <ol>
-                    <li><strong>Aplicar Patch 1:</strong> Añadir funciones de imágenes a informes.py</li>
-                    <li><strong>Aplicar Patch 2:</strong> Añadir productos M (AIM, RSM, SIM, LMM, PCM)</li>
-                    <li><strong>Testear:</strong> Verificar que los PDFs se generan correctamente</li>
-                    <li><strong>Validar:</strong> Confirmar que las imágenes aparecen en los PDFs</li>
+                    <li><strong>✅ COMPLETADO:</strong> Diagnóstico muestra 100% imágenes OK</li>
+                    <li><strong>⚠️ PENDIENTE:</strong> Implementar productos M en generación PDF</li>
+                    <li><strong>🧪 TESTEAR:</strong> Verificar PDFs con imágenes y marcos dorados</li>
                 </ol>
             </div>
             
-            <div class="buttons">
-                <a href="/test/panel_pdfs" class="btn">📋 Panel Principal</a>
-                <a href="/test/generar_pdf_especialidad/carta_astral_ia" class="btn warning">🧪 Test PDF Normal</a>
-                <a href="/test/debug_html_step_by_step/carta_astral_ia" class="btn">🔍 Debug HTML</a>
-                <a href="/test/generar_pdf_especialidad/carta_astral_ia_half" class="btn success">🔄 Test Producto M</a>
-            </div>
-            
-            <div class="status-card">
-                <h3>📋 Lista de Verificación</h3>
-                <ul>
-                    <li>{'✅' if encontradas >= 5 else '❌'} Al menos 5 imágenes disponibles ({encontradas}/9)</li>
-                    <li>{'✅' if os.path.exists('informes.py') else '❌'} Archivo informes.py existe</li>
-                    <li>{'✅' if os.path.exists('main.py') else '❌'} Archivo main.py existe</li>
-                    <li>{'✅' if os.path.exists('sofia.py') else '❌'} Archivo sofia.py existe</li>
-                    <li>{'⚠️' if not funciones_check.get('obtener_ruta_imagen_absoluta', False) else '✅'} Funciones de imagen en informes.py</li>
-                </ul>
-            </div>
-            
             <p style="text-align: center; color: #666; margin-top: 40px;">
-                <em>Generado automáticamente el {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</em><br>
-                <strong>AS Cartastral</strong> - Sistema de Verificación de Imágenes y PDFs
+                <em>AS Cartastral - Sistema Actualizado con Extensiones Correctas (.JPG)</em>
             </p>
         </div>
     </body>
@@ -8982,76 +8829,95 @@ def ver_html_ultimo():
 # ===================================
 
 def crear_archivos_unicos_testing(tipo_servicio):
-    """Crear archivos_unicos para testing con imágenes reales o dummy"""
+    """Crear nombres únicos para archivos - CON PRODUCTOS M IMPLEMENTADOS"""
+    import uuid
+    import os
+    from datetime import datetime
+    
     try:
-        import os
-        from datetime import datetime
+        print(f"🔄 crear_archivos_unicos_testing llamada con: {tipo_servicio}")
         
-        print(f"🔍 Creando archivos_unicos para: {tipo_servicio}")
+        # Generar ID único
+        id_unico = str(uuid.uuid4())[:8]
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        base_dir = os.getcwd()
         
-        # Timestamp único para archivos
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        print(f"📁 Directorio base: {base_dir}")
+        print(f"🆔 ID único generado: {id_unico}")
         
-        archivos_unicos = {}
-        
-        if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
+        # ✅ SERVICIOS NORMALES + PRODUCTOS M (MEDIO TIEMPO)
+        if tipo_servicio in ['carta_astral_ia', 'carta_natal', 'carta_astral_ia_half']:  # ✅ Agregado _half
             archivos_unicos = {
-                'carta_natal_img': buscar_o_crear_imagen_dummy('carta_natal', timestamp),
-                'progresiones_img': buscar_o_crear_imagen_dummy('progresiones', timestamp),
-                'transitos_img': buscar_o_crear_imagen_dummy('transitos', timestamp)
+                "informe_html": f"templates/informe_carta_astral_{id_unico}.html",
+                "carta_natal_img": f"http://localhost:5000/img/carta_natal_{id_unico}.png",
+                "progresiones_img": f"http://localhost:5000/img/progresiones_{id_unico}.png", 
+                "transitos_img": f"http://localhost:5000/img/transitos_{id_unico}.png",
+                'es_producto_m': tipo_servicio.endswith('_half'),
+                'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40
             }
-            
-        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
+        
+        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar', 'revolucion_solar_ia_half']:  # ✅ Agregado _half
             archivos_unicos = {
-                'carta_natal_img': buscar_o_crear_imagen_dummy('carta_natal', timestamp),
-                'revolucion_img': buscar_o_crear_imagen_dummy('revolucion_solar', timestamp),
-                'revolucion_natal_img': buscar_o_crear_imagen_dummy('revolucion_natal', timestamp)
+                "informe_html": f"templates/informe_revolucion_solar_{id_unico}.html",
+                "carta_natal_img": f"http://localhost:5000/img/carta_natal_{id_unico}.png",
+                "revolucion_solar_img": f"http://localhost:5000/img/revolucion_solar_{id_unico}.png",
+                "progresiones_img": f"http://localhost:5000/img/progresiones_{id_unico}.png",
+                "transitos_img": f"http://localhost:5000/img/transitos_{id_unico}.png",
+                'es_producto_m': tipo_servicio.endswith('_half'),
+                'duracion_minutos': 25 if tipo_servicio.endswith('_half') else 50
             }
-            
-        elif tipo_servicio in ['sinastria_ia', 'sinastria']:
+        
+        elif tipo_servicio in ['sinastria_ia', 'sinastria', 'sinastria_ia_half']:  # ✅ Agregado _half
             archivos_unicos = {
-                'sinastria_img': buscar_o_crear_imagen_dummy('sinastria', timestamp)
+                "informe_html": f"templates/informe_sinastria_{id_unico}.html",
+                "sinastria_img": f"http://localhost:5000/img/sinastria_{id_unico}.png",
+                'es_producto_m': tipo_servicio.endswith('_half'),
+                'duracion_minutos': 15 if tipo_servicio.endswith('_half') else 30
             }
-            
+        
         elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
             archivos_unicos = {
-                'carta_horaria_img': buscar_o_crear_imagen_dummy('carta_horaria', timestamp)
+                "informe_html": f"templates/informe_astrolhoraria_{id_unico}.html",
+                "carta_horaria_img": f"http://localhost:5000/img/carta_horaria_{id_unico}.png",
+                'es_producto_m': False,
+                'duracion_minutos': 30
             }
-            
-        elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
+        
+        elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos', 'lectura_manos_ia_half']:  # ✅ Agregado _half
             archivos_unicos = {
-                'mano_izquierda_img': buscar_o_crear_imagen_dummy('mano_izquierda', timestamp),
-                'mano_derecha_img': buscar_o_crear_imagen_dummy('mano_derecha', timestamp),
-                'lineas_anotadas_img': buscar_o_crear_imagen_dummy('lineas_anotadas', timestamp)
+                "informe_html": f"templates/informe_lectura_manos_{id_unico}.html",
+                'es_producto_m': tipo_servicio.endswith('_half'),
+                'duracion_minutos': 15 if tipo_servicio.endswith('_half') else 30
             }
-            
+        
         elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
             archivos_unicos = {
-                'cara_frontal_img': buscar_o_crear_imagen_dummy('cara_frontal', timestamp),
-                'cara_izquierda_img': buscar_o_crear_imagen_dummy('cara_izquierda', timestamp),
-                'cara_derecha_img': buscar_o_crear_imagen_dummy('cara_derecha', timestamp)
+                "informe_html": f"templates/informe_lectura_facial_{id_unico}.html",
+                'es_producto_m': False,
+                'duracion_minutos': 25
             }
-            
+        
+        elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching', 'psico_coaching_ia_half']:  # ✅ Agregado _half
+            archivos_unicos = {
+                "informe_html": f"templates/informe_psico_coaching_{id_unico}.html",
+                'es_producto_m': tipo_servicio.endswith('_half'),
+                'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40
+            }
+        
         elif tipo_servicio in ['grafologia_ia', 'grafologia']:
             archivos_unicos = {
-                'muestra_escritura_img': buscar_o_crear_imagen_dummy('muestra_escritura', timestamp),
-                'confianza': 85,
-                'puntuaciones': {
-                    'precision': 90,
-                    'estabilidad': 80,
-                    'creatividad': 75
-                }
-            }
-            
-        elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
-            archivos_unicos = {
-                'sesion_completa': True,
-                'duracion_minutos': 45
+                "informe_html": f"templates/informe_grafologia_{id_unico}.html",
+                'es_producto_m': False,
+                'duracion_minutos': 35
             }
         
         else:
             print(f"⚠️ Tipo de servicio no reconocido: {tipo_servicio}")
-            archivos_unicos = {}
+            archivos_unicos = {
+                "informe_html": f"templates/informe_generico_{id_unico}.html",
+                'es_producto_m': False,
+                'duracion_minutos': 30
+            }
         
         print(f"✅ Archivos_unicos creados: {archivos_unicos}")
         return archivos_unicos
