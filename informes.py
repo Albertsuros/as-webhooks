@@ -19,7 +19,7 @@ from jinja2 import Template
 # ========================================
 
 def obtener_ruta_imagen_absoluta(nombre_imagen):
-    """Obtener ruta accesible para Playwright/navegador - VERSIÓN MEJORADA"""
+    """Obtener ruta accesible para Playwright/navegador - VERSIÓN MEJORADA FINAL"""
     import os
     import shutil
     
@@ -29,63 +29,39 @@ def obtener_ruta_imagen_absoluta(nombre_imagen):
     if '/' in nombre_imagen:
         nombre_imagen = os.path.basename(nombre_imagen)
     
-    # Lista de directorios donde buscar
+    # Lista de directorios donde buscar (orden de prioridad)
     directorios_busqueda = [
-        './img/',
-        './static/img/',
-        '/app/img/',
-        '/app/static/img/',
-        '.',
-        './static/'
+        './static/img/',  # PRIMERO: Directorio protegido
+        './img/',         # SEGUNDO: Directorio original
+        '/app/img/',      # TERCERO: Railway absoluto
+        '/app/static/img/', # CUARTO: Railway static
+        './',             # QUINTO: Raíz
     ]
     
-    # Buscar el archivo exacto primero
+    # Buscar archivo en cada directorio
     for directorio in directorios_busqueda:
-        ruta_completa = os.path.join(directorio, nombre_imagen)
-        if os.path.exists(ruta_completa):
-            print(f"✅ Encontrada en: {ruta_completa}")
+        if os.path.exists(directorio):
+            ruta_completa = os.path.join(directorio, nombre_imagen)
             
-            # Copiar a static/img si no está ahí
-            destino = f'static/img/{nombre_imagen}'
-            os.makedirs('static/img', exist_ok=True)
-            
-            if not os.path.exists(destino) or ruta_completa != destino:
-                try:
-                    shutil.copy2(ruta_completa, destino)
-                    print(f"📋 Copiada a: {destino}")
-                except Exception as e:
-                    print(f"⚠️ Error copiando: {e}")
-            
-            return destino
-    
-    # Si no se encontró exacto, buscar variaciones de extensión
-    nombre_base = os.path.splitext(nombre_imagen)[0]
-    extensiones = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG']
-    
-    for directorio in directorios_busqueda:
-        for ext in extensiones:
-            archivo_variante = nombre_base + ext
-            ruta_variante = os.path.join(directorio, archivo_variante)
-            
-            if os.path.exists(ruta_variante):
-                print(f"✅ Encontrada variante: {ruta_variante}")
+            if os.path.exists(ruta_completa):
+                print(f"✅ Imagen encontrada: {ruta_completa}")
                 
-                # Copiar a static/img
-                destino = f'static/img/{archivo_variante}'
-                os.makedirs('static/img', exist_ok=True)
-                
-                if not os.path.exists(destino):
+                # Si está en img/ pero no en static/img/, copiarla para protegerla
+                if directorio == './img/' and os.path.exists('./static/img/'):
                     try:
-                        shutil.copy2(ruta_variante, destino)
-                        print(f"📋 Copiada a: {destino}")
+                        destino = f"./static/img/{nombre_imagen}"
+                        if not os.path.exists(destino):
+                            shutil.copy2(ruta_completa, destino)
+                            print(f"🛡️ Imagen copiada a directorio protegido: {destino}")
+                        return destino  # Usar la versión protegida
                     except Exception as e:
-                        print(f"⚠️ Error copiando: {e}")
+                        print(f"⚠️ No se pudo copiar, usando original: {e}")
                 
-                return destino
+                return ruta_completa
     
-    # Si no existe, crear placeholder
-    print(f"⚠️ No encontrada: {nombre_imagen} - Creando placeholder")
-    return crear_placeholder_svg(nombre_imagen)
+    # Si no se encuentra, crear placeholder y alertar
+    print(f"❌ IMAGEN NO ENCONTRADA: {nombre_imagen}")
+    return f"data:image/svg+xml;charset=UTF-8,%3csvg width='200' height='150' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='200' height='150' fill='%23f0f0f0'/%3e%3ctext x='100' y='75' text-anchor='middle' font-size='12' fill='%23666'%3e{nombre_imagen}%3c/text%3e%3c/svg%3e"
 
 def crear_placeholder_svg(nombre_imagen):
     """Crear placeholder SVG inline"""
@@ -207,24 +183,24 @@ def obtener_template_anexo_medio_tiempo(tipo_servicio):
 </html>"""
 
 def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
-    """Generar portada con logo AS Cartastral + imagen del servicio - CORREGIDA"""
+    """Generar portada con logo AS Cartastral + imagen del servicio - VERSIÓN FINAL"""
     
-    # DICCIONARIO CORREGIDO - SIN ERRORES DE SINTAXIS
+    # DICCIONARIO CON EXTENSIONES CORRECTAS (.JPG)
     imagenes_servicios = {
         # CARTA ASTRAL
         'carta_astral_ia': 'astrologia-3.JPG',
-        'carta_natal': 'astrologia-3.JPG',
-        'carta_astral_ia_half': 'astrologia-3.JPG',
+        'carta_natal': 'astrologia-3.JPG', 
+        'carta_astral_ia_half': 'astrologia-3.JPG',  # ✅ PRODUCTO M
         
-        # REVOLUCIÓN SOLAR  
+        # REVOLUCIÓN SOLAR
         'revolucion_solar_ia': 'Tarot y astrologia-5.JPG',
         'revolucion_solar': 'Tarot y astrologia-5.JPG',
-        'revolucion_solar_ia_half': 'Tarot y astrologia-5.JPG',
+        'revolucion_solar_ia_half': 'Tarot y astrologia-5.JPG',  # ✅ PRODUCTO M
         
-        # SINASTRÍA
+        # SINASTRÍA  
         'sinastria_ia': 'Sinastria.JPG',
         'sinastria': 'Sinastria.JPG',
-        'sinastria_ia_half': 'Sinastria.JPG',
+        'sinastria_ia_half': 'Sinastria.JPG',  # ✅ PRODUCTO M
         
         # ASTROLOGÍA HORARIA
         'astrologia_horaria_ia': 'astrologia-1.JPG',
@@ -232,8 +208,8 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         
         # LECTURA DE MANOS
         'lectura_manos_ia': 'Lectura-de-manos-p.jpg',
-        'lectura_manos': 'Lectura-de-manos-p.jpg',
-        'lectura_manos_ia_half': 'Lectura-de-manos-p.jpg',
+        'lectura_manos': 'Lectura-de-manos-p.jpg', 
+        'lectura_manos_ia_half': 'Lectura-de-manos-p.jpg',  # ✅ PRODUCTO M
         
         # LECTURA FACIAL
         'lectura_facial_ia': 'lectura facial.JPG',
@@ -242,82 +218,85 @@ def obtener_portada_con_logo(tipo_servicio, nombre_cliente):
         # PSICO-COACHING
         'psico_coaching_ia': 'coaching-4.JPG',
         'psico_coaching': 'coaching-4.JPG',
-        'psico_coaching_ia_half': 'coaching-4.JPG',
+        'psico_coaching_ia_half': 'coaching-4.JPG',  # ✅ PRODUCTO M
         
         # GRAFOLOGÍA
         'grafologia_ia': 'grafologia_2.jpeg',
         'grafologia': 'grafologia_2.jpeg'
-    }  # Solo UNA llave de cierre aquí
+    }
     
     titulos_servicios = {
         'carta_astral_ia': '🌟 CARTA ASTRAL PERSONALIZADA 🌟',
         'carta_natal': '🌟 CARTA ASTRAL PERSONALIZADA 🌟',
         'carta_astral_ia_half': '🌟 CARTA ASTRAL - CONTINUACIÓN 🌟',
+        
         'revolucion_solar_ia': '🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟',
-        'revolucion_solar': '🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟',
+        'revolucion_solar': '🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟', 
         'revolucion_solar_ia_half': '🌟 REVOLUCIÓN SOLAR - CONTINUACIÓN 🌟',
+        
         'sinastria_ia': '💕 SINASTRÍA ASTROLÓGICA 💕',
         'sinastria': '💕 SINASTRÍA ASTROLÓGICA 💕',
         'sinastria_ia_half': '💕 SINASTRÍA - CONTINUACIÓN 💕',
+        
         'astrologia_horaria_ia': '⏰ ASTROLOGÍA HORARIA ⏰',
         'astrol_horaria': '⏰ ASTROLOGÍA HORARIA ⏰',
+        
         'lectura_manos_ia': '🤚 LECTURA DE MANOS PERSONALIZADA 🤚',
         'lectura_manos': '🤚 LECTURA DE MANOS PERSONALIZADA 🤚',
         'lectura_manos_ia_half': '🤚 LECTURA DE MANOS - CONTINUACIÓN 🤚',
+        
         'lectura_facial_ia': '😊 LECTURA FACIAL PERSONALIZADA 😊',
         'lectura_facial': '😊 LECTURA FACIAL PERSONALIZADA 😊',
+        
         'psico_coaching_ia': '🧠 SESIÓN DE PSICO-COACHING 🧠',
         'psico_coaching': '🧠 SESIÓN DE PSICO-COACHING 🧠',
         'psico_coaching_ia_half': '🧠 PSICO-COACHING - CONTINUACIÓN 🧠',
+        
         'grafologia_ia': '✍️ ANÁLISIS GRAFOLÓGICO ✍️',
         'grafologia': '✍️ ANÁLISIS GRAFOLÓGICO ✍️'
     }
     
-    # PRIMERO: Obtener los valores del diccionario
+    # Obtener los valores del diccionario
     imagen_servicio = imagenes_servicios.get(tipo_servicio, 'astrologia-3.JPG')
     titulo_servicio = titulos_servicios.get(tipo_servicio, '🌟 INFORME PERSONALIZADO 🌟')
     
-    # SEGUNDO: Obtener las rutas usando la función
+    # Obtener las rutas usando la función mejorada
     ruta_logo = obtener_ruta_imagen_absoluta('logo.JPG')
     ruta_imagen_servicio = obtener_ruta_imagen_absoluta(imagen_servicio)
     
-    # TERCERO: Retornar el HTML con las variables ya definidas
-    return """
+    # HTML con diseño dorado y elegante
+    return f"""
     <div class="portada">
+        <div class="marco-dorado-superior"></div>
+        <div class="marco-dorado-lateral"></div>
+        
         <div class="logo-header">
-            <img src="{}" alt="AS Cartastral" class="logo-esquina">
+            <img src="{ruta_logo}" alt="AS Cartastral" class="logo-esquina">
             <span class="nombre-empresa">AS Cartastral</span>
         </div>
         
-        <h1 class="titulo-principal">{}</h1>
+        <h1 class="titulo-principal">{titulo_servicio}</h1>
         
         <div class="imagen-servicio">
-            <img src="{}" alt="{}" class="imagen-central">
+            <img src="{ruta_imagen_servicio}" alt="{tipo_servicio}" class="imagen-central">
         </div>
         
-        <h2 class="nombre-cliente">{}</h2>
+        <h2 class="nombre-cliente">{nombre_cliente}</h2>
         
         <h3 class="subtitulo">Tu análisis personalizado</h3>
         
         <div class="fecha-portada">
-            <p>Generado el {}</p>
+            <p>Generado el {datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d de %B de %Y')}</p>
         </div>
     </div>
-    """.format(
-        ruta_logo,
-        titulo_servicio, 
-        ruta_imagen_servicio,
-        tipo_servicio,
-        nombre_cliente,
-        datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d de %B de %Y')
-    )
+    """
 
 # ========================================
 # ACTUALIZAR ESTILOS CON LOGO DORADO E ITALICS
 # ========================================
 
 def obtener_estilos_portada_mejorada():
-    """Estilos CSS para la nueva portada con logo e imagen"""
+    """Estilos CSS para portada con marcos dorados y diseño elegante"""
     return """
     .portada {
         text-align: center;
@@ -328,57 +307,83 @@ def obtener_estilos_portada_mejorada():
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 40px 20px;
+    }
+    
+    /* MARCOS DORADOS DECORATIVOS */
+    .marco-dorado-superior {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        background: linear-gradient(90deg, #DAA520, #FFD700, #DAA520);
+        box-shadow: 0 2px 4px rgba(218, 165, 32, 0.3);
+    }
+    
+    .marco-dorado-lateral {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        background: linear-gradient(180deg, #DAA520, #FFD700, #DAA520);
+        box-shadow: 2px 0 4px rgba(218, 165, 32, 0.3);
     }
     
     /* LOGO EN ESQUINA SUPERIOR */
     .logo-header {
         position: absolute;
-        top: 20px;
-        left: 20px;
+        top: 30px;
+        left: 30px;
         display: flex;
         align-items: center;
         gap: 15px;
+        z-index: 10;
     }
     
     .logo-esquina {
-        height: 4cm;  /* 4cm de altura como solicitaste */
+        height: 4cm;
         width: auto;
         object-fit: contain;
+        border: 2px solid #DAA520;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     
     .nombre-empresa {
         font-size: 24px;
         font-weight: bold;
-        color: #DAA520;  /* Color dorado */
+        color: #DAA520;
         font-family: 'Georgia', serif;
-        font-style: italic;  /* Italic como solicitaste */
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        font-style: italic;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
     
     /* TÍTULO PRINCIPAL */
     .titulo-principal {
         font-size: 32px;
-        margin: 120px 0 40px 0;  /* Más espacio por logo más grande */
+        margin: 120px 0 40px 0;
         color: #2c5aa0;
         text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        font-weight: bold;
     }
     
     /* IMAGEN CENTRAL DEL SERVICIO */
     .imagen-servicio {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         margin: 40px 0;
+        display: flex;
+        justify-content: center;
     }
     
     .imagen-central {
-        width: 14cm;  /* 14x14 cm como solicitaste */
-        height: 14cm;
-        object-fit: cover;  /* Cambié a cover para que llene el espacio */
-        border: 3px solid #2c5aa0;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        max-width: 8cm;
+        max-height: 6cm;
+        object-fit: contain;
+        border: 3px solid #DAA520;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         background: white;
         padding: 10px;
     }
@@ -386,9 +391,12 @@ def obtener_estilos_portada_mejorada():
     /* NOMBRE DEL CLIENTE */
     .nombre-cliente {
         font-size: 28px;
-        color: #333;
-        margin: 20px 0;
-        font-weight: normal;
+        color: #DAA520;
+        font-weight: bold;
+        margin: 30px 0 20px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
     
     /* SUBTÍTULO */
@@ -396,27 +404,15 @@ def obtener_estilos_portada_mejorada():
         font-size: 18px;
         color: #666;
         font-style: italic;
-        margin: 10px 0;
+        margin-bottom: 40px;
     }
     
-    /* FECHA EN PORTADA */
+    /* FECHA */
     .fecha-portada {
-        margin-top: 40px;
-        font-size: 14px;
-        color: #888;
-    }
-    
-    @media print {
-        .portada {
-            page-break-after: always;
-        }
-        .imagen-central {
-            width: 14cm;
-            height: 14cm;
-        }
-        .logo-esquina {
-            height: 4cm;
-        }
+        font-size: 16px;
+        color: #2c5aa0;
+        font-weight: bold;
+        margin-top: auto;
     }
     """
 
@@ -1642,6 +1638,77 @@ def generar_y_enviar_informe_desde_agente(data, tipo_servicio, resumen_conversac
         import traceback
         traceback.print_exc()
         return False
+        
+def obtener_template_anexo_medio_tiempo(tipo_servicio):
+    """Template para productos M (medio tiempo) - NUEVOS PRODUCTOS"""
+    from datetime import datetime
+    import pytz
+    
+    # CSS específico para anexos
+    css_anexo = """
+    <style>
+        body { font-family: 'Georgia', serif; margin: 40px 20px; line-height: 1.6; color: #333; background: #fafafa; }
+        .encabezado-anexo { background: linear-gradient(135deg, #f57c00, #ff9800); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; text-align: center; border: 3px solid #f57c00; }
+        .encabezado-anexo h1 { color: white; font-size: 24px; margin: 0 0 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+        .encabezado-anexo p { color: white; margin: 5px 0; font-weight: bold; }
+        .badge-continuacion { background: #4caf50; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 10px; }
+        h2 { font-size: 20px; margin-top: 30px; border-bottom: 2px solid #ff9800; padding-bottom: 8px; color: #f57c00; }
+        .interpretacion { background: #fff8e1; padding: 20px; border-left: 4px solid #ff9800; margin: 20px 0; border-radius: 4px; }
+        .resumen-sesion { background: #e8f5e8; padding: 25px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #4caf50; }
+        .footer { text-align: center; margin-top: 60px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }
+        .dato { font-weight: bold; color: #f57c00; }
+    </style>
+    """
+    
+    # Configuración específica por producto M
+    config_productos = {
+        'carta_astral_ia_half': {'duracion': '20 minutos', 'codigo': 'AIM', 'titulo': 'CARTA ASTRAL'},
+        'revolucion_solar_ia_half': {'duracion': '25 minutos', 'codigo': 'RSM', 'titulo': 'REVOLUCIÓN SOLAR'},  
+        'sinastria_ia_half': {'duracion': '15 minutos', 'codigo': 'SIM', 'titulo': 'SINASTRÍA'},
+        'lectura_manos_ia_half': {'duracion': '15 minutos', 'codigo': 'LMM', 'titulo': 'LECTURA DE MANOS'},
+        'psico_coaching_ia_half': {'duracion': '20 minutos', 'codigo': 'PCM', 'titulo': 'PSICO-COACHING'}
+    }
+    
+    config = config_productos.get(tipo_servicio, {'duracion': 'Medio tiempo', 'codigo': 'XXM', 'titulo': 'SESIÓN'})
+    
+    return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ANEXO - {config['titulo']} Continuación - AS Cartastral</title>
+    {css_anexo}
+</head>
+<body>
+    <div class="encabezado-anexo">
+        <h1>📋 ANEXO - CONTINUACIÓN {config['titulo']}</h1>
+        <p><strong>Cliente:</strong> {{{{ nombre }}}}</p>
+        <p><strong>Email:</strong> {{{{ email }}}}</p>
+        <p><strong>Duración:</strong> {config['duracion']} (½ tiempo)</p>
+        <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}}</p>
+        <div class="badge-continuacion">✨ SESIÓN DE SEGUIMIENTO</div>
+    </div>
+
+    <div class="resumen-sesion">
+        <h2>📞 Continuación de tu Consulta</h2>
+        <p><span class="dato">Código:</span> {config['codigo']} - {config['titulo']} IA (½ tiempo)</p>
+        <p><span class="dato">Modalidad:</span> Sesión telefónica de seguimiento</p>
+        
+        {{% if resumen_sesion %}}
+        <div class="interpretacion">
+            {{{{ resumen_sesion }}}}
+        </div>
+        {{% endif %}}
+    </div>
+
+    <div class="footer">
+        <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+        <p><strong>Código de sesión:</strong> {config['codigo']} - {config['titulo']} IA (½ tiempo)</p>
+        <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+        <p><em>Este anexo complementa tu informe principal</em></p>
+    </div>
+</body>
+</html>"""
 
 if __name__ == "__main__":
     # Ejemplo de uso para testing

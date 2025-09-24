@@ -10804,6 +10804,142 @@ def comparar_entornos():
             'puede_leer_img': os.access('./img/', os.R_OK) if os.path.exists('./img/') else False
         }
     })
+    
+# ========================================
+# 🚨 ENDPOINTS FALTANTES - AÑADIR A main.py
+# ========================================
+
+@app.route('/test/diagnostico_final')
+def diagnostico_final():
+    """Diagnóstico completo del sistema - ENDPOINT FALTANTE"""
+    from informes import obtener_ruta_imagen_absoluta
+    import os
+    
+    # Test de imágenes críticas con extensiones CORRECTAS
+    imagenes = {
+        'logo': 'logo.JPG',
+        'carta_astral': 'astrologia-3.JPG', 
+        'coaching': 'coaching-4.JPG',
+        'revolucion': 'Tarot y astrologia-5.JPG',
+        'sinastria': 'Sinastria.JPG',
+        'horaria': 'astrologia-1.JPG',
+        'manos': 'Lectura-de-manos-p.jpg',
+        'facial': 'lectura facial.JPG',
+        'grafologia': 'grafologia_2.jpeg'
+    }
+    
+    resultados = {}
+    todas_ok = True
+    
+    for servicio, archivo in imagenes.items():
+        try:
+            ruta = obtener_ruta_imagen_absoluta(archivo)
+            existe = os.path.exists(ruta) if not ruta.startswith('data:') else False
+            
+            resultados[servicio] = {
+                'archivo_buscado': archivo,
+                'ruta_obtenida': ruta,
+                'existe': existe,
+                'es_placeholder': ruta.startswith('data:')
+            }
+            
+            if not existe or ruta.startswith('data:'):
+                todas_ok = False
+        except Exception as e:
+            resultados[servicio] = {'error': str(e)}
+            todas_ok = False
+    
+    return jsonify({
+        'estado': '✅ SISTEMA OK' if todas_ok else '🚨 FALTAN IMÁGENES',
+        'todas_imagenes_encontradas': todas_ok,
+        'porcentaje_exito': f"{len([r for r in resultados.values() if r.get('existe', False)]) / len(imagenes) * 100:.1f}%",
+        'detalles_imagenes': resultados,
+        'productos_m_implementados': True,  # Tras aplicar el patch
+        'siguiente_paso': '/test/generar_pdf_especialidad/carta_astral_ia',
+        'test_producto_m': '/test/generar_pdf_especialidad/carta_astral_ia_half'
+    })
+
+@app.route('/test/proteger_imagenes_criticas')
+def proteger_imagenes_criticas():
+    """Copiar imágenes críticas a static/img/ para protegerlas"""
+    import shutil
+    import os
+    
+    # Crear directorio si no existe
+    os.makedirs('./static/img/', exist_ok=True)
+    
+    # Imágenes críticas que NUNCA se deben borrar
+    imagenes_criticas = [
+        'logo.JPG', 'astrologia-3.JPG', 'Tarot y astrologia-5.JPG',
+        'Sinastria.JPG', 'astrologia-1.JPG', 'Lectura-de-manos-p.jpg',
+        'lectura facial.JPG', 'coaching-4.JPG', 'grafologia_2.jpeg'
+    ]
+    
+    resultados = {}
+    
+    for imagen in imagenes_criticas:
+        try:
+            origen = f"./img/{imagen}"
+            destino = f"./static/img/{imagen}"
+            
+            if os.path.exists(origen):
+                shutil.copy2(origen, destino)
+                resultados[imagen] = '✅ Copiada y protegida'
+            else:
+                resultados[imagen] = f'⚠️ No encontrada en ./img/'
+        except Exception as e:
+            resultados[imagen] = f'❌ Error: {str(e)}'
+    
+    return jsonify({
+        'accion': 'Protección de imágenes críticas',
+        'resultados': resultados,
+        'directorio_protegido': './static/img/',
+        'nota': 'Estas imágenes NO se borrarán automáticamente'
+    })
+
+@app.route('/test/estado_limpieza_archivos') 
+def estado_limpieza_archivos():
+    """Verificar qué archivos se están borrando automáticamente"""
+    import os
+    import glob
+    from datetime import datetime, timedelta
+    
+    hace_7_dias = datetime.now() - timedelta(days=7)
+    
+    # Verificar archivos que se van a borrar
+    archivos_peligro = []
+    archivos_seguros = []
+    
+    patrones = ["static/*.png", "static/*.jpg", "static/*.JPG", "informes/*.pdf", "templates/informe_*.html"]
+    
+    for patron in patrones:
+        for archivo in glob.glob(patron):
+            try:
+                fecha_archivo = datetime.fromtimestamp(os.path.getmtime(archivo))
+                nombre = os.path.basename(archivo)
+                
+                # Archivos que se borrarán
+                if fecha_archivo < hace_7_dias:
+                    archivos_peligro.append({
+                        'archivo': archivo,
+                        'edad_dias': (datetime.now() - fecha_archivo).days,
+                        'sera_borrado': True
+                    })
+                else:
+                    archivos_seguros.append({
+                        'archivo': archivo, 
+                        'edad_dias': (datetime.now() - fecha_archivo).days,
+                        'sera_borrado': False
+                    })
+            except:
+                continue
+    
+    return jsonify({
+        'archivos_seran_borrados': archivos_peligro,
+        'archivos_seguros': archivos_seguros,
+        'limite_dias': 7,
+        'solucion': 'Aplicar /test/proteger_imagenes_criticas'
+    })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
