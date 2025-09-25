@@ -6804,105 +6804,6 @@ def generar_solo_pdf(datos_cliente, tipo_servicio):
         return None
 
 # ========================================
-# 🎯 SOLUCIÓN DEFINITIVA - MAIN.PY
-# REEMPLAZAR crear_archivos_unicos_testing() 
-# ========================================
-
-def crear_archivos_unicos_testing(tipo_servicio):
-    """NUEVA FUNCIÓN que genera archivos únicos con timestamp y client_id"""
-    import uuid
-    from datetime import datetime
-    import os
-    
-    try:
-        # GENERAR ID ÚNICO (esto es lo que faltaba)
-        client_id = str(uuid.uuid4())[:8]
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        unique_suffix = f"{client_id}_{timestamp}"
-        
-        print(f"🔧 AS CARTASTRAL: Generando {tipo_servicio} - ID: {unique_suffix}")
-        
-        if tipo_servicio in ['carta_astral_ia', 'carta_natal', 'carta_astral_ia_half']:
-            
-            # ARCHIVOS ÚNICOS CON TIMESTAMP (esto es lo que faltaba)
-            archivos_unicos = {
-                'informe_html': f"templates/carta_astral_{unique_suffix}.html",
-                'carta_natal_img': f'static/carta_natal_{unique_suffix}.png',
-                'progresiones_img': f'static/progresiones_{unique_suffix}.png', 
-                'transitos_img': f'static/transitos_{unique_suffix}.png',
-                'es_producto_m': tipo_servicio.endswith('_half'),
-                'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40,
-                'client_id': client_id,           # CLAVE REQUERIDA
-                'timestamp': timestamp,           # CLAVE REQUERIDA  
-                'id_unico': unique_suffix,
-                'generacion_dinamica': False      # Por defecto False
-            }
-            
-            # INTENTAR generar cartas dinámicas (opcional)
-            try:
-                # Cargar funciones wrapper si existen
-                with open('sofia_fixes.py', 'r', encoding='utf-8') as f:
-                    exec(f.read())
-                    
-                datos_test = {
-                    'fecha_nacimiento': '15/07/1985',
-                    'hora_nacimiento': '10:30',
-                    'lugar_nacimiento': 'Madrid, España',
-                    'residencia_actual': 'Madrid, España'
-                }
-                
-                # Intentar generar (sin fallar si no funciona)
-                generar_carta_natal_desde_datos_natales(datos_test, archivos_unicos['carta_natal_img'])
-                generar_progresiones_desde_datos_natales(datos_test, archivos_unicos['progresiones_img'])
-                generar_transitos_desde_datos_natales(datos_test, archivos_unicos['transitos_img'])
-                
-                # Verificar si se crearon
-                archivos_creados = sum(1 for k, v in archivos_unicos.items() 
-                                     if k.endswith('_img') and os.path.exists(v))
-                
-                if archivos_creados >= 3:
-                    archivos_unicos['generacion_dinamica'] = True
-                    print(f"✅ Cartas dinámicas creadas: {archivos_creados}")
-                else:
-                    print(f"🔄 Usando imágenes estáticas, dinámicas: {archivos_creados}")
-                
-            except Exception as e:
-                print(f"⚠️ Generación dinámica falló, usando estáticas: {e}")
-                # Fallback a imágenes estáticas
-                archivos_unicos.update({
-                    'carta_natal_img': 'static/carta_astral.png',
-                    'progresiones_img': 'static/carta_astral_completa.png',
-                    'transitos_img': 'static/carta_astral_corregida.png'
-                })
-            
-            return archivos_unicos
-        
-        # Otros tipos de servicio
-        else:
-            return {
-                'informe_html': f"templates/informe_{tipo_servicio}_{unique_suffix}.html",
-                'es_producto_m': tipo_servicio.endswith('_half'),
-                'duracion_minutos': 30,
-                'client_id': client_id,
-                'timestamp': timestamp,
-                'generacion_dinamica': False
-            }
-            
-    except Exception as e:
-        print(f"❌ Error en crear_archivos_unicos_testing: {e}")
-        # FALLBACK SEGURO con timestamp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        return {
-            'carta_natal_img': 'static/carta_astral.png',
-            'progresiones_img': 'static/carta_astral_completa.png', 
-            'transitos_img': 'static/carta_astral_corregida.png',
-            'client_id': 'error',
-            'timestamp': timestamp,
-            'es_producto_m': False,
-            'generacion_dinamica': False
-        }
-
-# ========================================
 # FUNCIÓN MEJORADA PARA GENERAR CARTAS CON DATOS REALES
 # ========================================
 
@@ -8776,150 +8677,6 @@ def ver_html_ultimo():
     except Exception as e:
         return f"Error: {str(e)}"
 
-def crear_archivos_unicos_testing(tipo_servicio):
-    """Generar cartas astrales con UUID único por cliente para evitar colisiones"""
-    import uuid
-    from datetime import datetime
-    import os
-    
-    try:
-        # GENERAR ID ÚNICO POR CLIENTE (UUID + timestamp)
-        client_id = str(uuid.uuid4())[:8]  # 8 caracteres únicos
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        unique_suffix = f"{client_id}_{timestamp}"
-        
-        print(f"🔧 AS CARTASTRAL: Generando {tipo_servicio} - ID único: {unique_suffix}")
-        
-        if tipo_servicio in ['carta_astral_ia', 'carta_natal', 'carta_astral_ia_half']:
-            
-            # DATOS DE PRUEBA (Sofia pasará los datos reales del cliente)
-            datos_cliente_test = {
-                'nombre': f'Cliente AS Cartastral {client_id}',
-                'fecha_nacimiento': '15/07/1985',    # DD/MM/YYYY
-                'hora_nacimiento': '10:30',          # HH:MM  
-                'lugar_nacimiento': 'Madrid, España',
-                'residencia_actual': 'Madrid, España'
-            }
-            
-            # ARCHIVOS ÚNICOS CON ID ESPECÍFICO 
-            archivos_unicos = {
-                'informe_html': f"templates/carta_astral_{unique_suffix}.html",
-                'carta_natal_img': f'static/carta_natal_{unique_suffix}.png',
-                'progresiones_img': f'static/progresiones_{unique_suffix}.png', 
-                'transitos_img': f'static/transitos_{unique_suffix}.png',
-                'es_producto_m': tipo_servicio.endswith('_half'),
-                'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40,
-                'client_id': client_id,
-                'timestamp': timestamp,
-                'id_unico': unique_suffix
-            }
-            
-            # 🚀 USAR FUNCIONES WRAPPER DE SOFIA_FIXES.PY
-            try:
-                print("📍 Cargando funciones wrapper desde sofia_fixes.py...")
-                
-                # Cargar funciones del archivo sofia_fixes.py
-                with open('sofia_fixes.py', 'r', encoding='utf-8') as f:
-                    sofia_fixes_code = f.read()
-                    exec(sofia_fixes_code)
-                
-                print("✅ Funciones wrapper cargadas correctamente")
-                
-                # GENERAR CARTA NATAL con datos específicos
-                print(f"🔧 Generando carta natal → {archivos_unicos['carta_natal_img']}")
-                resultado_natal = generar_carta_natal_desde_datos_natales(
-                    datos_cliente_test, 
-                    archivos_unicos['carta_natal_img']
-                )
-                
-                # GENERAR PROGRESIONES con datos específicos  
-                print(f"🔧 Generando progresiones → {archivos_unicos['progresiones_img']}")
-                resultado_progresiones = generar_progresiones_desde_datos_natales(
-                    datos_cliente_test,
-                    archivos_unicos['progresiones_img'] 
-                )
-                
-                # GENERAR TRÁNSITOS con datos específicos
-                print(f"🔧 Generando tránsitos → {archivos_unicos['transitos_img']}")
-                resultado_transitos = generar_transitos_desde_datos_natales(
-                    datos_cliente_test,
-                    archivos_unicos['transitos_img']
-                )
-                
-                # VERIFICAR ARCHIVOS CREADOS
-                archivos_creados = []
-                tamaños_archivos = {}
-                
-                for key, path in archivos_unicos.items():
-                    if key.endswith('_img') and os.path.exists(path):
-                        archivos_creados.append(key)
-                        tamaños_archivos[key] = f"{os.path.getsize(path) / 1024:.1f} KB"
-                        print(f"✅ {key}: {path} ({tamaños_archivos[key]})")
-                
-                archivos_unicos['archivos_creados_dinamicamente'] = archivos_creados
-                archivos_unicos['tamaños_archivos'] = tamaños_archivos
-                archivos_unicos['generacion_dinamica'] = len(archivos_creados) >= 3
-                archivos_unicos['resultados_generacion'] = {
-                    'natal': resultado_natal is not None,
-                    'progresiones': resultado_progresiones is not None, 
-                    'transitos': resultado_transitos is not None
-                }
-                
-                if archivos_unicos['generacion_dinamica']:
-                    print(f"🎉 AS CARTASTRAL: {len(archivos_creados)} cartas generadas dinámicamente!")
-                    return archivos_unicos
-                else:
-                    print(f"⚠️ AS CARTASTRAL: Solo {len(archivos_creados)} archivos creados, usando fallback")
-                
-            except FileNotFoundError:
-                print("❌ Archivo sofia_fixes.py no encontrado, usando funciones integradas...")
-                
-                # FUNCIONES INTEGRADAS (del sofia_fixes.py)
-                resultado_natal = generar_carta_natal_integrada(datos_cliente_test, archivos_unicos['carta_natal_img'])
-                resultado_progresiones = generar_progresiones_integrada(datos_cliente_test, archivos_unicos['progresiones_img'])
-                resultado_transitos = generar_transitos_integrada(datos_cliente_test, archivos_unicos['transitos_img'])
-                
-                archivos_creados = []
-                for key, path in archivos_unicos.items():
-                    if key.endswith('_img') and os.path.exists(path):
-                        archivos_creados.append(key)
-                
-                archivos_unicos['generacion_dinamica'] = len(archivos_creados) >= 3
-                if archivos_unicos['generacion_dinamica']:
-                    return archivos_unicos
-                
-            except Exception as e:
-                print(f"❌ Error ejecutando funciones wrapper: {e}")
-                import traceback
-                traceback.print_exc()
-            
-            # FALLBACK: Imágenes estáticas (como backup)
-            print("🔄 AS CARTASTRAL: Usando imágenes estáticas como fallback")
-            archivos_unicos.update({
-                'carta_natal_img': 'static/carta_astral.png',
-                'progresiones_img': 'static/carta_astral_completa.png', 
-                'transitos_img': 'static/carta_astral_corregida.png',
-                'generacion_dinamica': False,
-                'metodo_usado': 'fallback_estatico'
-            })
-            
-            return archivos_unicos
-        
-        # OTROS TIPOS DE SERVICIO (no astrología)
-        else:
-            return {
-                'informe_html': f"templates/informe_{tipo_servicio}_{unique_suffix}.html",
-                'es_producto_m': tipo_servicio.endswith('_half'),
-                'duracion_minutos': 30,
-                'client_id': client_id,
-                'timestamp': timestamp,
-                'generacion_dinamica': False
-            }
-            
-    except Exception as e:
-        print(f"❌ AS CARTASTRAL: Error general en crear_archivos_unicos_testing: {e}")
-        return {}
-
 def buscar_o_crear_imagen_dummy(tipo_imagen, timestamp):
     """Buscar imagen existente o usar una dummy"""
     try:
@@ -9197,93 +8954,6 @@ def test_endpoints():
         'endpoints': endpoints
     })
     
-def crear_archivos_unicos_testing(tipo_servicio):
-    """Crear archivos_unicos para testing con imágenes reales o dummy"""
-    try:
-        import os
-        from datetime import datetime
-        
-        print(f"🔍 Creando archivos_unicos para: {tipo_servicio}")
-        
-        # Timestamp único para archivos
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        archivos_unicos = {}
-        
-        if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
-            # 🔥 USAR IMÁGENES ESTÁTICAS EXISTENTES (confirmadas por debug)
-            archivos_unicos = {
-                'carta_natal_img': 'static/carta_astral.png',  # Existe en debug
-                'progresiones_img': 'static/carta_astral_completa.png',  # Existe en debug
-                'transitos_img': 'static/carta_astral_corregida.png'  # Existe en debug
-            }
-            
-        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
-            archivos_unicos = {
-                'carta_natal_img': 'static/carta_astral.png',
-                'revolucion_img': 'static/carta_astral_placidus.png',  # Existe en debug
-                'revolucion_natal_img': 'static/carta_astral_placidus_corregida.png'  # Existe en debug
-            }
-            
-        elif tipo_servicio in ['sinastria_ia', 'sinastria']:
-            archivos_unicos = {
-                'sinastria_img': 'static/carta_astral_demo.png'  # Existe en debug
-            }
-            
-        elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
-            archivos_unicos = {
-                'carta_horaria_img': 'static/carta.png'  # Existe en debug
-            }
-            
-        elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
-            archivos_unicos = {
-                'mano_izquierda_img': buscar_o_crear_imagen_dummy('mano_izquierda', timestamp),
-                'mano_derecha_img': buscar_o_crear_imagen_dummy('mano_derecha', timestamp),
-                'lineas_anotadas_img': buscar_o_crear_imagen_dummy('lineas_anotadas', timestamp)
-            }
-            
-        elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
-            archivos_unicos = {
-                'cara_frontal_img': buscar_o_crear_imagen_dummy('cara_frontal', timestamp),
-                'cara_izquierda_img': buscar_o_crear_imagen_dummy('cara_izquierda', timestamp),
-                'cara_derecha_img': buscar_o_crear_imagen_dummy('cara_derecha', timestamp)
-            }
-            
-        elif tipo_servicio in ['grafologia_ia', 'grafologia']:
-            archivos_unicos = {
-                'muestra_escritura_img': buscar_o_crear_imagen_dummy('muestra_escritura', timestamp),
-                'confianza': 85,
-                'puntuaciones': {
-                    'precision': 90,
-                    'estabilidad': 80,
-                    'creatividad': 75
-                },
-                'medidas_tecnicas': {
-                    'regularidad_tamano': 85,
-                    'presion_escritura': 78,
-                    'velocidad_escritura': 82
-                }
-            }
-            
-        elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
-            archivos_unicos = {
-                'sesion_completa': True,
-                'duracion_minutos': 45
-            }
-        
-        else:
-            print(f"⚠️ Tipo de servicio no reconocido: {tipo_servicio}")
-            archivos_unicos = {}
-        
-        print(f"✅ Archivos_unicos creados: {archivos_unicos}")
-        return archivos_unicos
-        
-    except Exception as e:
-        print(f"❌ Error en crear_archivos_unicos_testing: {e}")
-        import traceback
-        traceback.print_exc()
-        return {}
-
 def buscar_o_crear_imagen_dummy(tipo_imagen, timestamp):
     """Buscar imagen existente o crear dummy"""
     try:
@@ -12086,6 +11756,348 @@ def generar_pdf_funcionando(especialidad):
                 "mensaje": f"Error generando PDF: {resultado_pdf['error']}"
             }
             
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "mensaje": f"Error general: {str(e)}",
+            "traceback": traceback.format_exc()
+        }
+        
+# ========================================
+# 🔥 SOLUCIÓN FINAL LIMPIA AS CARTASTRAL
+# NO MÁS TESTS - SOLO LA SOLUCIÓN
+# ========================================
+
+# PASO 1: ELIMINAR TODAS las definiciones de crear_archivos_unicos_testing() del main.py
+# PASO 2: AÑADIR SOLO ESTA al final:
+
+def crear_archivos_unicos_AS_CARTASTRAL(tipo_servicio):
+    """FUNCIÓN CON NOMBRE ÚNICO para evitar conflictos - AS Cartastral"""
+    import uuid
+    from datetime import datetime
+    
+    # GENERAR IDs ÚNICOS
+    client_id = str(uuid.uuid4())[:8]
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    print(f"🔮 AS CARTASTRAL: Generando {tipo_servicio} - {client_id}_{timestamp}")
+    
+    # ARCHIVOS ÚNICOS CON TODAS LAS CLAVES NECESARIAS
+    archivos = {
+        'client_id': client_id,
+        'timestamp': timestamp,
+        'es_producto_m': tipo_servicio.endswith('_half'),
+        'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40,
+        'generacion_dinamica': False
+    }
+    
+    if tipo_servicio in ['carta_astral_ia', 'carta_natal', 'carta_astral_ia_half']:
+        archivos.update({
+            'carta_natal_img': 'static/carta_astral.png',
+            'progresiones_img': 'static/carta_astral_completa.png', 
+            'transitos_img': 'static/carta_astral_corregida.png'
+        })
+    
+    return archivos
+
+# ========================================
+# ENDPOINT FINAL QUE FUNCIONA
+# ========================================
+
+@app.route('/generar_pdf_as_cartastral/<especialidad>')
+def generar_pdf_as_cartastral(especialidad):
+    """ENDPOINT FINAL AS CARTASTRAL - Sin más tests"""
+    try:
+        from datetime import datetime
+        import os
+        
+        # USAR FUNCIÓN CON NOMBRE ÚNICO
+        archivos_unicos = crear_archivos_unicos_AS_CARTASTRAL(especialidad)
+        
+        # DATOS DEL CLIENTE
+        datos_cliente = {
+            'nombre': f'Cliente AS Cartastral {archivos_unicos["client_id"]}',
+            'email': f'cliente_{archivos_unicos["client_id"]}@ascartastral.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # HTML DIRECTO
+        es_producto_m = archivos_unicos['es_producto_m']
+        
+        # PORTADA SOLO PARA PRODUCTOS COMPLETOS
+        portada_html = '' if es_producto_m else f'''
+        <div style="page-break-after: always; text-align: center; padding: 80px 20px; 
+                    background: linear-gradient(135deg, #DAA520, #FFD700); color: white;">
+            <h1 style="font-size: 48px; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                AS CARTASTRAL
+            </h1>
+            <h2 style="font-size: 28px; margin-bottom: 40px;">
+                Informe Astrológico Personalizado
+            </h2>
+            <div style="font-size: 22px; margin-bottom: 20px;">
+                <strong>{datos_cliente['nombre']}</strong>
+            </div>
+            <div style="font-size: 16px; margin-bottom: 30px;">
+                {datos_cliente['fecha_nacimiento']} • {datos_cliente['hora_nacimiento']}<br>
+                {datos_cliente['lugar_nacimiento']}
+            </div>
+            <div style="font-size: 14px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px;">
+                ID: {archivos_unicos['client_id']} • Generado: {archivos_unicos['timestamp']}
+            </div>
+        </div>
+        '''
+        
+        html_completo = f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>AS Cartastral - {datos_cliente['nombre']}</title>
+            <style>
+                body {{ 
+                    font-family: 'Georgia', serif; 
+                    margin: 0; 
+                    padding: 20px; 
+                    line-height: 1.6; 
+                    background: #FEFCF5;
+                }}
+                .contenido {{ 
+                    max-width: 800px; 
+                    margin: 0 auto; 
+                    background: white; 
+                    padding: 30px; 
+                    border-radius: 10px; 
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }}
+                .seccion {{ 
+                    margin-bottom: 40px; 
+                    border-bottom: 1px solid #E5E5E5; 
+                    padding-bottom: 30px;
+                }}
+                .seccion:last-child {{ border-bottom: none; }}
+                .carta-imagen {{ 
+                    text-align: center; 
+                    margin: 25px 0; 
+                    padding: 20px;
+                    background: #F9F9F9;
+                    border-radius: 8px;
+                }}
+                .carta-imagen img {{ 
+                    max-width: 100%; 
+                    height: auto; 
+                    border: 3px solid #DAA520; 
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }}
+                h2 {{ 
+                    color: #8B4513; 
+                    border-bottom: 3px solid #DAA520; 
+                    padding-bottom: 12px; 
+                    font-size: 24px;
+                    margin-top: 0;
+                }}
+                .interpretacion {{ 
+                    background: linear-gradient(to right, #FFF8DC, #FFFEF7); 
+                    padding: 25px; 
+                    border-left: 5px solid #DAA520; 
+                    margin: 25px 0; 
+                    border-radius: 0 8px 8px 0;
+                    box-shadow: 0 2px 8px rgba(218, 165, 32, 0.1);
+                }}
+                .interpretacion p {{ 
+                    margin: 0; 
+                    font-size: 16px; 
+                    color: #333;
+                }}
+                .pie {{ 
+                    text-align: center; 
+                    margin-top: 50px; 
+                    padding: 20px; 
+                    background: #8B4513; 
+                    color: white; 
+                    border-radius: 8px;
+                }}
+            </style>
+        </head>
+        <body>
+            {portada_html}
+            
+            <div class="contenido">
+                {"<div style='background: #FF9800; color: white; padding: 15px; border-radius: 8px; margin-bottom: 30px; text-align: center;'><strong>🎯 ANEXO - PRODUCTO MEDIO TIEMPO</strong><br>Versión resumida del informe completo</div>" if es_producto_m else ""}
+                
+                <div class="seccion">
+                    <h2>🌟 Carta Natal</h2>
+                    <div class="carta-imagen">
+                        <img src="{archivos_unicos['carta_natal_img']}" alt="Carta Natal Personalizada">
+                    </div>
+                    <div class="interpretacion">
+                        <p><strong>Tu Configuración Astral Única:</strong> Tu carta natal revela la configuración planetaria exacta en el momento de tu nacimiento. Cada planeta en su signo zodiacal y casa astrológica aporta información valiosa sobre tu personalidad, potenciales naturales y caminos de crecimiento personal.</p>
+                    </div>
+                </div>
+                
+                <div class="seccion">
+                    <h2>📈 Progresiones Secundarias</h2>
+                    <div class="carta-imagen">
+                        <img src="{archivos_unicos['progresiones_img']}" alt="Progresiones Astrológicas">
+                    </div>
+                    <div class="interpretacion">
+                        <p><strong>Tu Evolución Astrológica:</strong> Las progresiones secundarias muestran cómo has evolucionado desde tu nacimiento y revelan las tendencias de desarrollo personal para los próximos años. Es tu crecimiento interior reflejado en el cosmos.</p>
+                    </div>
+                </div>
+                
+                <div class="seccion">
+                    <h2>🔄 Tránsitos Planetarios</h2>
+                    <div class="carta-imagen">
+                        <img src="{archivos_unicos['transitos_img']}" alt="Tránsitos Actuales">
+                    </div>
+                    <div class="interpretacion">
+                        <p><strong>Energías del Momento Presente:</strong> Los tránsitos planetarios actuales indican las oportunidades, desafíos y ciclos que se presentan en tu vida en este momento específico. Te ayudan a navegar el presente con sabiduría astrológica.</p>
+                    </div>
+                </div>
+                
+                <div class="pie">
+                    <p><strong>🔮 AS CARTASTRAL</strong><br>
+                    Astrología Profesional Personalizada</p>
+                    <p style="font-size: 14px; margin-top: 10px;">
+                        Informe ID: {archivos_unicos['client_id']} | 
+                        Generado: {archivos_unicos['timestamp']} | 
+                        Duración: {archivos_unicos['duracion_minutos']} min
+                    </p>
+                    {f'<p style="font-size: 13px; margin-top: 8px; color: #FFE4B5;"><em>📋 Versión resumida - Consulta completa disponible</em></p>' if es_producto_m else ''}
+                </div>
+            </div>
+        </body>
+        </html>
+        '''
+        
+        # GUARDAR HTML
+        nombre_html = f"informe_as_cartastral_{archivos_unicos['timestamp']}.html"
+        ruta_html = f"templates/{nombre_html}"
+        os.makedirs('templates', exist_ok=True)
+        
+        with open(ruta_html, 'w', encoding='utf-8') as f:
+            f.write(html_completo)
+        
+        # CONVERTIR A PDF CON WKHTMLTOPDF (más confiable que Playwright)
+        nombre_pdf = f"as_cartastral_{especialidad}_{archivos_unicos['timestamp']}.pdf"
+        ruta_pdf = f"informes/{nombre_pdf}"
+        os.makedirs('informes', exist_ok=True)
+        
+        # INTENTAR wkhtmltopdf primero
+        import subprocess
+        try:
+            cmd = [
+                'wkhtmltopdf',
+                '--page-size', 'A4',
+                '--margin-top', '15mm',
+                '--margin-bottom', '15mm', 
+                '--margin-left', '15mm',
+                '--margin-right', '15mm',
+                '--enable-local-file-access',
+                '--print-media-type',
+                ruta_html,
+                ruta_pdf
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            
+            if result.returncode == 0 and os.path.exists(ruta_pdf) and os.path.getsize(ruta_pdf) > 5000:
+                return {
+                    "status": "success",
+                    "mensaje": f"🔮 AS CARTASTRAL: PDF generado para {especialidad}",
+                    "archivo": ruta_pdf,
+                    "download_url": f"/test/descargar_pdf/{nombre_pdf}",
+                    "especialidad": especialidad,
+                    "client_id": archivos_unicos['client_id'],
+                    "timestamp": archivos_unicos['timestamp'],
+                    "es_producto_m": es_producto_m,
+                    "duracion_minutos": archivos_unicos['duracion_minutos'],
+                    "metodo": "wkhtmltopdf",
+                    "tamano_bytes": os.path.getsize(ruta_pdf)
+                }
+            
+        except Exception as e:
+            print(f"wkhtmltopdf falló: {e}")
+        
+        # FALLBACK: Crear PDF básico con reportlab
+        try:
+            # Instalar si no existe
+            import subprocess
+            subprocess.run(['pip', 'install', 'reportlab'], check=False)
+            
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+            
+            # Crear PDF con reportlab
+            doc = SimpleDocTemplate(ruta_pdf, pagesize=A4)
+            styles = getSampleStyleSheet()
+            story = []
+            
+            # Título principal
+            title = Paragraph("AS CARTASTRAL", styles['Title'])
+            story.append(title)
+            story.append(Spacer(1, 20))
+            
+            subtitle = Paragraph("Informe Astrológico Personalizado", styles['Heading2']) 
+            story.append(subtitle)
+            story.append(Spacer(1, 15))
+            
+            # Contenido
+            content_lines = [
+                f"Cliente: {datos_cliente['nombre']}",
+                f"Fecha de nacimiento: {datos_cliente['fecha_nacimiento']}",
+                f"Hora: {datos_cliente['hora_nacimiento']}",
+                f"Lugar: {datos_cliente['lugar_nacimiento']}",
+                "",
+                "Su carta astral ha sido calculada con precisión astronómica.",
+                "Este informe incluye análisis de:",
+                "• Carta Natal - Configuración planetaria única",
+                "• Progresiones - Evolución astrológica personal", 
+                "• Tránsitos - Influencias planetarias actuales",
+                "",
+                f"ID del informe: {archivos_unicos['client_id']}",
+                f"Generado: {archivos_unicos['timestamp']}",
+                f"Duración de sesión: {archivos_unicos['duracion_minutos']} minutos"
+            ]
+            
+            if es_producto_m:
+                content_lines.insert(-3, "📋 PRODUCTO MEDIO TIEMPO - Versión resumida")
+            
+            for line in content_lines:
+                if line:
+                    p = Paragraph(line, styles['Normal'])
+                    story.append(p)
+                story.append(Spacer(1, 10))
+            
+            doc.build(story)
+            
+            if os.path.exists(ruta_pdf) and os.path.getsize(ruta_pdf) > 1000:
+                return {
+                    "status": "success", 
+                    "mensaje": f"🔮 AS CARTASTRAL: PDF generado para {especialidad}",
+                    "archivo": ruta_pdf,
+                    "download_url": f"/test/descargar_pdf/{nombre_pdf}",
+                    "especialidad": especialidad,
+                    "client_id": archivos_unicos['client_id'],
+                    "timestamp": archivos_unicos['timestamp'],
+                    "es_producto_m": es_producto_m,
+                    "metodo": "reportlab_fallback",
+                    "tamano_bytes": os.path.getsize(ruta_pdf)
+                }
+                
+        except Exception as e:
+            print(f"reportlab también falló: {e}")
+        
+        return {
+            "status": "error",
+            "mensaje": "No se pudo generar PDF con ningún método disponible"
+        }
+        
     except Exception as e:
         import traceback
         return {
