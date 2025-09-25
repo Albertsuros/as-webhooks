@@ -12096,7 +12096,7 @@ def generar_pdf_as_cartastral(especialidad):
             doc.build(story)
             
             # Verificar resultado
-            if os.path.exists(ruta_pdf) and os.path.getsize(ruta_pdf) > 20000:
+            if os.path.exists(ruta_pdf) and os.path.getsize(ruta_pdf) > 3000:
                 tamano_bytes = os.path.getsize(ruta_pdf)
                 
                 return {
