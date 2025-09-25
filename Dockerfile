@@ -1,4 +1,3 @@
-# REEMPLAZAR EN Dockerfile
 FROM python:3.11-bookworm
 
 # Instalar dependencias del sistema
