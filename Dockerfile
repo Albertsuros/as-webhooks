@@ -1,35 +1,34 @@
-FROM python:3.9-bullseye
+# REEMPLAZAR EN Dockerfile
+FROM python:3.11-bookworm
 
-# Instalar dependencias manualmente para evitar conflictos
+# Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
-    libnss3 \
-    libatk-bridge2.0-0 \
-    libdrm2 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libgbm1 \
-    libxss1 \
-    libasound2 \
+    wkhtmltopdf \
+    xvfb \
     fonts-liberation \
-    libappindicator3-1 \
-    xdg-utils \
+    libfontconfig1 \
+    libfreetype6 \
+    libjpeg62-turbo \
+    libpng16-16 \
+    libx11-6 \
+    libxcb1 \
+    libxext6 \
+    libxrender1 \
+    xfonts-75dpi \
+    xfonts-base \
     && rm -rf /var/lib/apt/lists/*
+
+# Instalar Playwright y sus dependencias
+RUN pip install playwright
+RUN playwright install --with-deps chromium
 
 WORKDIR /app
 
-# Copiar requirements e instalar dependencias Python
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Instalar solo el navegador, sin dependencias automáticas
-RUN playwright install chromium
-
-# Copiar todo el código
 COPY . .
 
-# Puerto para Railway
 EXPOSE 5000
 
-# Comando de inicio
 CMD ["python", "main.py"]
