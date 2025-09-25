@@ -11703,6 +11703,193 @@ def convertir_html_a_pdf_playwright(contenido_html, ruta_pdf):
         
     except Exception as e:
         return {"success": False, "error": str(e)}
+        
+# ========================================
+# DIAGNÓSTICO ERROR 'timestamp' - AÑADIR A main.py
+# ========================================
+
+@app.route('/test/debug_crear_archivos_unicos/<especialidad>')
+def debug_crear_archivos_unicos(especialidad):
+    """Debug específico de la función crear_archivos_unicos_testing"""
+    try:
+        import traceback
+        
+        print(f"🔍 DEBUG: Llamando crear_archivos_unicos_testing('{especialidad}')")
+        
+        # Llamar la función y capturar el resultado
+        resultado = crear_archivos_unicos_testing(especialidad)
+        
+        print(f"🔍 DEBUG: Resultado = {resultado}")
+        
+        return {
+            "status": "success",
+            "especialidad": especialidad,
+            "resultado_funcion": resultado,
+            "tipo_resultado": type(resultado).__name__,
+            "claves_disponibles": list(resultado.keys()) if isinstance(resultado, dict) else "No es diccionario",
+            "tiene_timestamp": "timestamp" in resultado if isinstance(resultado, dict) else False,
+            "tiene_client_id": "client_id" in resultado if isinstance(resultado, dict) else False,
+            "esta_vacio": len(resultado) == 0 if resultado else True
+        }
+        
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error", 
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "especialidad": especialidad
+        }
+
+# ========================================
+# VERSIÓN SEGURA DEL ENDPOINT PRINCIPAL
+# ========================================
+
+@app.route('/test/generar_pdf_seguro/<especialidad>')
+def generar_pdf_seguro(especialidad):
+    """Versión segura que maneja el error de timestamp"""
+    try:
+        from datetime import datetime
+        
+        print(f"🔧 Iniciando generación PDF segura para {especialidad}")
+        
+        # PASO 1: Crear archivos únicos con validación
+        archivos_unicos = crear_archivos_unicos_testing(especialidad)
+        
+        print(f"🔍 Archivos únicos recibidos: {archivos_unicos}")
+        
+        if not archivos_unicos or not isinstance(archivos_unicos, dict):
+            return {
+                "status": "error", 
+                "mensaje": "crear_archivos_unicos_testing devolvió resultado inválido",
+                "resultado_recibido": str(archivos_unicos)
+            }
+        
+        # VALIDAR claves necesarias
+        claves_requeridas = ['timestamp', 'client_id']
+        claves_faltantes = [clave for clave in claves_requeridas if clave not in archivos_unicos]
+        
+        if claves_faltantes:
+            # FALLBACK: Generar timestamp propio
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            client_id = "fallback"
+            
+            print(f"⚠️ Claves faltantes: {claves_faltantes}, usando fallback")
+            
+            archivos_unicos.update({
+                'timestamp': timestamp,
+                'client_id': client_id
+            })
+        
+        # Datos de prueba
+        datos_cliente = {
+            'codigo_servicio': f'SEGURO_{especialidad.upper()}',
+            'nombre': f'Cliente Seguro {archivos_unicos["client_id"]}',
+            'email': f'seguro_{archivos_unicos["client_id"]}@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30', 
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # PASO 2: HTML simple y directo
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>AS Cartastral - {datos_cliente['nombre']}</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                .portada {{ background: #DAA520; color: white; padding: 30px; text-align: center; }}
+                .seccion {{ margin: 20px 0; padding: 15px; border-left: 4px solid #DAA520; }}
+                .imagen {{ text-align: center; margin: 20px 0; }}
+                .imagen img {{ max-width: 100%; height: auto; }}
+            </style>
+        </head>
+        <body>
+            <div class="portada">
+                <h1>AS CARTASTRAL</h1>
+                <h2>Informe Astrológico</h2>
+                <p><strong>{datos_cliente['nombre']}</strong></p>
+                <p>ID: {archivos_unicos['client_id']} | {archivos_unicos['timestamp']}</p>
+            </div>
+            
+            <div class="seccion">
+                <h2>Carta Natal</h2>
+                <div class="imagen">
+                    <img src="{archivos_unicos.get('carta_natal_img', 'static/carta_astral.png')}" alt="Carta Natal">
+                </div>
+                <p>Tu carta natal muestra la configuración planetaria en el momento de tu nacimiento.</p>
+            </div>
+            
+            <div class="seccion">
+                <h2>Progresiones</h2>
+                <div class="imagen">
+                    <img src="{archivos_unicos.get('progresiones_img', 'static/carta_astral_completa.png')}" alt="Progresiones">
+                </div>
+                <p>Las progresiones muestran tu evolución astrológica personal.</p>
+            </div>
+            
+            <div class="seccion">
+                <h2>Tránsitos</h2>
+                <div class="imagen">
+                    <img src="{archivos_unicos.get('transitos_img', 'static/carta_astral_corregida.png')}" alt="Tránsitos">
+                </div>
+                <p>Los tránsitos indican las influencias astrológicas actuales.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # PASO 3: Convertir a PDF con Playwright
+        nombre_archivo = f"{especialidad}_seguro_{archivos_unicos['timestamp']}.pdf"
+        ruta_pdf = f"informes/{nombre_archivo}"
+        
+        # Asegurar directorio
+        import os
+        os.makedirs('informes', exist_ok=True)
+        
+        from playwright.sync_api import sync_playwright
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+            page.set_content(html_content)
+            
+            page.pdf(
+                path=ruta_pdf,
+                format='A4',
+                print_background=True,
+                margin={'top': '20px', 'bottom': '20px', 'left': '20px', 'right': '20px'}
+            )
+            
+            browser.close()
+        
+        # Verificar PDF
+        if os.path.exists(ruta_pdf) and os.path.getsize(ruta_pdf) > 1000:
+            return {
+                "status": "success",
+                "mensaje": f"PDF seguro generado: {especialidad}",
+                "archivo": ruta_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "archivos_unicos_usados": archivos_unicos,
+                "claves_disponibles": list(archivos_unicos.keys()),
+                "especialidad": especialidad,
+                "metodo": "Versión segura con fallbacks"
+            }
+        else:
+            return {
+                "status": "error", 
+                "mensaje": "PDF no se generó correctamente"
+            }
+            
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "mensaje": f"Error en versión segura: {str(e)}",
+            "traceback": traceback.format_exc()
+        }
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
