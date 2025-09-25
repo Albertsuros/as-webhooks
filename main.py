@@ -11802,17 +11802,13 @@ def crear_archivos_unicos_AS_CARTASTRAL(tipo_servicio):
     return archivos
 
 # ========================================
-# ENDPOINT FINAL QUE FUNCIONA
-# ========================================
-
-# ========================================
-# 🎯 PDF COMPLETO CON IMÁGENES - AS CARTASTRAL
+# PDF CON PLAYWRIGHT (que ya está instalado) - AS CARTASTRAL
 # REEMPLAZAR el endpoint generar_pdf_as_cartastral
 # ========================================
 
 @app.route('/generar_pdf_as_cartastral/<especialidad>')
 def generar_pdf_as_cartastral(especialidad):
-    """PDF COMPLETO con imágenes y estilos - AS Cartastral"""
+    """PDF completo usando Playwright - AS Cartastral"""
     try:
         from datetime import datetime
         import os
@@ -11829,29 +11825,34 @@ def generar_pdf_as_cartastral(especialidad):
             'lugar_nacimiento': 'Madrid, España'
         }
         
-        # HTML CON RUTAS ABSOLUTAS (para que wkhtmltopdf las encuentre)
+        # HTML OPTIMIZADO PARA PLAYWRIGHT
         es_producto_m = archivos_unicos['es_producto_m']
         base_url = "https://as-webhooks-production.up.railway.app"
         
         # PORTADA SOLO PARA PRODUCTOS COMPLETOS
         portada_html = '' if es_producto_m else f'''
-        <div style="page-break-after: always; text-align: center; padding: 80px 20px; 
-                    background: linear-gradient(135deg, #DAA520, #FFD700); color: white; min-height: 500px;">
-            <h1 style="font-size: 48px; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); font-weight: bold;">
+        <div style="page-break-after: always; text-align: center; padding: 100px 30px; 
+                    background: linear-gradient(135deg, #DAA520, #FFD700, #DAA520); 
+                    color: white; min-height: 600px; display: flex; flex-direction: column; justify-content: center;">
+            <h1 style="font-size: 56px; margin-bottom: 30px; text-shadow: 3px 3px 6px rgba(0,0,0,0.7); 
+                       font-weight: bold; letter-spacing: 3px;">
                 AS CARTASTRAL
             </h1>
-            <h2 style="font-size: 28px; margin-bottom: 40px; font-weight: normal;">
+            <h2 style="font-size: 32px; margin-bottom: 50px; font-weight: 300; letter-spacing: 1px;">
                 Informe Astrológico Personalizado
             </h2>
-            <div style="font-size: 22px; margin-bottom: 20px;">
-                <strong>{datos_cliente['nombre']}</strong>
-            </div>
-            <div style="font-size: 16px; margin-bottom: 30px;">
-                {datos_cliente['fecha_nacimiento']} • {datos_cliente['hora_nacimiento']}<br>
-                {datos_cliente['lugar_nacimiento']}
-            </div>
-            <div style="font-size: 14px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; display: inline-block;">
-                ID: {archivos_unicos['client_id']} • Generado: {archivos_unicos['timestamp']}
+            <div style="background: rgba(255,255,255,0.15); padding: 30px; border-radius: 15px; 
+                        backdrop-filter: blur(10px); max-width: 500px; margin: 0 auto;">
+                <div style="font-size: 26px; margin-bottom: 20px; font-weight: bold;">
+                    {datos_cliente['nombre']}
+                </div>
+                <div style="font-size: 18px; margin-bottom: 25px; line-height: 1.5;">
+                    {datos_cliente['fecha_nacimiento']} • {datos_cliente['hora_nacimiento']}<br>
+                    {datos_cliente['lugar_nacimiento']}
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    ID: {archivos_unicos['client_id']} | Generado: {archivos_unicos['timestamp']}
+                </div>
             </div>
         </div>
         '''
@@ -11863,75 +11864,130 @@ def generar_pdf_as_cartastral(especialidad):
             <meta charset="UTF-8">
             <title>AS Cartastral - {datos_cliente['nombre']}</title>
             <style>
+                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600&display=swap');
+                
                 body {{ 
-                    font-family: 'Georgia', serif; 
+                    font-family: 'Source Sans Pro', Arial, sans-serif; 
                     margin: 0; 
                     padding: 0; 
-                    line-height: 1.6; 
-                    background: #FEFCF5;
+                    line-height: 1.7; 
+                    background: linear-gradient(135deg, #FEFCF5, #FFF8DC);
+                    color: #2C1810;
                 }}
                 .contenido {{ 
-                    max-width: 800px; 
+                    max-width: 900px; 
                     margin: 0 auto; 
                     background: white; 
-                    padding: 30px; 
+                    padding: 40px; 
+                    box-shadow: 0 0 30px rgba(0,0,0,0.1);
                 }}
                 .seccion {{ 
-                    margin-bottom: 40px; 
-                    border-bottom: 1px solid #E5E5E5; 
-                    padding-bottom: 30px;
+                    margin-bottom: 50px; 
+                    border-bottom: 2px solid #E8E0D0; 
+                    padding-bottom: 40px;
                 }}
                 .seccion:last-child {{ border-bottom: none; }}
-                .carta-imagen {{ 
-                    text-align: center; 
-                    margin: 25px 0; 
-                    padding: 20px;
-                    background: #F9F9F9;
-                    border: 2px solid #DAA520;
-                    border-radius: 8px;
+                
+                .carta-container {{
+                    background: linear-gradient(145deg, #FFF8DC, #FFFEF7);
+                    border: 3px solid #DAA520;
+                    border-radius: 15px;
+                    padding: 25px;
+                    margin: 30px 0;
+                    box-shadow: 0 8px 25px rgba(218, 165, 32, 0.2);
+                    text-align: center;
                 }}
-                .carta-imagen img {{ 
-                    max-width: 90%; 
+                
+                .carta-container img {{ 
+                    max-width: 100%; 
                     height: auto; 
-                    border: 3px solid #8B4513; 
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    border: 4px solid #8B4513; 
+                    border-radius: 12px;
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+                    margin: 15px 0;
                 }}
-                h2 {{ 
+                
+                .carta-caption {{
+                    font-style: italic; 
                     color: #8B4513; 
-                    border-bottom: 3px solid #DAA520; 
-                    padding-bottom: 12px; 
-                    font-size: 24px;
+                    font-size: 16px; 
+                    margin-top: 15px;
+                    font-weight: 500;
+                }}
+                
+                h2 {{ 
+                    font-family: 'Playfair Display', Georgia, serif;
+                    color: #8B4513; 
+                    border-bottom: 4px solid #DAA520; 
+                    padding-bottom: 15px; 
+                    font-size: 28px;
                     margin-top: 0;
+                    font-weight: 700;
+                    letter-spacing: 1px;
                 }}
+                
                 .interpretacion {{ 
-                    background: linear-gradient(to right, #FFF8DC, #FFFEF7); 
-                    padding: 25px; 
-                    border-left: 5px solid #DAA520; 
-                    margin: 25px 0; 
-                    border-radius: 0 8px 8px 0;
+                    background: linear-gradient(135deg, #FFF8DC, #FFFEF7, #FFF8DC); 
+                    padding: 30px; 
+                    border-left: 6px solid #DAA520; 
+                    margin: 30px 0; 
+                    border-radius: 0 12px 12px 0;
+                    box-shadow: 0 4px 15px rgba(218, 165, 32, 0.15);
+                    position: relative;
                 }}
+                
+                .interpretacion::before {{
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: linear-gradient(90deg, #DAA520, #FFD700, #DAA520);
+                    border-radius: 0 12px 0 0;
+                }}
+                
                 .interpretacion p {{ 
                     margin: 0; 
-                    font-size: 16px; 
+                    font-size: 17px; 
                     color: #333;
+                    text-align: justify;
+                    line-height: 1.6;
                 }}
+                
+                .interpretacion strong {{
+                    color: #8B4513;
+                    font-weight: 600;
+                }}
+                
                 .pie {{ 
                     text-align: center; 
-                    margin-top: 50px; 
-                    padding: 20px; 
-                    background: #8B4513; 
+                    margin-top: 60px; 
+                    padding: 30px; 
+                    background: linear-gradient(135deg, #8B4513, #A0522D);
                     color: white; 
-                    border-radius: 8px;
+                    border-radius: 15px;
+                    box-shadow: 0 8px 25px rgba(139, 69, 19, 0.3);
                 }}
+                
                 .anexo-header {{
-                    background: #FF9800; 
+                    background: linear-gradient(135deg, #FF9800, #FF8F00); 
                     color: white; 
-                    padding: 15px; 
-                    border-radius: 8px; 
-                    margin-bottom: 30px; 
+                    padding: 20px; 
+                    border-radius: 12px; 
+                    margin-bottom: 40px; 
                     text-align: center;
                     font-weight: bold;
+                    font-size: 18px;
+                    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+                }}
+                
+                .client-info {{
+                    background: rgba(218, 165, 32, 0.1);
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin: 20px 0;
+                    border-left: 4px solid #DAA520;
                 }}
             </style>
         </head>
@@ -11939,279 +11995,136 @@ def generar_pdf_as_cartastral(especialidad):
             {portada_html}
             
             <div class="contenido">
-                {f'<div class="anexo-header">🎯 ANEXO - PRODUCTO MEDIO TIEMPO<br>Versión resumida del informe completo</div>' if es_producto_m else ""}
+                {f'<div class="anexo-header">🎯 ANEXO - PRODUCTO MEDIO TIEMPO<br>Versión resumida del informe astrológico completo</div>' if es_producto_m else ""}
+                
+                <div class="client-info">
+                    <strong>Cliente:</strong> {datos_cliente['nombre']} | 
+                    <strong>Nacimiento:</strong> {datos_cliente['fecha_nacimiento']} a las {datos_cliente['hora_nacimiento']} | 
+                    <strong>Lugar:</strong> {datos_cliente['lugar_nacimiento']}
+                </div>
                 
                 <div class="seccion">
                     <h2>🌟 Carta Natal</h2>
-                    <div class="carta-imagen">
-                        <img src="{base_url}/{archivos_unicos['carta_natal_img']}" alt="Carta Natal Personalizada">
-                        <p style="margin-top: 15px; font-style: italic; color: #8B4513;">Tu configuración planetaria única</p>
+                    <div class="carta-container">
+                        <img src="{base_url}/{archivos_unicos['carta_natal_img']}" alt="Carta Natal Personalizada" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjVGNUY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNhcnRhIE5hdGFsPC90ZXh0Pjwvc3ZnPg=='">
+                        <div class="carta-caption">Tu configuración planetaria única del momento del nacimiento</div>
                     </div>
                     <div class="interpretacion">
-                        <p><strong>Tu Configuración Astral Única:</strong> Tu carta natal revela la configuración planetaria exacta en el momento de tu nacimiento en {datos_cliente['lugar_nacimiento']}. Cada planeta en su signo zodiacal y casa astrológica aporta información valiosa sobre tu personalidad, potenciales naturales y caminos de crecimiento personal. Esta es tu huella cósmica única.</p>
+                        <p><strong>Tu Huella Cósmica Única:</strong> Tu carta natal revela la configuración planetaria exacta en el momento de tu nacimiento en {datos_cliente['lugar_nacimiento']} el {datos_cliente['fecha_nacimiento']} a las {datos_cliente['hora_nacimiento']}. Cada planeta posicionado en su signo zodiacal específico y casa astrológica correspondiente aporta información valiosa sobre tu personalidad, potenciales naturales, talentos innatos y los caminos más propicios para tu crecimiento personal. Esta es tu huella cósmica única, tu ADN astrológico que revela quién eres en esencia.</p>
                     </div>
                 </div>
                 
                 <div class="seccion">
                     <h2>📈 Progresiones Secundarias</h2>
-                    <div class="carta-imagen">
-                        <img src="{base_url}/{archivos_unicos['progresiones_img']}" alt="Progresiones Astrológicas">
-                        <p style="margin-top: 15px; font-style: italic; color: #8B4513;">Tu evolución astrológica personal</p>
+                    <div class="carta-container">
+                        <img src="{base_url}/{archivos_unicos['progresiones_img']}" alt="Progresiones Astrológicas" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjVGNUY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlByb2dyZXNpb25lczwvdGV4dD48L3N2Zz4='">
+                        <div class="carta-caption">Tu evolución astrológica personal a través del tiempo</div>
                     </div>
                     <div class="interpretacion">
-                        <p><strong>Tu Evolución Astrológica:</strong> Las progresiones secundarias muestran cómo has evolucionado desde tu nacimiento el {datos_cliente['fecha_nacimiento']} y revelan las tendencias de desarrollo personal para los próximos años. Es tu crecimiento interior reflejado en el movimiento de los planetas progresados, mostrando los ciclos naturales de tu desarrollo personal.</p>
+                        <p><strong>Tu Evolución Cósmica Personal:</strong> Las progresiones secundarias representan tu crecimiento y evolución astrológica desde el momento de tu nacimiento hasta ahora. Utilizando la técnica milenaria "un día equivale a un año", muestran cómo has desarrollado tu potencial natal y revelan las tendencias naturales de desarrollo personal para los próximos años. Es tu crecimiento interior reflejado en el movimiento simbólico de los planetas progresados, mostrando los ciclos naturales de maduración de tu ser y los períodos más favorables para diferentes tipos de crecimiento personal.</p>
                     </div>
                 </div>
                 
                 <div class="seccion">
                     <h2>🔄 Tránsitos Planetarios</h2>
-                    <div class="carta-imagen">
-                        <img src="{base_url}/{archivos_unicos['transitos_img']}" alt="Tránsitos Actuales">
-                        <p style="margin-top: 15px; font-style: italic; color: #8B4513;">Influencias planetarias del momento actual</p>
+                    <div class="carta-container">
+                        <img src="{base_url}/{archivos_unicos['transitos_img']}" alt="Tránsitos Actuales" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjVGNUY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRyw6Fuc2l0b3M8L3RleHQ+PC9zdmc+'">
+                        <div class="carta-caption">Influencias planetarias del momento presente</div>
                     </div>
                     <div class="interpretacion">
-                        <p><strong>Energías del Momento Presente:</strong> Los tránsitos planetarios actuales indican las oportunidades, desafíos y ciclos que se presentan en tu vida en este momento específico. Te ayudan a navegar el presente con sabiduría astrológica, aprovechando las energías cósmicas favorables y preparándote para los períodos más desafiantes.</p>
+                        <p><strong>Las Energías del Ahora:</strong> Los tránsitos planetarios actuales representan las posiciones reales de los planetas en este momento específico y su relación con tu carta natal. Indican las oportunidades únicas, desafíos constructivos y ciclos naturales que se presentan en tu vida ahora mismo. Te ayudan a navegar el presente con sabiduría astrológica, aprovechando conscientemente las energías cósmicas más favorables y preparándote estratégicamente para los períodos que requieren mayor atención y cuidado personal.</p>
                     </div>
                 </div>
                 
                 <div class="pie">
-                    <p><strong>🔮 AS CARTASTRAL</strong><br>
-                    Astrología Profesional Personalizada</p>
-                    <p style="font-size: 14px; margin-top: 10px;">
-                        Cliente: {datos_cliente['nombre']} | 
-                        Informe ID: {archivos_unicos['client_id']} | 
-                        Generado: {archivos_unicos['timestamp']}<br>
-                        Duración de sesión: {archivos_unicos['duracion_minutos']} minutos | 
-                        {datos_cliente['fecha_nacimiento']} - {datos_cliente['hora_nacimiento']} - {datos_cliente['lugar_nacimiento']}
-                    </p>
-                    {f'<p style="font-size: 13px; margin-top: 8px; color: #FFE4B5;"><em>📋 Versión resumida - Consulta completa de {40} minutos disponible</em></p>' if es_producto_m else ''}
+                    <h3 style="margin-top: 0; font-family: 'Playfair Display', serif;">🔮 AS CARTASTRAL</h3>
+                    <p style="font-size: 16px; margin: 15px 0;">Astrología Profesional Personalizada</p>
+                    <div style="font-size: 14px; line-height: 1.6; margin-top: 20px; opacity: 0.9;">
+                        <strong>Cliente:</strong> {datos_cliente['nombre']}<br>
+                        <strong>Datos natales:</strong> {datos_cliente['fecha_nacimiento']} - {datos_cliente['hora_nacimiento']} - {datos_cliente['lugar_nacimiento']}<br>
+                        <strong>Informe ID:</strong> {archivos_unicos['client_id']} | <strong>Generado:</strong> {archivos_unicos['timestamp']}<br>
+                        <strong>Duración de sesión:</strong> {archivos_unicos['duracion_minutos']} minutos
+                    </div>
+                    {f'<p style="font-size: 13px; margin-top: 15px; color: #FFE4B5; font-style: italic;">📋 Versión resumida - Consulta astrológica completa de 40 minutos disponible</p>' if es_producto_m else ''}
                 </div>
             </div>
         </body>
         </html>
         '''
         
-        # GUARDAR HTML
-        nombre_html = f"informe_as_cartastral_{archivos_unicos['timestamp']}.html"
-        ruta_html = f"templates/{nombre_html}"
-        os.makedirs('templates', exist_ok=True)
-        
-        with open(ruta_html, 'w', encoding='utf-8') as f:
-            f.write(html_completo)
-        
-        # PDF CON MÚLTIPLES MÉTODOS
+        # GENERAR PDF CON PLAYWRIGHT
         nombre_pdf = f"as_cartastral_{especialidad}_{archivos_unicos['timestamp']}.pdf"
         ruta_pdf = f"informes/{nombre_pdf}"
         os.makedirs('informes', exist_ok=True)
         
-        metodo_usado = "ninguno"
-        pdf_exitoso = False
-        
-        # MÉTODO 1: wkhtmltopdf con configuración mejorada
-        import subprocess
         try:
-            # Usar ruta absoluta del HTML
-            ruta_html_absoluta = os.path.abspath(ruta_html)
+            from playwright.sync_api import sync_playwright
             
-            cmd = [
-                'wkhtmltopdf',
-                '--page-size', 'A4',
-                '--margin-top', '10mm',
-                '--margin-bottom', '10mm', 
-                '--margin-left', '10mm',
-                '--margin-right', '10mm',
-                '--enable-local-file-access',
-                '--load-error-handling', 'ignore',
-                '--load-media-error-handling', 'ignore',
-                '--print-media-type',
-                '--no-stop-slow-scripts',
-                '--javascript-delay', '1000',
-                ruta_html_absoluta,
-                ruta_pdf
-            ]
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    args=['--no-sandbox', '--disable-setuid-sandbox']
+                )
+                page = browser.new_page()
+                
+                # Configurar el contenido
+                page.set_content(html_completo, wait_until='load')
+                
+                # Esperar a que las imágenes se carguen (o fallen al placeholder)
+                page.wait_for_timeout(2000)
+                
+                # Generar PDF con configuración optimizada
+                page.pdf(
+                    path=ruta_pdf,
+                    format='A4',
+                    print_background=True,
+                    margin={
+                        'top': '15mm',
+                        'bottom': '15mm',
+                        'left': '10mm', 
+                        'right': '10mm'
+                    },
+                    prefer_css_page_size=True
+                )
+                
+                browser.close()
             
-            print(f"🔧 Intentando wkhtmltopdf: {' '.join(cmd)}")
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            
-            print(f"wkhtmltopdf return code: {result.returncode}")
-            print(f"wkhtmltopdf stdout: {result.stdout}")
-            print(f"wkhtmltopdf stderr: {result.stderr}")
-            
-            if result.returncode == 0 and os.path.exists(ruta_pdf) and os.path.getsize(ruta_pdf) > 10000:
-                metodo_usado = "wkhtmltopdf_mejorado"
-                pdf_exitoso = True
-                print("✅ wkhtmltopdf funcionó!")
-            
+            # Verificar que el PDF se generó correctamente
+            if os.path.exists(ruta_pdf) and os.path.getsize(ruta_pdf) > 10000:
+                tamano_bytes = os.path.getsize(ruta_pdf)
+                
+                return {
+                    "status": "success",
+                    "mensaje": f"AS CARTASTRAL: PDF completo generado para {especialidad}",
+                    "archivo": ruta_pdf,
+                    "download_url": f"/test/descargar_pdf/{nombre_pdf}",
+                    "especialidad": especialidad,
+                    "client_id": archivos_unicos['client_id'],
+                    "timestamp": archivos_unicos['timestamp'],
+                    "es_producto_m": es_producto_m,
+                    "duracion_minutos": archivos_unicos['duracion_minutos'],
+                    "metodo": "playwright_optimizado",
+                    "tamano_bytes": tamano_bytes,
+                    "mejoras": [
+                        "Portada con gradiente dorado profesional" if not es_producto_m else "Anexo claramente identificado",
+                        "Diseño astrológico completo con tipografías Google Fonts",
+                        "3 secciones astrológicas detalladas con interpretaciones",
+                        "Imágenes con fallback automático a placeholders SVG",
+                        "Información completa del cliente integrada",
+                        f"PDF optimizado de {tamano_bytes} bytes"
+                    ]
+                }
+            else:
+                return {
+                    "status": "error",
+                    "mensaje": "PDF generado pero con tamaño insuficiente",
+                    "tamano_generado": os.path.getsize(ruta_pdf) if os.path.exists(ruta_pdf) else 0
+                }
+                
         except Exception as e:
-            print(f"wkhtmltopdf falló: {e}")
-        
-        # MÉTODO 2: Crear PDF más rico con reportlab
-        if not pdf_exitoso:
-            try:
-                subprocess.run(['pip', 'install', 'reportlab'], check=False)
-                
-                from reportlab.pdfgen import canvas
-                from reportlab.lib.pagesizes import A4
-                from reportlab.lib.colors import HexColor, white, black
-                from reportlab.lib.utils import ImageReader
-                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
-                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-                from reportlab.lib.units import mm, inch
-                import urllib.request
-                
-                # Crear PDF más elaborado
-                doc = SimpleDocTemplate(ruta_pdf, pagesize=A4,
-                                       topMargin=20*mm, bottomMargin=20*mm,
-                                       leftMargin=15*mm, rightMargin=15*mm)
-                
-                styles = getSampleStyleSheet()
-                
-                # Estilos personalizados
-                title_style = ParagraphStyle(
-                    'CustomTitle',
-                    parent=styles['Title'],
-                    fontSize=28,
-                    textColor=HexColor('#DAA520'),
-                    spaceAfter=20,
-                    alignment=1  # Centrado
-                )
-                
-                header_style = ParagraphStyle(
-                    'CustomHeader',
-                    parent=styles['Heading2'],
-                    fontSize=18,
-                    textColor=HexColor('#8B4513'),
-                    spaceBefore=15,
-                    spaceAfter=10
-                )
-                
-                story = []
-                
-                # PORTADA (solo para productos completos)
-                if not es_producto_m:
-                    # Crear una "portada" con colores
-                    story.append(Spacer(1, 30))
-                    
-                    title = Paragraph("AS CARTASTRAL", title_style)
-                    story.append(title)
-                    
-                    subtitle = Paragraph("Informe Astrológico Personalizado", styles['Heading2'])
-                    story.append(subtitle)
-                    story.append(Spacer(1, 30))
-                    
-                    client_info = Paragraph(f"<b>{datos_cliente['nombre']}</b>", styles['Heading3'])
-                    story.append(client_info)
-                    
-                    birth_info = Paragraph(f"{datos_cliente['fecha_nacimiento']} • {datos_cliente['hora_nacimiento']}<br/>{datos_cliente['lugar_nacimiento']}", styles['Normal'])
-                    story.append(birth_info)
-                    story.append(Spacer(1, 20))
-                    
-                    id_info = Paragraph(f"ID: {archivos_unicos['client_id']} • {archivos_unicos['timestamp']}", styles['Normal'])
-                    story.append(id_info)
-                    
-                    # Salto de página
-                    from reportlab.platypus import PageBreak
-                    story.append(PageBreak())
-                
-                # ANEXO para productos M
-                if es_producto_m:
-                    anexo_style = ParagraphStyle(
-                        'Anexo',
-                        parent=styles['Normal'],
-                        fontSize=14,
-                        textColor=white,
-                        backColor=HexColor('#FF9800'),
-                        alignment=1,
-                        spaceAfter=20
-                    )
-                    anexo = Paragraph("🎯 ANEXO - PRODUCTO MEDIO TIEMPO<br/>Versión resumida del informe completo", anexo_style)
-                    story.append(anexo)
-                
-                # CONTENIDO PRINCIPAL
-                sections = [
-                    ("🌟 Carta Natal", "Tu configuración planetaria única del momento de tu nacimiento. Cada planeta en su signo y casa revela aspectos fundamentales de tu personalidad y potencial."),
-                    ("📈 Progresiones Secundarias", "Tu evolución astrológica personal. Muestra cómo has desarrollado tu potencial y las tendencias para los próximos años."),
-                    ("🔄 Tránsitos Planetarios", "Influencias actuales. Los tránsitos indican oportunidades y desafíos que se presentan en tu vida en este momento específico.")
-                ]
-                
-                for section_title, section_text in sections:
-                    # Título de sección
-                    section_header = Paragraph(section_title, header_style)
-                    story.append(section_header)
-                    story.append(Spacer(1, 10))
-                    
-                    # Placeholder para imagen (ya que las imágenes reales pueden no estar disponibles)
-                    img_placeholder = Paragraph("[Carta astrológica correspondiente]", styles['Normal'])
-                    story.append(img_placeholder)
-                    story.append(Spacer(1, 10))
-                    
-                    # Texto explicativo
-                    content = Paragraph(section_text, styles['Normal'])
-                    story.append(content)
-                    story.append(Spacer(1, 20))
-                
-                # PIE DE PÁGINA
-                story.append(Spacer(1, 30))
-                
-                footer_style = ParagraphStyle(
-                    'Footer',
-                    parent=styles['Normal'],
-                    fontSize=12,
-                    textColor=white,
-                    backColor=HexColor('#8B4513'),
-                    alignment=1,
-                    spaceAfter=10
-                )
-                
-                footer = Paragraph(f"""
-                <b>🔮 AS CARTASTRAL</b><br/>
-                Astrología Profesional Personalizada<br/>
-                Cliente: {datos_cliente['nombre']} | ID: {archivos_unicos['client_id']}<br/>
-                Generado: {archivos_unicos['timestamp']} | Duración: {archivos_unicos['duracion_minutos']} min
-                {f'<br/>📋 Versión resumida - Consulta completa disponible' if es_producto_m else ''}
-                """, footer_style)
-                
-                story.append(footer)
-                
-                # Construir PDF
-                doc.build(story)
-                
-                if os.path.exists(ruta_pdf) and os.path.getsize(ruta_pdf) > 5000:
-                    metodo_usado = "reportlab_mejorado"
-                    pdf_exitoso = True
-                    
-            except Exception as e:
-                print(f"reportlab mejorado falló: {e}")
-        
-        # Verificar resultado
-        if pdf_exitoso:
-            tamano_bytes = os.path.getsize(ruta_pdf)
             return {
-                "status": "success",
-                "mensaje": f"🔮 AS CARTASTRAL: PDF completo generado para {especialidad}",
-                "archivo": ruta_pdf,
-                "download_url": f"/test/descargar_pdf/{nombre_pdf}",
-                "especialidad": especialidad,
-                "client_id": archivos_unicos['client_id'],
-                "timestamp": archivos_unicos['timestamp'],
-                "es_producto_m": es_producto_m,
-                "duracion_minutos": archivos_unicos['duracion_minutos'],
-                "metodo": metodo_usado,
-                "tamano_bytes": tamano_bytes,
-                "mejoras": [
-                    "Portada con gradiente dorado" if not es_producto_m else "Anexo identificado",
-                    "3 secciones astrológicas completas",
-                    "Estilos profesionales",
-                    "Información cliente integrada",
-                    f"PDF de {tamano_bytes} bytes (vs {2187} anterior)"
-                ]
-            }
-        else:
-            return {
-                "status": "error",
-                "mensaje": "No se pudo generar PDF con ningún método",
-                "intentos": ["wkhtmltopdf_mejorado", "reportlab_mejorado"]
+                "status": "error", 
+                "mensaje": f"Error con Playwright: {str(e)}",
+                "detalle": "Verificar que Playwright esté correctamente instalado con: playwright install chromium"
             }
         
     except Exception as e:
