@@ -21,3 +21,4 @@ cffi==1.16.0
 pycparser==2.21
 Flask-CORS==4.0.0
 retell-sdk
+weasyprint
