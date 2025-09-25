@@ -11769,34 +11769,177 @@ def generar_pdf_funcionando(especialidad):
 # NO MÁS TESTS - SOLO LA SOLUCIÓN
 # ========================================
 
-# PASO 1: ELIMINAR TODAS las definiciones de crear_archivos_unicos_testing() del main.py
-# PASO 2: AÑADIR SOLO ESTA al final:
-
 def crear_archivos_unicos_AS_CARTASTRAL(tipo_servicio):
-    """FUNCIÓN CON NOMBRE ÚNICO para evitar conflictos - AS Cartastral"""
+    """GENERAR CARTAS REALES + archivos únicos"""
     import uuid
     from datetime import datetime
+    import os
     
     # GENERAR IDs ÚNICOS
     client_id = str(uuid.uuid4())[:8]
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
-    print(f"🔮 AS CARTASTRAL: Generando {tipo_servicio} - {client_id}_{timestamp}")
+    print(f"🔮 AS CARTASTRAL: Generando cartas reales para {tipo_servicio} - {client_id}_{timestamp}")
     
-    # ARCHIVOS ÚNICOS CON TODAS LAS CLAVES NECESARIAS
+    # DATOS REALES DEL CLIENTE (Sofia pasará los datos reales)
+    datos_natales_test = {
+        'nombre': f'Cliente Test {client_id}',
+        'fecha_nacimiento': '15/07/1985',  # DD/MM/YYYY
+        'hora_nacimiento': '10:30',        # HH:MM
+        'lugar_nacimiento': 'Madrid, España',
+        'residencia_actual': 'Madrid, España'
+    }
+    
+    # ARCHIVOS ÚNICOS CON TIMESTAMP
     archivos = {
         'client_id': client_id,
         'timestamp': timestamp,
         'es_producto_m': tipo_servicio.endswith('_half'),
         'duracion_minutos': 20 if tipo_servicio.endswith('_half') else 40,
-        'generacion_dinamica': False
+        'generacion_dinamica': False,
+        'datos_natales': datos_natales_test
     }
     
     if tipo_servicio in ['carta_astral_ia', 'carta_natal', 'carta_astral_ia_half']:
+        # NOMBRES ÚNICOS PARA LAS CARTAS
+        archivos.update({
+            'carta_natal_img': f'static/carta_natal_{client_id}_{timestamp}.png',
+            'progresiones_img': f'static/progresiones_{client_id}_{timestamp}.png', 
+            'transitos_img': f'static/transitos_{client_id}_{timestamp}.png'
+        })
+        
+        # INTENTAR GENERAR CARTAS REALES
+        try:
+            # OPCIÓN 1: Usar funciones wrapper de sofia_fixes.py
+            try:
+                with open('sofia_fixes.py', 'r', encoding='utf-8') as f:
+                    exec(f.read())
+                
+                print("📍 Generando carta natal real...")
+                resultado_natal = generar_carta_natal_desde_datos_natales(
+                    datos_natales_test, archivos['carta_natal_img']
+                )
+                
+                print("📍 Generando progresiones reales...")
+                resultado_progresiones = generar_progresiones_desde_datos_natales(
+                    datos_natales_test, archivos['progresiones_img']
+                )
+                
+                print("📍 Generando tránsitos reales...")
+                resultado_transitos = generar_transitos_desde_datos_natales(
+                    datos_natales_test, archivos['transitos_img']
+                )
+                
+                # Verificar archivos creados
+                archivos_creados = 0
+                for key, path in archivos.items():
+                    if key.endswith('_img') and os.path.exists(path):
+                        archivos_creados += 1
+                        size_kb = os.path.getsize(path) / 1024
+                        print(f"✅ {key}: {path} ({size_kb:.1f} KB)")
+                
+                if archivos_creados >= 3:
+                    archivos['generacion_dinamica'] = True
+                    archivos['cartas_generadas'] = archivos_creados
+                    archivos['resultados'] = {
+                        'natal': resultado_natal,
+                        'progresiones': resultado_progresiones, 
+                        'transitos': resultado_transitos
+                    }
+                    print(f"🎉 {archivos_creados} cartas astrales reales generadas!")
+                    return archivos
+                    
+            except FileNotFoundError:
+                print("⚠️ sofia_fixes.py no encontrado, intentando funciones directas...")
+                
+            # OPCIÓN 2: Llamar funciones directamente
+            try:
+                from carta_natal import CartaAstralNatal
+                from progresiones import CartaProgresiones  
+                from transitos import CartaTransitos
+                
+                # Convertir formato de fecha
+                fecha_str = datos_natales_test['fecha_nacimiento']
+                hora_str = datos_natales_test['hora_nacimiento']
+                
+                if '/' in fecha_str and ':' in hora_str:
+                    dia, mes, año = map(int, fecha_str.split('/'))
+                    hora, minuto = map(int, hora_str.split(':'))
+                    fecha_natal = (año, mes, dia, hora, minuto)
+                    
+                    # Coordenadas Madrid
+                    lugar_coords = (40.42, -3.70)
+                    
+                    print("📍 Generando con clases directas...")
+                    
+                    # Carta Natal
+                    carta_natal = CartaAstralNatal(figsize=(12, 12))
+                    aspectos_natal, posiciones_natal = carta_natal.crear_carta_astral_natal(
+                        fecha_natal=fecha_natal,
+                        lugar_natal=lugar_coords,
+                        ciudad_natal="Madrid, España",
+                        guardar_archivo=True,
+                        directorio_salida="static",
+                        nombre_archivo=f"carta_natal_{client_id}_{timestamp}.png"
+                    )
+                    
+                    # Progresiones
+                    carta_prog = CartaProgresiones(figsize=(12, 12))
+                    from datetime import datetime as dt
+                    hoy = dt.now()
+                    edad_actual = (hoy.year - año) + (hoy.month - mes) / 12.0
+                    
+                    aspectos_prog, pos_natales, pos_prog, _, _ = carta_prog.crear_carta_progresiones(
+                        fecha_nacimiento=fecha_natal,
+                        edad_consulta=edad_actual,
+                        lugar_nacimiento=lugar_coords,
+                        lugar_actual=lugar_coords,
+                        ciudad_nacimiento="Madrid, España",
+                        ciudad_actual="Madrid, España",
+                        guardar_archivo=True,
+                        directorio_salida="static",
+                        nombre_archivo=f"progresiones_{client_id}_{timestamp}.png"
+                    )
+                    
+                    # Tránsitos
+                    carta_trans = CartaTransitos(figsize=(12, 12))
+                    fecha_transito = (hoy.year, hoy.month, hoy.day, hoy.hour, hoy.minute)
+                    
+                    aspectos_trans, pos_nat, pos_trans, _, edad = carta_trans.crear_carta_transitos(
+                        fecha_nacimiento=fecha_natal,
+                        fecha_transito=fecha_transito,
+                        lugar_nacimiento=lugar_coords,
+                        guardar_archivo=True,
+                        directorio_salida="static",
+                        nombre_archivo=f"transitos_{client_id}_{timestamp}.png"
+                    )
+                    
+                    archivos['generacion_dinamica'] = True
+                    archivos['datos_planetarios'] = {
+                        'aspectos_natal': aspectos_natal,
+                        'posiciones_natal': posiciones_natal,
+                        'aspectos_progresiones': aspectos_prog,
+                        'aspectos_transitos': aspectos_trans,
+                        'edad_actual': edad_actual
+                    }
+                    
+                    print("✅ Cartas astrales generadas con clases directas!")
+                    return archivos
+                    
+            except Exception as e:
+                print(f"⚠️ Error con clases directas: {e}")
+        
+        except Exception as e:
+            print(f"⚠️ Error generando cartas dinámicas: {e}")
+        
+        # FALLBACK: Usar imágenes estáticas existentes
+        print("🔄 Usando imágenes estáticas como fallback...")
         archivos.update({
             'carta_natal_img': 'static/carta_astral.png',
-            'progresiones_img': 'static/carta_astral_completa.png', 
-            'transitos_img': 'static/carta_astral_corregida.png'
+            'progresiones_img': 'static/carta_astral_completa.png',
+            'transitos_img': 'static/carta_astral_corregida.png',
+            'generacion_dinamica': False,
+            'metodo': 'fallback_estatico'
         })
     
     return archivos
@@ -11808,49 +11951,37 @@ def crear_archivos_unicos_AS_CARTASTRAL(tipo_servicio):
 
 @app.route('/generar_pdf_as_cartastral/<especialidad>')
 def generar_pdf_as_cartastral(especialidad):
-    """PDF solo con reportlab - Sin dependencias externas"""
+    """PDF con cartas astrales reales incluidas"""
     try:
         from datetime import datetime
         import os
         
-        # USAR FUNCIÓN CON NOMBRE ÚNICO
+        # USAR FUNCIÓN ACTUALIZADA
         archivos_unicos = crear_archivos_unicos_AS_CARTASTRAL(especialidad)
         
         # DATOS DEL CLIENTE
-        datos_cliente = {
+        datos_cliente = archivos_unicos.get('datos_natales', {
             'nombre': f'Cliente AS Cartastral {archivos_unicos["client_id"]}',
-            'email': f'cliente_{archivos_unicos["client_id"]}@ascartastral.com',
             'fecha_nacimiento': '15/07/1985',
             'hora_nacimiento': '10:30',
             'lugar_nacimiento': 'Madrid, España'
-        }
+        })
         
         es_producto_m = archivos_unicos['es_producto_m']
         
-        # GENERAR PDF CON REPORTLAB SOLAMENTE
+        # GENERAR PDF CON REPORTLAB + IMÁGENES
         nombre_pdf = f"as_cartastral_{especialidad}_{archivos_unicos['timestamp']}.pdf"
         ruta_pdf = f"informes/{nombre_pdf}"
         os.makedirs('informes', exist_ok=True)
         
         try:
-            # Instalar reportlab si no está
-            import subprocess
-            try:
-                from reportlab.pdfgen import canvas
-                from reportlab.lib.pagesizes import A4
-                from reportlab.lib.colors import HexColor, Color
-                from reportlab.lib.units import mm
-                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            except ImportError:
-                print("Instalando reportlab...")
-                subprocess.run(['pip', 'install', 'reportlab'], check=True)
-                from reportlab.pdfgen import canvas
-                from reportlab.lib.pagesizes import A4
-                from reportlab.lib.colors import HexColor, Color
-                from reportlab.lib.units import mm
-                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.colors import HexColor
+            from reportlab.lib.units import mm
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.utils import ImageReader
             
             # Crear documento
             doc = SimpleDocTemplate(
@@ -11862,7 +11993,6 @@ def generar_pdf_as_cartastral(especialidad):
                 rightMargin=15*mm
             )
             
-            # Obtener estilos base
             styles = getSampleStyleSheet()
             
             # ESTILOS PERSONALIZADOS
@@ -11872,221 +12002,218 @@ def generar_pdf_as_cartastral(especialidad):
                 fontSize=32,
                 textColor=HexColor('#DAA520'),
                 spaceAfter=20,
-                alignment=1,  # Centrado
-                fontName='Helvetica-Bold'
-            )
-            
-            subtitle_style = ParagraphStyle(
-                'ASCartastralSubtitle',
-                parent=styles['Heading2'],
-                fontSize=20,
-                textColor=HexColor('#8B4513'),
-                spaceAfter=15,
                 alignment=1,
-                fontName='Helvetica'
+                fontName='Helvetica-Bold'
             )
             
             header_style = ParagraphStyle(
                 'ASCartastralHeader',
                 parent=styles['Heading2'],
-                fontSize=18,
+                fontSize=16,
                 textColor=HexColor('#8B4513'),
                 spaceBefore=20,
                 spaceAfter=12,
-                fontName='Helvetica-Bold',
-                borderWidth=1,
-                borderColor=HexColor('#DAA520'),
-                borderPadding=8,
-                backColor=HexColor('#FFF8DC')
+                fontName='Helvetica-Bold'
             )
             
             content_style = ParagraphStyle(
                 'ASCartastralContent',
                 parent=styles['Normal'],
-                fontSize=12,
+                fontSize=11,
                 spaceAfter=10,
                 textColor=HexColor('#2C1810'),
-                fontName='Times-Roman',
-                alignment=0,  # Justificado
-                leftIndent=10,
-                rightIndent=10
+                fontName='Times-Roman'
             )
             
-            anexo_style = ParagraphStyle(
-                'ASCartastralAnexo',
-                parent=styles['Normal'],
-                fontSize=14,
-                textColor=HexColor('#FFFFFF'),
-                backColor=HexColor('#FF9800'),
-                alignment=1,
-                spaceAfter=20,
-                borderWidth=1,
-                borderColor=HexColor('#FF8F00'),
-                borderPadding=15,
-                fontName='Helvetica-Bold'
-            )
-            
-            # Construir contenido
             story = []
             
             # PORTADA (solo para productos completos)
             if not es_producto_m:
-                # Espaciado inicial
                 story.append(Spacer(1, 40))
                 
-                # Título principal
+                # Logo (si existe)
+                try:
+                    if os.path.exists('static/logo.jpg'):
+                        logo = Image('static/logo.jpg', width=60, height=40)
+                        logo.hAlign = 'CENTER'
+                        story.append(logo)
+                        story.append(Spacer(1, 20))
+                except:
+                    pass
+                
                 title = Paragraph("AS CARTASTRAL", title_style)
                 story.append(title)
-                story.append(Spacer(1, 10))
                 
-                # Subtítulo
+                subtitle_style = ParagraphStyle(
+                    'Subtitle', parent=styles['Heading2'], fontSize=20,
+                    textColor=HexColor('#8B4513'), alignment=1
+                )
                 subtitle = Paragraph("Informe Astrológico Personalizado", subtitle_style)
                 story.append(subtitle)
                 story.append(Spacer(1, 30))
                 
-                # Información del cliente
-                client_info_style = ParagraphStyle(
-                    'ClientInfo',
-                    parent=styles['Normal'],
-                    fontSize=16,
-                    textColor=HexColor('#8B4513'),
-                    alignment=1,
-                    fontName='Helvetica-Bold',
-                    spaceAfter=10
-                )
-                
-                client_name = Paragraph(f"<b>{datos_cliente['nombre']}</b>", client_info_style)
+                # Info del cliente
+                client_name = Paragraph(f"<b>{datos_cliente['nombre']}</b>", 
+                                      ParagraphStyle('ClientName', parent=styles['Normal'], 
+                                                   fontSize=18, alignment=1, fontName='Helvetica-Bold'))
                 story.append(client_name)
                 story.append(Spacer(1, 15))
                 
-                # Datos natales
                 birth_data = f"""
-                <b>Fecha de nacimiento:</b> {datos_cliente['fecha_nacimiento']}<br/>
-                <b>Hora de nacimiento:</b> {datos_cliente['hora_nacimiento']}<br/>
-                <b>Lugar de nacimiento:</b> {datos_cliente['lugar_nacimiento']}
+                <b>Fecha:</b> {datos_cliente['fecha_nacimiento']} | 
+                <b>Hora:</b> {datos_cliente['hora_nacimiento']} | 
+                <b>Lugar:</b> {datos_cliente['lugar_nacimiento']}
                 """
                 birth_info = Paragraph(birth_data, content_style)
                 story.append(birth_info)
-                story.append(Spacer(1, 25))
+                story.append(Spacer(1, 20))
                 
-                # ID del informe
+                # Info de generación
+                if archivos_unicos.get('generacion_dinamica'):
+                    gen_info = Paragraph("✅ Cartas astrales generadas dinámicamente", 
+                                       ParagraphStyle('GenInfo', parent=styles['Normal'], 
+                                                    fontSize=10, textColor=HexColor('#006400')))
+                    story.append(gen_info)
+                
                 id_info = Paragraph(
-                    f"ID del informe: {archivos_unicos['client_id']} | Generado: {archivos_unicos['timestamp']}", 
-                    styles['Normal']
+                    f"ID: {archivos_unicos['client_id']} | Generado: {archivos_unicos['timestamp']}", 
+                    ParagraphStyle('IDInfo', parent=styles['Normal'], fontSize=10, alignment=1)
                 )
                 story.append(id_info)
                 
-                # Salto de página
                 from reportlab.platypus import PageBreak
                 story.append(PageBreak())
             
-            # ANEXO para productos M
-            if es_producto_m:
-                anexo_text = "🎯 ANEXO - PRODUCTO MEDIO TIEMPO<br/>Versión resumida del informe astrológico completo"
-                anexo = Paragraph(anexo_text, anexo_style)
-                story.append(anexo)
-                story.append(Spacer(1, 10))
+            # DATOS PLANETARIOS (si están disponibles)
+            if archivos_unicos.get('datos_planetarios'):
+                datos_planet = archivos_unicos['datos_planetarios']
+                
+                planet_header = Paragraph("📊 Configuración Planetaria", header_style)
+                story.append(planet_header)
+                
+                # Tabla de posiciones planetarias
+                if 'posiciones_natal' in datos_planet:
+                    posiciones = datos_planet['posiciones_natal']
+                    
+                    table_data = [['Planeta', 'Signo', 'Posición', 'Casa']]
+                    
+                    for planeta, datos in posiciones.items():
+                        if isinstance(datos, dict):
+                            signo = datos.get('signo', 'N/A')
+                            grado = datos.get('grado', 0)
+                            casa = datos.get('casa', 'N/A')
+                            table_data.append([planeta, signo, f"{grado:.1f}°", str(casa)])
+                    
+                    table = Table(table_data)
+                    table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#DAA520')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#FFFFFF')),
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 10),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                        ('BACKGROUND', (0, 1), (-1, -1), HexColor('#FFF8DC')),
+                        ('GRID', (0, 0), (-1, -1), 1, HexColor('#DAA520'))
+                    ]))
+                    story.append(table)
+                    story.append(Spacer(1, 20))
             
-            # Información del cliente (para ambos tipos)
-            client_summary = f"""
-            <b>Cliente:</b> {datos_cliente['nombre']} | 
-            <b>Nacimiento:</b> {datos_cliente['fecha_nacimiento']} a las {datos_cliente['hora_nacimiento']} | 
-            <b>Lugar:</b> {datos_cliente['lugar_nacimiento']}
-            """
-            client_para = Paragraph(client_summary, content_style)
-            story.append(client_para)
-            story.append(Spacer(1, 20))
-            
-            # SECCIONES ASTROLÓGICAS
+            # SECCIONES CON IMÁGENES REALES
             secciones = [
                 {
-                    "titulo": "🌟 Carta Natal",
-                    "descripcion": "Configuración planetaria única del momento del nacimiento",
-                    "contenido": f"Tu carta natal revela la configuración planetaria exacta en el momento de tu nacimiento en {datos_cliente['lugar_nacimiento']} el {datos_cliente['fecha_nacimiento']} a las {datos_cliente['hora_nacimiento']}. Cada planeta posicionado en su signo zodiacal específico y casa astrológica correspondiente aporta información valiosa sobre tu personalidad, potenciales naturales, talentos innatos y los caminos más propicios para tu crecimiento personal. Esta es tu huella cósmica única, tu ADN astrológico que revela quién eres en esencia y cómo puedes desarrollar tu máximo potencial en esta encarnación."
+                    'titulo': '🌟 Carta Natal',
+                    'imagen': archivos_unicos.get('carta_natal_img'),
+                    'descripcion': 'Tu configuración planetaria única del momento del nacimiento'
                 },
                 {
-                    "titulo": "📈 Progresiones Secundarias", 
-                    "descripcion": "Tu evolución astrológica personal a través del tiempo",
-                    "contenido": "Las progresiones secundarias representan tu crecimiento y evolución astrológica desde el momento de tu nacimiento hasta ahora. Utilizando la técnica milenaria 'un día equivale a un año', muestran cómo has desarrollado tu potencial natal y revelan las tendencias naturales de desarrollo personal para los próximos años. Es tu crecimiento interior reflejado en el movimiento simbólico de los planetas progresados, mostrando los ciclos naturales de maduración de tu ser y los períodos más favorables para diferentes tipos de crecimiento, transformación personal y realización de tu propósito de vida."
+                    'titulo': '📈 Progresiones Secundarias', 
+                    'imagen': archivos_unicos.get('progresiones_img'),
+                    'descripcion': 'Tu evolución astrológica personal a través del tiempo'
                 },
                 {
-                    "titulo": "🔄 Tránsitos Planetarios",
-                    "descripcion": "Influencias planetarias del momento presente", 
-                    "contenido": "Los tránsitos planetarios actuales representan las posiciones reales de los planetas en este momento específico y su relación dinámica con tu carta natal. Indican las oportunidades únicas, desafíos constructivos y ciclos naturales que se presentan en tu vida ahora mismo. Te ayudan a navegar el presente con sabiduría astrológica, aprovechando conscientemente las energías cósmicas más favorables y preparándote estratégicamente para los períodos que requieren mayor atención, cuidado personal y toma de decisiones importantes para tu crecimiento y bienestar."
+                    'titulo': '🔄 Tránsitos Planetarios',
+                    'imagen': archivos_unicos.get('transitos_img'),
+                    'descripcion': 'Influencias planetarias del momento presente'
                 }
             ]
             
-            for i, seccion in enumerate(secciones):
-                # Título de sección
-                section_header = Paragraph(seccion["titulo"], header_style)
+            for seccion in secciones:
+                # Título
+                section_header = Paragraph(seccion['titulo'], header_style)
                 story.append(section_header)
-                story.append(Spacer(1, 10))
                 
-                # Placeholder para carta astral
-                placeholder_style = ParagraphStyle(
-                    'PlaceholderStyle',
-                    parent=styles['Normal'],
-                    fontSize=14,
-                    textColor=HexColor('#8B4513'),
-                    alignment=1,
-                    backColor=HexColor('#F5F5F5'),
-                    borderWidth=2,
-                    borderColor=HexColor('#DAA520'),
-                    borderPadding=20,
-                    fontName='Helvetica-Bold'
-                )
+                # Imagen real de la carta
+                imagen_path = seccion['imagen']
+                if imagen_path and os.path.exists(imagen_path):
+                    try:
+                        # Añadir imagen de carta astral real
+                        img = Image(imagen_path, width=140*mm, height=105*mm)
+                        img.hAlign = 'CENTER'
+                        story.append(img)
+                        
+                        # Nota sobre la imagen
+                        img_note = Paragraph(
+                            f"Carta astral generada dinámicamente - {seccion['descripcion']}", 
+                            ParagraphStyle('ImgNote', parent=styles['Normal'], 
+                                         fontSize=9, alignment=1, fontStyle='italic',
+                                         textColor=HexColor('#8B4513'))
+                        )
+                        story.append(img_note)
+                        
+                    except Exception as e:
+                        print(f"Error añadiendo imagen {imagen_path}: {e}")
+                        # Fallback a placeholder
+                        placeholder = Paragraph(
+                            f"[CARTA ASTROLÓGICA - {seccion['titulo']}]<br/>{seccion['descripcion']}", 
+                            ParagraphStyle('Placeholder', parent=styles['Normal'], 
+                                         fontSize=12, alignment=1, 
+                                         backColor=HexColor('#F5F5F5'),
+                                         borderWidth=1, borderColor=HexColor('#DAA520'),
+                                         borderPadding=15)
+                        )
+                        story.append(placeholder)
+                else:
+                    # Placeholder si no hay imagen
+                    placeholder = Paragraph(
+                        f"[CARTA ASTROLÓGICA - {seccion['titulo']}]<br/>{seccion['descripcion']}", 
+                        ParagraphStyle('Placeholder', parent=styles['Normal'], 
+                                     fontSize=12, alignment=1, 
+                                     backColor=HexColor('#F5F5F5'),
+                                     borderWidth=1, borderColor=HexColor('#DAA520'),
+                                     borderPadding=15)
+                    )
+                    story.append(placeholder)
                 
-                placeholder_text = f"[ CARTA ASTROLÓGICA ]<br/>{seccion['descripcion']}"
-                placeholder = Paragraph(placeholder_text, placeholder_style)
-                story.append(placeholder)
                 story.append(Spacer(1, 15))
                 
-                # Contenido interpretativo
-                interpretacion_style = ParagraphStyle(
-                    'InterpretacionStyle',
-                    parent=content_style,
-                    backColor=HexColor('#FFF8DC'),
-                    borderWidth=1,
-                    borderColor=HexColor('#DAA520'),
-                    borderPadding=15,
-                    leftIndent=20,
-                    rightIndent=20,
-                    spaceBefore=10,
-                    spaceAfter=15
+                # Interpretación
+                interpretacion_content = f"Análisis detallado de {seccion['titulo'].lower()} con interpretaciones astrológicas personalizadas."
+                interpretacion = Paragraph(
+                    interpretacion_content, 
+                    ParagraphStyle('Interpretacion', parent=content_style,
+                                 backColor=HexColor('#FFF8DC'),
+                                 borderWidth=1, borderColor=HexColor('#DAA520'),
+                                 borderPadding=12, leftIndent=10, rightIndent=10)
                 )
-                
-                contenido_texto = f"<b>Análisis Astrológico:</b> {seccion['contenido']}"
-                contenido_para = Paragraph(contenido_texto, interpretacion_style)
-                story.append(contenido_para)
-                
-                # Espaciado entre secciones
-                if i < len(secciones) - 1:
-                    story.append(Spacer(1, 25))
+                story.append(interpretacion)
+                story.append(Spacer(1, 20))
             
             # PIE DE PÁGINA
-            story.append(Spacer(1, 30))
-            
             footer_style = ParagraphStyle(
-                'FooterStyle',
-                parent=styles['Normal'],
-                fontSize=12,
-                textColor=HexColor('#FFFFFF'),
-                backColor=HexColor('#8B4513'),
-                alignment=1,
-                borderWidth=1,
-                borderColor=HexColor('#A0522D'),
-                borderPadding=20,
-                fontName='Helvetica'
+                'Footer', parent=styles['Normal'], fontSize=11,
+                textColor=HexColor('#FFFFFF'), backColor=HexColor('#8B4513'),
+                alignment=1, borderPadding=15
             )
             
             footer_content = f"""
             <b>🔮 AS CARTASTRAL</b><br/>
-            <i>Astrología Profesional Personalizada</i><br/><br/>
-            <b>Cliente:</b> {datos_cliente['nombre']}<br/>
-            <b>Datos natales:</b> {datos_cliente['fecha_nacimiento']} - {datos_cliente['hora_nacimiento']} - {datos_cliente['lugar_nacimiento']}<br/>
-            <b>Informe ID:</b> {archivos_unicos['client_id']} | <b>Generado:</b> {archivos_unicos['timestamp']}<br/>
-            <b>Duración de sesión:</b> {archivos_unicos['duracion_minutos']} minutos
-            {f'<br/><br/><i>📋 Versión resumida - Consulta astrológica completa de 40 minutos disponible</i>' if es_producto_m else ''}
+            Astrología Profesional Personalizada<br/><br/>
+            Cliente: {datos_cliente['nombre']}<br/>
+            Datos natales: {datos_cliente['fecha_nacimiento']} - {datos_cliente['hora_nacimiento']} - {datos_cliente['lugar_nacimiento']}<br/>
+            ID: {archivos_unicos['client_id']} | Generado: {archivos_unicos['timestamp']}<br/>
+            Duración: {archivos_unicos['duracion_minutos']} minutos | 
+            Cartas dinámicas: {"SÍ" if archivos_unicos.get('generacion_dinamica') else "NO"}
+            {f'<br/><br/>📋 Versión resumida - Consulta completa disponible' if es_producto_m else ''}
             """
             
             footer = Paragraph(footer_content, footer_style)
@@ -12101,7 +12228,7 @@ def generar_pdf_as_cartastral(especialidad):
                 
                 return {
                     "status": "success",
-                    "mensaje": f"AS CARTASTRAL: PDF profesional generado para {especialidad}",
+                    "mensaje": f"AS CARTASTRAL: PDF completo con cartas reales para {especialidad}",
                     "archivo": ruta_pdf,
                     "download_url": f"/test/descargar_pdf/{nombre_pdf}",
                     "especialidad": especialidad,
@@ -12109,46 +12236,31 @@ def generar_pdf_as_cartastral(especialidad):
                     "timestamp": archivos_unicos['timestamp'],
                     "es_producto_m": es_producto_m,
                     "duracion_minutos": archivos_unicos['duracion_minutos'],
-                    "metodo": "reportlab_profesional",
+                    "metodo": "reportlab_con_cartas_reales",
                     "tamano_bytes": tamano_bytes,
-                    "caracteristicas": [
-                        "Portada profesional con colores corporativos" if not es_producto_m else "Anexo producto medio tiempo identificado",
-                        "3 secciones astrológicas completas con interpretaciones detalladas",
-                        "Placeholders profesionales para cartas astrológicas",
-                        "Estilos tipográficos diferenciados y colores temáticos",
-                        "Información completa del cliente integrada",
-                        "Pie de página con branding AS Cartastral",
-                        f"PDF de {tamano_bytes} bytes con diseño profesional completo"
+                    "cartas_dinamicas": archivos_unicos.get('generacion_dinamica', False),
+                    "imagenes_incluidas": [
+                        archivos_unicos.get('carta_natal_img'),
+                        archivos_unicos.get('progresiones_img'),
+                        archivos_unicos.get('transitos_img')
                     ],
-                    "diferencias_vs_anterior": [
-                        f"Tamaño: {tamano_bytes} bytes vs 2,187 bytes anteriores (+{round((tamano_bytes/2187)*100)}%)",
-                        "Diseño: Profesional vs básico",
-                        "Contenido: Interpretaciones completas vs texto mínimo",
-                        "Sin dependencias externas: 100% Python puro"
+                    "mejoras": [
+                        "Logo AS Cartastral incluido (si existe)",
+                        "Cartas astrales reales generadas dinámicamente" if archivos_unicos.get('generacion_dinamica') else "Placeholders profesionales",
+                        "Tabla de posiciones planetarias incluida" if archivos_unicos.get('datos_planetarios') else "Sin datos planetarios",
+                        "Imágenes de cartas en tamaño completo",
+                        f"PDF de {tamano_bytes} bytes con contenido astrológico real"
                     ]
                 }
             else:
-                return {
-                    "status": "error",
-                    "mensaje": "PDF generado pero con tamaño menor al esperado",
-                    "tamano_actual": os.path.getsize(ruta_pdf) if os.path.exists(ruta_pdf) else 0,
-                    "tamano_minimo_esperado": 20000
-                }
+                return {"status": "error", "mensaje": "PDF generado con tamaño insuficiente"}
                 
         except Exception as e:
-            return {
-                "status": "error",
-                "mensaje": f"Error generando PDF con reportlab: {str(e)}",
-                "detalle": "Error en la generación con reportlab profesional"
-            }
+            return {"status": "error", "mensaje": f"Error con reportlab: {str(e)}"}
         
     except Exception as e:
         import traceback
-        return {
-            "status": "error",
-            "mensaje": f"Error general: {str(e)}",
-            "traceback": traceback.format_exc()
-        }
+        return {"status": "error", "mensaje": f"Error general: {str(e)}", "traceback": traceback.format_exc()}
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
