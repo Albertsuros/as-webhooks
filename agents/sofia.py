@@ -752,159 +752,158 @@ def calcular_año_revolucion_solar(fecha_nacimiento_str, preferencia_año):
         return datetime.now().year
 
 def generar_cartas_astrales_completas(datos_natales, archivos_unicos):
-    """Generar cartas astrales usando SOLO matplotlib + swisseph - SIN FALLOS"""
+    """Generar cartas astrológicas REALES usando los archivos Python existentes"""
     try:
-        import matplotlib
-        matplotlib.use('Agg')  # Backend sin pantalla para Railway
-        import matplotlib.pyplot as plt
-        import swisseph as swe
-        import math
-        from datetime import datetime
         import os
+        from datetime import datetime
         
-        print(f"🎯 Iniciando generación de cartas con archivos: {archivos_unicos}")
+        print(f"🎯 Generando cartas REALES con: {archivos_unicos}")
         
-        # === CARTA NATAL ===
+        # === 1. CARTA NATAL REAL ===
         try:
-            fig, ax = plt.subplots(figsize=(12, 12))
+            from carta_natal import CartaAstralNatal
             
-            # Parsear fecha natal
+            # Parsear datos natales al formato correcto
             fecha_str = datos_natales['fecha_nacimiento']  # "15/07/1985"
+            hora_str = datos_natales['hora_nacimiento']    # "10:30"
+            
             dia, mes, año = map(int, fecha_str.split('/'))
+            hora, minuto = map(int, hora_str.split(':'))
             
-            # Calcular posiciones planetarias usando swisseph
-            julian_day = swe.julday(año, mes, dia, 12.0)  # 12:00 por defecto
+            # Formato que espera carta_natal.py: (año, mes, día, hora, minuto)
+            fecha_natal = (año, mes, dia, hora, minuto)
             
-            # Planetas básicos
-            planetas = [
-                (swe.SUN, "☉ Sol"),
-                (swe.MOON, "☽ Luna"), 
-                (swe.MERCURY, "☿ Mercurio"),
-                (swe.VENUS, "♀ Venus"),
-                (swe.MARS, "♂ Marte"),
-                (swe.JUPITER, "♃ Júpiter"),
-                (swe.SATURN, "♄ Saturno"),
-            ]
+            # Coordenadas básicas (Madrid por defecto)
+            lugar_natal = (40.42, -3.70)
+            ciudad_natal = datos_natales.get('lugar_nacimiento', 'Madrid, España')
             
-            posiciones = []
-            for planeta_id, nombre in planetas:
-                pos, _ = swe.calc_ut(julian_day, planeta_id)
-                posiciones.append((nombre, pos[0]))  # pos[0] es la longitud
+            # CREAR CARTA REAL
+            carta = CartaAstralNatal(figsize=(16, 14))
             
-            # Dibujar círculo zodiacal
-            circle = plt.Circle((0, 0), 1, fill=False, color='navy', linewidth=2)
-            ax.add_patch(circle)
+            # Configurar archivo de salida específico
+            carta.nombre_archivo_personalizado = archivos_unicos['carta_natal_img']
             
-            # Dibujar planetas
-            for nombre, grado in posiciones:
-                # Convertir grado zodiacal a radianes
-                rad = math.radians(grado - 90)  # -90 para que Aries esté arriba
-                x = 0.8 * math.cos(rad)
-                y = 0.8 * math.sin(rad)
-                
-                ax.scatter(x, y, s=100, color='red')
-                ax.text(x*1.15, y*1.15, nombre, ha='center', va='center', fontsize=8)
+            # GENERAR CARTA ASTRAL NATAL COMPLETA
+            aspectos, posiciones = carta.crear_carta_astral_natal(
+                fecha_natal=fecha_natal,
+                lugar_natal=lugar_natal,
+                ciudad_natal=ciudad_natal,
+                guardar_archivo=True,
+                directorio_salida="static"
+            )
             
-            # Signos zodiacales
-            signos = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"]
-            for i, signo in enumerate(signos):
-                rad = math.radians(i * 30 - 90)  # 30 grados por signo
-                x = 1.1 * math.cos(rad)
-                y = 1.1 * math.sin(rad)
-                ax.text(x, y, signo, ha='center', va='center', fontsize=12, weight='bold')
-            
-            ax.set_xlim(-1.3, 1.3)
-            ax.set_ylim(-1.3, 1.3)
-            ax.set_aspect('equal')
-            ax.axis('off')
-            ax.set_title(f"Carta Natal - {datos_natales['nombre']}", fontsize=16, weight='bold')
-            
-            # GUARDAR ARCHIVO
-            plt.savefig(archivos_unicos['carta_natal_img'], dpi=150, bbox_inches='tight')
-            plt.close()
-            print("✅ Carta natal creada")
+            print(f"✅ CARTA NATAL REAL creada: {len(aspectos)} aspectos, {len(posiciones)} planetas")
             
         except Exception as e:
             print(f"❌ Error carta natal: {e}")
+            import traceback
+            traceback.print_exc()
         
-        # === PROGRESIONES (círculo simple con texto) ===
+        # === 2. PROGRESIONES REALES ===
         try:
-            fig, ax = plt.subplots(figsize=(10, 8))
+            from progresiones import CartaProgresiones
             
-            # Calcular edad aproximada
+            # Crear carta de progresiones
+            prog = CartaProgresiones(figsize=(16, 14))
+            prog.nombre_archivo_personalizado = archivos_unicos['progresiones_img']
+            
+            # Generar progresiones para edad actual
             hoy = datetime.now()
             edad = hoy.year - año
+            fecha_progresada = (año + edad//365, mes, dia, hora, minuto)
             
-            ax.text(0.5, 0.7, "PROGRESIONES SECUNDARIAS", ha='center', va='center', 
-                   fontsize=18, weight='bold', transform=ax.transAxes)
-            ax.text(0.5, 0.5, f"Edad actual: {edad} años", ha='center', va='center',
-                   fontsize=14, transform=ax.transAxes)
-            ax.text(0.5, 0.3, f"Sol progresado: {posiciones[0][1]:.1f}°", ha='center', va='center',
-                   fontsize=12, transform=ax.transAxes)
+            aspectos_prog, pos_prog = prog.crear_carta_progresiones(
+                fecha_natal=fecha_natal,
+                fecha_progresada=fecha_progresada,
+                lugar_natal=lugar_natal,
+                ciudad_natal=ciudad_natal,
+                guardar_archivo=True,
+                directorio_salida="static"
+            )
             
-            ax.axis('off')
-            plt.savefig(archivos_unicos['progresiones_img'], dpi=150, bbox_inches='tight')
-            plt.close()
-            print("✅ Progresiones creadas")
+            print(f"✅ PROGRESIONES REALES creadas: {len(aspectos_prog)} aspectos")
             
         except Exception as e:
-            print(f"❌ Error progresiones: {e}")
+            print(f"❌ Error progresiones (usando método alternativo): {e}")
+            # Método alternativo si no existe la clase
+            try:
+                import progresiones
+                datos_prog = progresiones.generar_progresiones_personalizada(
+                    datos_natales, archivos_unicos['progresiones_img']
+                )
+                print("✅ Progresiones creadas con método alternativo")
+            except Exception as e2:
+                print(f"❌ Error método alternativo progresiones: {e2}")
         
-        # === TRÁNSITOS (posiciones actuales vs natales) ===
+        # === 3. TRÁNSITOS REALES ===
         try:
-            fig, ax = plt.subplots(figsize=(10, 8))
+            from transitos import CartaTransitos
             
-            # Calcular tránsitos de hoy
-            julian_hoy = swe.julday(hoy.year, hoy.month, hoy.day, hoy.hour + hoy.minute/60.0)
+            # Crear carta de tránsitos
+            trans = CartaTransitos(figsize=(16, 14))
+            trans.nombre_archivo_personalizado = archivos_unicos['transitos_img']
             
-            transitos_texto = ["TRÁNSITOS ACTUALES\n"]
+            # Tránsitos para HOY
+            hoy = datetime.now()
+            fecha_transito = (hoy.year, hoy.month, hoy.day, hoy.hour, hoy.minute)
             
-            for planeta_id, nombre in planetas:
-                pos_natal = None
-                pos_transito, _ = swe.calc_ut(julian_hoy, planeta_id)
-                
-                # Buscar posición natal
-                for n, p in posiciones:
-                    if n == nombre:
-                        pos_natal = p
-                        break
-                
-                if pos_natal:
-                    diferencia = pos_transito[0] - pos_natal
-                    if diferencia > 180:
-                        diferencia -= 360
-                    elif diferencia < -180:
-                        diferencia += 360
-                    
-                    transitos_texto.append(f"{nombre}: {pos_transito[0]:.1f}° ({diferencia:+.1f}°)")
+            aspectos_trans, pos_nat, pos_trans, fecha_dt, edad = trans.crear_carta_transitos(
+                fecha_nacimiento=fecha_natal,
+                fecha_transito=fecha_transito,
+                lugar_nacimiento=lugar_natal,
+                guardar_archivo=True,
+                directorio_salida="static"
+            )
             
-            ax.text(0.5, 0.5, "\n".join(transitos_texto), ha='center', va='center',
-                   fontsize=11, transform=ax.transAxes, family='monospace')
-            
-            ax.axis('off')
-            plt.savefig(archivos_unicos['transitos_img'], dpi=150, bbox_inches='tight')
-            plt.close()
-            print("✅ Tránsitos creados")
+            print(f"✅ TRÁNSITOS REALES creados: {len(aspectos_trans)} aspectos")
             
         except Exception as e:
-            print(f"❌ Error tránsitos: {e}")
+            print(f"❌ Error tránsitos (usando método alternativo): {e}")
+            # Método alternativo
+            try:
+                import transitos
+                datos_trans = transitos.generar_transitos_personalizada(
+                    datos_natales, archivos_unicos['transitos_img']
+                )
+                print("✅ Tránsitos creados con método alternativo")
+            except Exception as e2:
+                print(f"❌ Error método alternativo tránsitos: {e2}")
         
-        # Verificar archivos creados
+        # === VERIFICAR ARCHIVOS CREADOS ===
         archivos_ok = 0
-        for archivo in archivos_unicos.values():
-            if os.path.exists(archivo) and os.path.getsize(archivo) > 1000:  # >1KB
-                archivos_ok += 1
-                print(f"✅ Archivo OK: {archivo} ({os.path.getsize(archivo)} bytes)")
+        archivos_info = {}
+        
+        for nombre, ruta in archivos_unicos.items():
+            if os.path.exists(ruta):
+                tamaño = os.path.getsize(ruta)
+                if tamaño > 10000:  # >10KB para asegurar que es una carta real
+                    archivos_ok += 1
+                    archivos_info[nombre] = {'existe': True, 'tamaño': tamaño, 'tipo': 'CARTA_REAL'}
+                    print(f"✅ CARTA REAL creada: {nombre} - {tamaño} bytes")
+                else:
+                    archivos_info[nombre] = {'existe': True, 'tamaño': tamaño, 'tipo': 'ARCHIVO_PEQUEÑO'}
+                    print(f"⚠️ Archivo pequeño: {nombre} - {tamaño} bytes")
             else:
-                print(f"❌ Archivo fallido: {archivo}")
+                archivos_info[nombre] = {'existe': False, 'tamaño': 0}
+                print(f"❌ No creado: {nombre}")
         
-        if archivos_ok >= 2:  # Al menos 2 de 3 archivos
-            print("🎉 ÉXITO - Cartas generadas correctamente")
-            return True, {'exito': True, 'archivos_creados': archivos_ok}
+        # === RESULTADO ===
+        if archivos_ok >= 2:
+            print(f"🎉 ÉXITO - {archivos_ok}/3 CARTAS ASTROLÓGICAS REALES generadas")
+            
+            datos_completos = {
+                'carta_natal': posiciones if 'posiciones' in locals() else None,
+                'aspectos': aspectos if 'aspectos' in locals() else None,
+                'progresiones': datos_prog if 'datos_prog' in locals() else None,
+                'transitos': datos_trans if 'datos_trans' in locals() else None,
+                'archivos_info': archivos_info
+            }
+            
+            return True, datos_completos
         else:
-            print("💥 FALLO - No se crearon suficientes archivos")
+            print(f"💥 FALLO - Solo {archivos_ok}/3 cartas creadas correctamente")
             return False, None
-        
+            
     except Exception as e:
         print(f"💥 ERROR CRÍTICO: {e}")
         import traceback
