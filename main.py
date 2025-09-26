@@ -12902,6 +12902,25 @@ def html_con_cartas_existentes():
     </body>
     </html>
     """
+    
+@app.route('/test/html_con_urls_exactas')
+def html_con_urls_exactas():
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head><title>Test URLs Exactas</title></head>
+    <body>
+        <h1>Carta Natal</h1>
+        <img src="/static/carta_natal_test_20250926183454.png" style="max-width:100%;">
+        
+        <h1>Progresiones</h1>
+        <img src="/static/progresiones_test_20250926183454.png" style="max-width:100%;">
+        
+        <h1>Tránsitos</h1>
+        <img src="/static/transitos_test_20250926183454.png" style="max-width:100%;">
+    </body>
+    </html>
+    """
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
