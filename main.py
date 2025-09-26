@@ -12914,6 +12914,87 @@ def serve_static(filename):
             return f"Archivo no encontrado: {filename}", 404
     except Exception as e:
         return f"Error sirviendo archivo: {str(e)}", 500
+        
+@app.route('/test/listar_archivos_static')
+def listar_archivos_static():
+    """Ver qué archivos existen realmente en static/"""
+    import os
+    import glob
+    from datetime import datetime
+    
+    try:
+        resultado = {
+            'directorio_actual': os.getcwd(),
+            'existe_static': os.path.exists('static/'),
+            'archivos_static': [],
+            'archivos_templates': [],
+            'archivos_informes': []
+        }
+        
+        # Listar static/
+        if os.path.exists('static/'):
+            archivos = os.listdir('static/')
+            for archivo in archivos:
+                ruta = f'static/{archivo}'
+                if os.path.isfile(ruta):
+                    stats = os.stat(ruta)
+                    resultado['archivos_static'].append({
+                        'nombre': archivo,
+                        'tamaño': stats.st_size,
+                        'fecha': datetime.fromtimestamp(stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+                        'url': f'/static/{archivo}'
+                    })
+        
+        # Listar templates/
+        if os.path.exists('templates/'):
+            archivos = os.listdir('templates/')
+            for archivo in archivos:
+                if archivo.endswith('.html'):
+                    resultado['archivos_templates'].append(archivo)
+        
+        # Listar informes/
+        if os.path.exists('informes/'):
+            archivos = os.listdir('informes/')
+            for archivo in archivos:
+                if archivo.endswith('.pdf'):
+                    resultado['archivos_informes'].append(archivo)
+        
+        # Buscar cualquier archivo PNG
+        todos_png = glob.glob('**/*.png', recursive=True)
+        resultado['todos_los_png'] = todos_png
+        
+        return f"""
+        <html>
+        <body>
+            <h1>Archivos en el sistema</h1>
+            
+            <h2>Directorio static/ ({len(resultado['archivos_static'])} archivos)</h2>
+            <ul>
+            {''.join([f'<li><a href="{a["url"]}">{a["nombre"]}</a> - {a["tamaño"]} bytes - {a["fecha"]}</li>' for a in resultado['archivos_static']])}
+            </ul>
+            
+            <h2>Todos los PNG encontrados:</h2>
+            <ul>
+            {''.join([f'<li>{png}</li>' for png in resultado['todos_los_png']])}
+            </ul>
+            
+            <h2>Templates HTML:</h2>
+            <ul>
+            {''.join([f'<li>{t}</li>' for t in resultado['archivos_templates']])}
+            </ul>
+            
+            <h2>PDFs generados:</h2>
+            <ul>
+            {''.join([f'<li>{p}</li>' for p in resultado['archivos_informes']])}
+            </ul>
+            
+            <pre>{repr(resultado)}</pre>
+        </body>
+        </html>
+        """
+        
+    except Exception as e:
+        return f"<h1>Error: {str(e)}</h1>"
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
