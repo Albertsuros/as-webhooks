@@ -38,6 +38,7 @@ import glob
 import threading
 import time
 from informes import procesar_y_enviar_informe
+from flask import send_from_directory
 from pathlib import Path
 from app import app
 CORS(app, origins=["https://asasesores.com"])
@@ -12901,6 +12902,18 @@ def html_con_cartas_reales():
     </body>
     </html>
     """
+    
+@app.route('/static/<filename>')
+def serve_static(filename):
+    """Servir archivos estáticos manualmente porque Railway no los sirve"""
+    import os
+    try:
+        if os.path.exists(f'static/{filename}'):
+            return send_from_directory('static', filename)
+        else:
+            return f"Archivo no encontrado: {filename}", 404
+    except Exception as e:
+        return f"Error sirviendo archivo: {str(e)}", 500
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
