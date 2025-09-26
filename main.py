@@ -5,7 +5,6 @@ from flask import send_file
 from datetime import datetime, timedelta
 import datetime as dt
 import json
-import subprocess
 from flask import render_template, send_file
 from agents.sofia import handle_sofia_webhook, obtener_numero_telefono_desde_vapi
 from agents.grafologia import handle_grafologia_webhook
@@ -12297,31 +12296,6 @@ def generar_pdf_as_cartastral(especialidad):
 def crear_archivos_unicos_testing(tipo_servicio):
     """Función simple que llama a la principal"""
     return crear_archivos_unicos_AS_CARTASTRAL(tipo_servicio)
-    
-@app.route('/debug/env_full')
-def debug_env_full():
-    def run(cmd):
-        try:
-            out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=10)
-            return out.decode(errors='ignore').strip()
-        except Exception as e:
-            return f"ERROR: {e}"
-
-    checks = {
-        "cwd": os.getcwd(),
-        "python_version": run("python --version"),
-        "pip_freeze": run("pip freeze | sed -n '1,200p'"),
-        "which_astrolog": run("which astrolog || echo 'not found'"),
-        "astrolog_version": run("astrolog --version || echo 'no version'"),
-        "which_wkhtmltopdf": run("which wkhtmltopdf || echo 'not found'"),
-        "wkhtmltopdf_version": run("wkhtmltopdf --version || echo 'no version'"),
-        "which_playwright": run("which playwright || echo 'not found'"),
-        "playwright_cli": run("npx playwright --version || echo 'no npx/playwright'"),
-        "disk_usage": run("df -h ."),
-        "ls_static_img": run("ls -la static/img || echo 'no static/img'"),
-        "env_vars_sample": {k: os.environ.get(k) for k in ["PATH","HOME","RAILWAY_ENV","RAILWAY_STATIC_URL"]},
-    }
-    return jsonify(checks)
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
