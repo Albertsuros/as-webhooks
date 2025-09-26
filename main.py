@@ -12993,6 +12993,32 @@ def cartas_funcionando():
     </body>
     </html>
     """
+    
+@app.route('/test/debug_imagen_headers')
+def debug_imagen_headers():
+    """Verificar exactamente qué headers devuelve Railway"""
+    import requests
+    
+    url = "https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926191158.png"
+    
+    try:
+        # Request desde el servidor (simula lo que hace el HTML)
+        response = requests.get(url, timeout=10)
+        
+        return f"""
+        <h1>Debug Headers de Imagen</h1>
+        <p><strong>Status:</strong> {response.status_code}</p>
+        <p><strong>Content-Type:</strong> {response.headers.get('Content-Type', 'MISSING')}</p>
+        <p><strong>Content-Length:</strong> {response.headers.get('Content-Length', 'MISSING')}</p>
+        <p><strong>Headers completos:</strong></p>
+        <pre>{dict(response.headers)}</pre>
+        
+        <h2>Imagen Base64 (método alternativo):</h2>
+        <img src="data:image/png;base64,{__import__('base64').b64encode(response.content).decode()}" width="200">
+        """
+        
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
