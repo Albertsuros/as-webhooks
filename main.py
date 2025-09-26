@@ -12941,6 +12941,44 @@ def debug_headers_imagenes():
         })
     except Exception as e:
         return jsonify({'error': str(e)})
+        
+@app.route('/test/verificar_funcion_actual')
+def verificar_funcion_actual():
+    """Ver exactamente qué HTML se está generando"""
+    import inspect
+    
+    # Obtener el código fuente actual de la función
+    try:
+        from main import html_con_urls_exactas
+        codigo_actual = inspect.getsource(html_con_urls_exactas)
+    except:
+        codigo_actual = "No se pudo obtener"
+    
+    return f"""
+    <h1>Código actual de la función:</h1>
+    <pre>{codigo_actual}</pre>
+    
+    <h1>Test directo con URLs absolutas:</h1>
+    <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926191158.png" style="max-width:300px; border:2px solid red;">
+    <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926191158.png" style="max-width:300px; border:2px solid red;">
+    <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926191158.png" style="max-width:300px; border:2px solid red;">
+    """
+    
+@app.route('/test/cartas_funcionando')
+def cartas_funcionando():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <body>
+        <h1>Test Simple</h1>
+        <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926191158.png" width="400">
+        <br>
+        <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926191158.png" width="400">
+        <br>
+        <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926191158.png" width="400">
+    </body>
+    </html>
+    """
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
