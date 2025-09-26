@@ -12321,8 +12321,6 @@ def crear_archivos_unicos_testing(tipo_servicio):
         'transitos_img': 'carta.png'
     }
     
-Y AÑADIR rutas para servir estos archivos:
-    
 @app.route('/cartas_generadas/<filename>')
 def serve_cartas_generadas(filename):
     return send_from_directory('cartas_generadas', filename)
