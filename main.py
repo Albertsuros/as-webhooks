@@ -12969,13 +12969,18 @@ def cartas_funcionando():
     return """
     <!DOCTYPE html>
     <html>
+    <head>
+        <title>Test URLs Absolutas</title>
+    </head>
     <body>
-        <h1>Test Simple</h1>
-        <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926191158.png" width="400">
+        <h1>Test con URLs Absolutas</h1>
+        <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926191158.png" width="400" style="border: 1px solid red;">
         <br>
-        <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926191158.png" width="400">
+        <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926191158.png" width="400" style="border: 1px solid red;">
         <br>
-        <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926191158.png" width="400">
+        <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926191158.png" width="400" style="border: 1px solid red;">
+        
+        <p>Si aparecen las 3 cartas con bordes rojos, el problema estaba en las rutas relativas</p>
     </body>
     </html>
     """
@@ -12988,6 +12993,27 @@ def add_cors_headers(response):
         response.headers['Access-Control-Allow-Methods'] = 'GET'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     return response
+    
+@app.route('/test/cartas_funcionando')
+def cartas_funcionando():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Test URLs Absolutas</title>
+    </head>
+    <body>
+        <h1>Test con URLs Absolutas</h1>
+        <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926191158.png" width="400" style="border: 1px solid red;">
+        <br>
+        <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926191158.png" width="400" style="border: 1px solid red;">
+        <br>
+        <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926191158.png" width="400" style="border: 1px solid red;">
+        
+        <p>Si aparecen las 3 cartas con bordes rojos, el problema estaba en las rutas relativas</p>
+    </body>
+    </html>
+    """
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
