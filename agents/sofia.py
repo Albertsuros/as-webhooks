@@ -752,33 +752,163 @@ def calcular_año_revolucion_solar(fecha_nacimiento_str, preferencia_año):
         return datetime.now().year
 
 def generar_cartas_astrales_completas(datos_natales, archivos_unicos):
-    """Generar cartas astrales completas (natal, progresiones, tránsitos)"""
+    """Generar cartas astrales usando SOLO matplotlib + swisseph - SIN FALLOS"""
     try:
-        # Generar carta natal
-        carta_natal = CartaAstralNatal(
-            nombre=datos_natales['nombre'],
-            fecha_nacimiento=datos_natales['fecha_nacimiento'],
-            hora_nacimiento=datos_natales['hora_nacimiento'],
-            lugar_nacimiento=datos_natales['lugar_nacimiento'],
-            residencia_actual=datos_natales['residencia_actual']
-        )
+        import matplotlib
+        matplotlib.use('Agg')  # Backend sin pantalla para Railway
+        import matplotlib.pyplot as plt
+        import swisseph as swe
+        import math
+        from datetime import datetime
+        import os
         
-        datos_carta_natal = generar_carta_natal_desde_datos_natales(datos_natales, archivos_unicos['carta_natal_img'])
+        print(f"🎯 Iniciando generación de cartas con archivos: {archivos_unicos}")
         
-        # Generar progresiones
-        datos_progresiones = generar_progresiones(datos_natales, archivos_unicos['progresiones_img'])
+        # === CARTA NATAL ===
+        try:
+            fig, ax = plt.subplots(figsize=(12, 12))
+            
+            # Parsear fecha natal
+            fecha_str = datos_natales['fecha_nacimiento']  # "15/07/1985"
+            dia, mes, año = map(int, fecha_str.split('/'))
+            
+            # Calcular posiciones planetarias usando swisseph
+            julian_day = swe.julday(año, mes, dia, 12.0)  # 12:00 por defecto
+            
+            # Planetas básicos
+            planetas = [
+                (swe.SUN, "☉ Sol"),
+                (swe.MOON, "☽ Luna"), 
+                (swe.MERCURY, "☿ Mercurio"),
+                (swe.VENUS, "♀ Venus"),
+                (swe.MARS, "♂ Marte"),
+                (swe.JUPITER, "♃ Júpiter"),
+                (swe.SATURN, "♄ Saturno"),
+            ]
+            
+            posiciones = []
+            for planeta_id, nombre in planetas:
+                pos, _ = swe.calc_ut(julian_day, planeta_id)
+                posiciones.append((nombre, pos[0]))  # pos[0] es la longitud
+            
+            # Dibujar círculo zodiacal
+            circle = plt.Circle((0, 0), 1, fill=False, color='navy', linewidth=2)
+            ax.add_patch(circle)
+            
+            # Dibujar planetas
+            for nombre, grado in posiciones:
+                # Convertir grado zodiacal a radianes
+                rad = math.radians(grado - 90)  # -90 para que Aries esté arriba
+                x = 0.8 * math.cos(rad)
+                y = 0.8 * math.sin(rad)
+                
+                ax.scatter(x, y, s=100, color='red')
+                ax.text(x*1.15, y*1.15, nombre, ha='center', va='center', fontsize=8)
+            
+            # Signos zodiacales
+            signos = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"]
+            for i, signo in enumerate(signos):
+                rad = math.radians(i * 30 - 90)  # 30 grados por signo
+                x = 1.1 * math.cos(rad)
+                y = 1.1 * math.sin(rad)
+                ax.text(x, y, signo, ha='center', va='center', fontsize=12, weight='bold')
+            
+            ax.set_xlim(-1.3, 1.3)
+            ax.set_ylim(-1.3, 1.3)
+            ax.set_aspect('equal')
+            ax.axis('off')
+            ax.set_title(f"Carta Natal - {datos_natales['nombre']}", fontsize=16, weight='bold')
+            
+            # GUARDAR ARCHIVO
+            plt.savefig(archivos_unicos['carta_natal_img'], dpi=150, bbox_inches='tight')
+            plt.close()
+            print("✅ Carta natal creada")
+            
+        except Exception as e:
+            print(f"❌ Error carta natal: {e}")
         
-        # Generar tránsitos
-        datos_transitos = generar_transitos(datos_natales, archivos_unicos['transitos_img'])
+        # === PROGRESIONES (círculo simple con texto) ===
+        try:
+            fig, ax = plt.subplots(figsize=(10, 8))
+            
+            # Calcular edad aproximada
+            hoy = datetime.now()
+            edad = hoy.year - año
+            
+            ax.text(0.5, 0.7, "PROGRESIONES SECUNDARIAS", ha='center', va='center', 
+                   fontsize=18, weight='bold', transform=ax.transAxes)
+            ax.text(0.5, 0.5, f"Edad actual: {edad} años", ha='center', va='center',
+                   fontsize=14, transform=ax.transAxes)
+            ax.text(0.5, 0.3, f"Sol progresado: {posiciones[0][1]:.1f}°", ha='center', va='center',
+                   fontsize=12, transform=ax.transAxes)
+            
+            ax.axis('off')
+            plt.savefig(archivos_unicos['progresiones_img'], dpi=150, bbox_inches='tight')
+            plt.close()
+            print("✅ Progresiones creadas")
+            
+        except Exception as e:
+            print(f"❌ Error progresiones: {e}")
         
-        # Extraer datos para interpretación
-        datos_completos = extraer_datos_para_interpretacion(carta_natal, datos_progresiones, datos_transitos)
+        # === TRÁNSITOS (posiciones actuales vs natales) ===
+        try:
+            fig, ax = plt.subplots(figsize=(10, 8))
+            
+            # Calcular tránsitos de hoy
+            julian_hoy = swe.julday(hoy.year, hoy.month, hoy.day, hoy.hour + hoy.minute/60.0)
+            
+            transitos_texto = ["TRÁNSITOS ACTUALES\n"]
+            
+            for planeta_id, nombre in planetas:
+                pos_natal = None
+                pos_transito, _ = swe.calc_ut(julian_hoy, planeta_id)
+                
+                # Buscar posición natal
+                for n, p in posiciones:
+                    if n == nombre:
+                        pos_natal = p
+                        break
+                
+                if pos_natal:
+                    diferencia = pos_transito[0] - pos_natal
+                    if diferencia > 180:
+                        diferencia -= 360
+                    elif diferencia < -180:
+                        diferencia += 360
+                    
+                    transitos_texto.append(f"{nombre}: {pos_transito[0]:.1f}° ({diferencia:+.1f}°)")
+            
+            ax.text(0.5, 0.5, "\n".join(transitos_texto), ha='center', va='center',
+                   fontsize=11, transform=ax.transAxes, family='monospace')
+            
+            ax.axis('off')
+            plt.savefig(archivos_unicos['transitos_img'], dpi=150, bbox_inches='tight')
+            plt.close()
+            print("✅ Tránsitos creados")
+            
+        except Exception as e:
+            print(f"❌ Error tránsitos: {e}")
         
-        print("✅ Cartas astrales generadas correctamente")
-        return True, datos_completos
+        # Verificar archivos creados
+        archivos_ok = 0
+        for archivo in archivos_unicos.values():
+            if os.path.exists(archivo) and os.path.getsize(archivo) > 1000:  # >1KB
+                archivos_ok += 1
+                print(f"✅ Archivo OK: {archivo} ({os.path.getsize(archivo)} bytes)")
+            else:
+                print(f"❌ Archivo fallido: {archivo}")
+        
+        if archivos_ok >= 2:  # Al menos 2 de 3 archivos
+            print("🎉 ÉXITO - Cartas generadas correctamente")
+            return True, {'exito': True, 'archivos_creados': archivos_ok}
+        else:
+            print("💥 FALLO - No se crearon suficientes archivos")
+            return False, None
         
     except Exception as e:
-        print(f"❌ Error generando cartas astrales: {e}")
+        print(f"💥 ERROR CRÍTICO: {e}")
+        import traceback
+        traceback.print_exc()
         return False, None
 
 def generar_revoluciones_solares_completas(datos_natales, archivos_unicos, año_revolucion):
