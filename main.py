@@ -12911,16 +12911,36 @@ def html_con_urls_exactas():
     <head><title>Test URLs Exactas</title></head>
     <body>
         <h1>Carta Natal</h1>
-        <img src="/static/carta_natal_test_20250926183454.png" style="max-width:100%;">
+        <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926183454.png" style="max-width:100%; border: 1px solid red;">
         
         <h1>Progresiones</h1>
-        <img src="/static/progresiones_test_20250926183454.png" style="max-width:100%;">
+        <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926183454.png" style="max-width:100%; border: 1px solid red;">
         
         <h1>Tránsitos</h1>
-        <img src="/static/transitos_test_20250926183454.png" style="max-width:100%;">
+        <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926183454.png" style="max-width:100%; border: 1px solid red;">
+        
+        <p>Si no ves las imágenes, check F12 Console para errores</p>
     </body>
     </html>
     """
+    
+@app.route('/test/debug_headers_imagenes')
+def debug_headers_imagenes():
+    """Ver qué headers devuelve Railway para las imágenes"""
+    import requests
+    
+    url_test = "https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926183454.png"
+    
+    try:
+        response = requests.head(url_test)
+        return jsonify({
+            'url': url_test,
+            'status_code': response.status_code,
+            'headers': dict(response.headers),
+            'problema_posible': 'CORS o Content-Type' if response.status_code == 200 else 'URL no existe'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
