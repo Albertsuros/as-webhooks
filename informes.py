@@ -1047,62 +1047,99 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         traceback.print_exc()
         return None
 
-def convertir_html_a_pdf_con_logs_completos(archivo_html, archivo_pdf):
-    """Versión con logs completos para debug"""
+def convertir_html_a_pdf(archivo_html, archivo_pdf):
+    """Convertir HTML a PDF usando Playwright con configuración Railway"""
     try:
-        import subprocess
+        from playwright.sync_api import sync_playwright
         import os
         
-        print(f"🎯 DEBUG: Convirtiendo {archivo_html} → {archivo_pdf}")
+        print(f"🎯 Convirtiendo con Playwright: {archivo_html} → {archivo_pdf}")
         
-        # Verificar archivo HTML
+        # Verificar HTML
         if not os.path.exists(archivo_html):
-            print(f"❌ DEBUG: HTML no existe: {archivo_html}")
+            print(f"❌ HTML no existe: {archivo_html}")
             return False
         
-        print(f"✅ DEBUG: HTML existe ({os.path.getsize(archivo_html)} bytes)")
-        
-        # Comando básico primero
-        cmd = [
-            'wkhtmltopdf',
-            '--page-size', 'A4',
-            '--encoding', 'UTF-8',
-            '--enable-local-file-access',
-            archivo_html,
-            archivo_pdf
-        ]
-        
-        print(f"🔧 DEBUG: Ejecutando: {' '.join(cmd)}")
-        
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=45
-        )
-        
-        print(f"📊 DEBUG: Return code: {result.returncode}")
-        print(f"📊 DEBUG: STDOUT: '{result.stdout}'")
-        print(f"📊 DEBUG: STDERR: '{result.stderr}'")
-        
-        if result.returncode == 0:
+        with sync_playwright() as p:
+            # Configuración optimizada para Railway
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-web-security',
+                    '--allow-file-access-from-files',
+                    '--disable-features=VizDisplayCompositor',
+                    '--disable-gpu',
+                    '--no-first-run',
+                    '--disable-default-apps',
+                    '--disable-extensions',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding'
+                ]
+            )
+            
+            page = browser.new_page()
+            
+            # Configurar viewport
+            page.set_viewport_size({"width": 1200, "height": 800})
+            
+            # Cargar HTML directamente como string (más confiable)
+            with open(archivo_html, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # Convertir rutas relativas a absolutas para imágenes
+            import re
+            def fix_image_paths(match):
+                src = match.group(1)
+                if src.startswith('static/'):
+                    abs_path = os.path.abspath(src)
+                    return f'src="file://{abs_path}"'
+                elif src.startswith('/app/static/'):
+                    return f'src="file://{src}"'
+                return match.group(0)
+            
+            html_content = re.sub(r'src="([^"]+)"', fix_image_paths, html_content)
+            
+            # Cargar contenido
+            page.set_content(html_content)
+            
+            # Esperar a que carguen las imágenes
+            try:
+                page.wait_for_load_state('networkidle', timeout=10000)
+            except:
+                print("⚠️ Timeout esperando imágenes, continuando...")
+                page.wait_for_timeout(2000)  # Esperar 2 segundos mínimo
+            
+            # Generar PDF
+            page.pdf(
+                path=archivo_pdf,
+                format='A4',
+                margin={
+                    'top': '20mm',
+                    'bottom': '20mm', 
+                    'left': '20mm',
+                    'right': '20mm'
+                },
+                print_background=True,
+                display_header_footer=False
+            )
+            
+            browser.close()
+            
+            # Verificar PDF creado
             if os.path.exists(archivo_pdf):
                 tamaño = os.path.getsize(archivo_pdf)
-                print(f"✅ DEBUG: PDF creado exitosamente ({tamaño} bytes)")
-                return tamaño > 1000  # Al menos 1KB
+                print(f"✅ PDF generado con Playwright: {archivo_pdf} ({tamaño} bytes)")
+                return tamaño > 1000
             else:
-                print(f"⚠️ DEBUG: Comando exitoso pero PDF no existe")
+                print(f"❌ PDF no se creó")
                 return False
-        else:
-            print(f"❌ DEBUG: Comando falló con código {result.returncode}")
-            print(f"❌ DEBUG: Error: {result.stderr}")
-            return False
-            
-    except subprocess.TimeoutExpired:
-        print("❌ DEBUG: Timeout ejecutando wkhtmltopdf")
-        return False
+                
     except Exception as e:
-        print(f"❌ DEBUG: Excepción: {e}")
+        print(f"❌ Error Playwright: {e}")
         import traceback
         traceback.print_exc()
         return False
