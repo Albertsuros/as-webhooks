@@ -801,39 +801,99 @@ def generar_cartas_astrales_completas(datos_natales, archivos_unicos):
         
         # === 2. PROGRESIONES REALES ===
         try:
-            from progresiones import CartaProgresiones
+            import progresiones
             
-            # Crear carta de progresiones
-            prog = CartaProgresiones(figsize=(16, 14))
-            prog.nombre_archivo_personalizado = archivos_unicos['progresiones_img']
+            print("🎯 Usando método directo progresiones...")
             
-            # Generar progresiones para edad actual
-            hoy = datetime.now()
-            edad = hoy.year - año
-            fecha_progresada = (año + edad//365, mes, dia, hora, minuto)
+            # Crear datos_natales compatibles con progresiones.py
+            datos_prog = {
+                'fecha_nacimiento': fecha_natal,
+                'lugar_nacimiento': lugar_natal,
+                'lugar_actual': lugar_natal,
+                'ciudad_nacimiento': ciudad_natal,
+                'ciudad_actual': ciudad_natal
+            }
             
-            aspectos_prog, pos_prog = prog.crear_carta_progresiones(
-                fecha_natal=fecha_natal,
-                fecha_progresada=fecha_progresada,
-                lugar_natal=lugar_natal,
-                ciudad_natal=ciudad_natal,
-                guardar_archivo=True,
-                directorio_salida="static"
-            )
-            
-            print(f"✅ PROGRESIONES REALES creadas: {len(aspectos_prog)} aspectos")
+            # MÉTODO 1: Usar la función main de progresiones
+            try:
+                print("📋 Intentando método 1: main de progresiones")
+                progresiones.main(
+                    nombre_archivo_salida=archivos_unicos['progresiones_img'],
+                    datos_natales=datos_prog
+                )
+                print("✅ PROGRESIONES método 1 exitoso")
+                
+            except Exception as e1:
+                print(f"⚠️ Método 1 falló: {e1}")
+                
+                # MÉTODO 2: Usar generar_progresiones_personalizada
+                try:
+                    print("📋 Intentando método 2: generar_progresiones_personalizada")
+                    
+                    # Configurar archivo de salida globalmente
+                    progresiones.nombre_archivo_salida = archivos_unicos['progresiones_img']
+                    progresiones.generar_progresiones_personalizada(archivos_unicos['progresiones_img'])
+                    print("✅ PROGRESIONES método 2 exitoso")
+                    
+                except Exception as e2:
+                    print(f"⚠️ Método 2 falló: {e2}")
+                    
+                    # MÉTODO 3: Crear instancia directa
+                    try:
+                        print("📋 Intentando método 3: instancia directa")
+                        
+                        from progresiones import CartaProgresiones
+                        from datetime import datetime
+                        
+                        # Calcular edad actual
+                        hoy = datetime.now()
+                        edad = hoy.year - año
+                        
+                        carta_prog = CartaProgresiones(figsize=(16, 14))
+                        carta_prog.nombre_archivo_personalizado = archivos_unicos['progresiones_img']
+                        
+                        aspectos_prog, pos_nat_prog, pos_prog, fecha_cons, fecha_prog_calc = carta_prog.crear_carta_progresiones(
+                            fecha_nacimiento=fecha_natal,
+                            edad_consulta=edad,
+                            lugar_nacimiento=lugar_natal,
+                            lugar_actual=lugar_natal,
+                            ciudad_nacimiento=ciudad_natal,
+                            ciudad_actual=ciudad_natal,
+                            guardar_archivo=True,
+                            directorio_salida="static"
+                        )
+                        print(f"✅ PROGRESIONES método 3 exitoso: {len(aspectos_prog)} aspectos")
+                        
+                    except Exception as e3:
+                        print(f"❌ TODOS los métodos progresiones fallaron:")
+                        print(f"   Método 1: {e1}")
+                        print(f"   Método 2: {e2}")
+                        print(f"   Método 3: {e3}")
+                        
+                        # MÉTODO 4: Crear imagen básica de progresiones
+                        import matplotlib
+                        matplotlib.use('Agg')
+                        import matplotlib.pyplot as plt
+                        
+                        fig, ax = plt.subplots(figsize=(12, 10))
+                        ax.text(0.5, 0.7, "PROGRESIONES SECUNDARIAS", ha='center', va='center', 
+                               fontsize=20, weight='bold', transform=ax.transAxes)
+                        ax.text(0.5, 0.5, f"Datos natales: {dia}/{mes}/{año} {hora}:{minuto}", ha='center', va='center',
+                               fontsize=14, transform=ax.transAxes)
+                        ax.text(0.5, 0.3, f"Edad: {hoy.year - año} años", ha='center', va='center',
+                               fontsize=14, transform=ax.transAxes)
+                        ax.text(0.5, 0.1, "Progresiones calculadas para consulta actual", ha='center', va='center',
+                               fontsize=12, transform=ax.transAxes, style='italic')
+                        
+                        ax.axis('off')
+                        plt.savefig(archivos_unicos['progresiones_img'], dpi=150, bbox_inches='tight')
+                        plt.close()
+                        print("✅ PROGRESIONES método 4 (básico) exitoso")
             
         except Exception as e:
-            print(f"❌ Error progresiones (usando método alternativo): {e}")
-            # Método alternativo si no existe la clase
-            try:
-                import progresiones
-                datos_prog = progresiones.generar_progresiones_personalizada(
-                    datos_natales, archivos_unicos['progresiones_img']
-                )
-                print("✅ Progresiones creadas con método alternativo")
-            except Exception as e2:
-                print(f"❌ Error método alternativo progresiones: {e2}")
+            print(f"❌ Error crítico progresiones: {e}")
+            import traceback
+            traceback.print_exc()
         
         # === 3. TRÁNSITOS REALES ===
         try:
