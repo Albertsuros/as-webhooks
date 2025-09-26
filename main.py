@@ -12862,6 +12862,56 @@ def debug_donde_guarda_sofia():
         'archivos_test': resultado,
         'problema': 'Sofia dice que guarda pero no guarda realmente'
     })
+    
+@app.route('/test/html_con_cartas_existentes')
+def html_con_cartas_existentes():
+    """HTML usando las cartas que SÍ existen en el servidor"""
+    return f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Carta Astral Completa - AS Cartastral</title>
+        <style>
+            body {{ font-family: Georgia, serif; margin: 30px; line-height: 1.6; color: #333; background: #fafafa; }}
+            .portada {{ text-align: center; margin: 30px 0; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; }}
+            .imagen-carta {{ text-align: center; margin: 40px 0; padding: 20px; background: white; border-radius: 8px; }}
+            .imagen-carta img {{ max-width: 100%; height: auto; border: 2px solid #ddd; border-radius: 8px; }}
+        </style>
+    </head>
+    <body>
+        <div class="portada">
+            <h1>CARTA ASTRAL COMPLETA</h1>
+            <h2>Cliente Real</h2>
+            <p>Informe Astrológico Personalizado</p>
+        </div>
+
+        <div class="imagen-carta">
+            <h2>Tu Carta Natal</h2>
+            <img src="/cartas_generadas/carta_19591001_1046.png" alt="Carta Natal">
+            <p>Carta astrológica completa con casas, planetas y aspectos.</p>
+        </div>
+
+        <div class="imagen-carta">
+            <h2>Progresiones Secundarias</h2>
+            <img src="/progresiones_generadas/progresiones_19850723_1045_edad_40.0.png" alt="Progresiones">
+            <p>Evolución de tu personalidad a lo largo de los años.</p>
+        </div>
+
+        <p><strong>ÉXITO: Estas son cartas astrológicas REALES funcionando</strong></p>
+    </body>
+    </html>
+    """
+
+@app.route('/cartas_generadas/<filename>')
+def serve_cartas_generadas(filename):
+    from flask import send_from_directory
+    return send_from_directory('cartas_generadas', filename)
+
+@app.route('/progresiones_generadas/<filename>')  
+def serve_progresiones_generadas(filename):
+    from flask import send_from_directory
+    return send_from_directory('progresiones_generadas', filename)
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
