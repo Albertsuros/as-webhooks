@@ -12964,27 +12964,6 @@ def verificar_funcion_actual():
     <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926191158.png" style="max-width:300px; border:2px solid red;">
     """
     
-@app.route('/test/cartas_funcionando')
-def cartas_funcionando():
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Test URLs Absolutas</title>
-    </head>
-    <body>
-        <h1>Test con URLs Absolutas</h1>
-        <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926191158.png" width="400" style="border: 1px solid red;">
-        <br>
-        <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926191158.png" width="400" style="border: 1px solid red;">
-        <br>
-        <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926191158.png" width="400" style="border: 1px solid red;">
-        
-        <p>Si aparecen las 3 cartas con bordes rojos, el problema estaba en las rutas relativas</p>
-    </body>
-    </html>
-    """
-    
 @app.after_request
 def add_cors_headers(response):
     """Añadir headers CORS para que las imágenes se vean en HTML"""
