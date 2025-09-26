@@ -13019,6 +13019,50 @@ def debug_imagen_headers():
         
     except Exception as e:
         return f"Error: {str(e)}"
+        
+@app.route('/test/verificacion_final_archivos')
+def verificacion_final_archivos():
+    """Verificar qué archivos existen REALMENTE ahora mismo"""
+    import os
+    import glob
+    from datetime import datetime
+    
+    # Buscar TODOS los PNG en static/
+    archivos_static = glob.glob("static/*.png")
+    
+    # Buscar específicamente los que Sofia dice que creó
+    archivos_esperados = [
+        "static/carta_natal_test_20250926191158.png",
+        "static/progresiones_test_20250926191158.png", 
+        "static/transitos_test_20250926191158.png"
+    ]
+    
+    verificacion = {}
+    for archivo in archivos_esperados:
+        verificacion[archivo] = {
+            'existe': os.path.exists(archivo),
+            'tamaño': os.path.getsize(archivo) if os.path.exists(archivo) else 0
+        }
+    
+    return f"""
+    <h1>VERIFICACIÓN FINAL DE ARCHIVOS</h1>
+    
+    <h2>Archivos que Sofia DICE que creó:</h2>
+    <ul>
+    {''.join([f'<li>{k}: {"✅ EXISTE" if v["existe"] else "❌ NO EXISTE"} ({v["tamaño"]} bytes)</li>' for k, v in verificacion.items()])}
+    </ul>
+    
+    <h2>Archivos PNG que REALMENTE existen en static/:</h2>
+    <ul>
+    {''.join([f'<li>{archivo}</li>' for archivo in archivos_static])}
+    </ul>
+    
+    <h2>DIAGNÓSTICO:</h2>
+    <p><strong>{"Sofia crea los archivos correctamente" if all(v["existe"] for v in verificacion.values()) else "Sofia NO crea los archivos - solo dice que los crea"}</strong></p>
+    
+    <h2>Si los archivos SÍ existen, test de imagen:</h2>
+    <img src="/static/carta_natal_test_20250926191158.png" style="border: 2px solid red; max-width: 200px;">
+    """
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
