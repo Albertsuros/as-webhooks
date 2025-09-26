@@ -12844,6 +12844,7 @@ def html_con_cartas_reales():
                 padding: 20px;
                 background: white;
                 border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             }}
             .imagen-carta img {{ 
                 max-width: 100%; 
@@ -12862,38 +12863,39 @@ def html_con_cartas_reales():
     </head>
     <body>
         <div class="portada">
-            <h1>CARTA ASTRAL COMPLETA</h1>
+            <h1>🔮 CARTA ASTRAL COMPLETA</h1>
             <h2>Cliente con Cartas Reales</h2>
             <p>Informe Astrológico Personalizado</p>
         </div>
 
         <div class="datos-natales">
-            <h2>Datos Natales</h2>
+            <h2>📋 Datos Natales</h2>
             <p><strong>Fecha:</strong> 15/07/1985</p>
             <p><strong>Hora:</strong> 10:30</p>
             <p><strong>Lugar:</strong> Madrid, España</p>
         </div>
 
         <div class="imagen-carta">
-            <h2>Tu Carta Natal</h2>
-            <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926114637.png" alt="Carta Natal">
-            <p>Posiciones planetarias exactas en el momento de tu nacimiento.</p>
+            <h2>🗺️ Tu Carta Natal</h2>
+            <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926164824.png" alt="Carta Natal">
+            <p>Posiciones planetarias exactas en el momento de tu nacimiento con casas, aspectos y signos zodiacales.</p>
         </div>
 
         <div class="imagen-carta">
-            <h2>Progresiones Secundarias</h2>
-            <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926114637.png" alt="Progresiones">
-            <p>Evolución de tu personalidad a lo largo de los años.</p>
+            <h2>📈 Progresiones Secundarias</h2>
+            <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926164824.png" alt="Progresiones">
+            <p>Evolución de tu personalidad a lo largo de los años según el método de progresiones secundarias.</p>
         </div>
 
         <div class="imagen-carta">
-            <h2>Tránsitos Actuales</h2>
-            <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926114637.png" alt="Tránsitos">
-            <p>Influencias planetarias actuales en tu vida.</p>
+            <h2>🌊 Tránsitos Actuales</h2>
+            <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926164824.png" alt="Tránsitos">
+            <p>Influencias planetarias actuales en tu vida y cómo afectan a tu carta natal.</p>
         </div>
 
         <div class="footer">
-            <p><strong>Este es exactamente el contenido que iría en el PDF final</strong></p>
+            <p><strong>✅ Este es exactamente el contenido que iría en el PDF final</strong></p>
+            <p>Con 3 cartas astrológicas completas y profesionales</p>
             <p>Generado por AS Cartastral - Servicios Astrológicos IA</p>
         </div>
     </body>
