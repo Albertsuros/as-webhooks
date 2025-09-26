@@ -12796,6 +12796,12 @@ def probar_weasyprint_directo():
                 'error': 'PDF no se creó'
             })
             
+        except Exception as e:
+            return jsonify({
+                'error': str(e),
+                'weasyprint_disponible': False
+            })
+            
 @app.route('/test/html_basico')
 def html_basico():
     return "<h1>HTML funciona</h1><p>Si ves esto, todo OK</p>"
