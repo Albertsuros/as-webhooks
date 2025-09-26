@@ -12903,16 +12903,6 @@ def html_con_cartas_existentes():
     </html>
     """
 
-@app.route('/cartas_generadas/<filename>')
-def serve_cartas_generadas(filename):
-    from flask import send_from_directory
-    return send_from_directory('cartas_generadas', filename)
-
-@app.route('/progresiones_generadas/<filename>')  
-def serve_progresiones_generadas(filename):
-    from flask import send_from_directory
-    return send_from_directory('progresiones_generadas', filename)
-
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
 
