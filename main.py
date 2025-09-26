@@ -12805,6 +12805,100 @@ def probar_weasyprint_directo():
 @app.route('/test/html_basico')
 def html_basico():
     return "<h1>HTML funciona</h1><p>Si ves esto, todo OK</p>"
+    
+@app.route('/test/html_con_cartas_reales')
+def html_con_cartas_reales():
+    """Ver HTML con las cartas astrológicas reales que ya funcionan"""
+    return f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Carta Astral Completa - AS Cartastral</title>
+        <style>
+            body {{ 
+                font-family: Georgia, serif; 
+                margin: 30px; 
+                line-height: 1.6; 
+                color: #333; 
+                background: #fafafa; 
+            }}
+            .portada {{ 
+                text-align: center; 
+                margin: 30px 0; 
+                padding: 40px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; 
+                border-radius: 10px; 
+            }}
+            .datos-natales {{ 
+                background: #f8f9fa; 
+                padding: 20px; 
+                margin: 20px 0; 
+                border-radius: 8px; 
+                border-left: 4px solid #667eea; 
+            }}
+            .imagen-carta {{ 
+                text-align: center; 
+                margin: 40px 0; 
+                padding: 20px;
+                background: white;
+                border-radius: 8px;
+            }}
+            .imagen-carta img {{ 
+                max-width: 100%; 
+                height: auto; 
+                border: 2px solid #ddd; 
+                border-radius: 8px; 
+            }}
+            .footer {{ 
+                margin-top: 50px; 
+                padding: 20px; 
+                background: #e9ecef; 
+                border-radius: 8px; 
+                text-align: center; 
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="portada">
+            <h1>CARTA ASTRAL COMPLETA</h1>
+            <h2>Cliente con Cartas Reales</h2>
+            <p>Informe Astrológico Personalizado</p>
+        </div>
+
+        <div class="datos-natales">
+            <h2>Datos Natales</h2>
+            <p><strong>Fecha:</strong> 15/07/1985</p>
+            <p><strong>Hora:</strong> 10:30</p>
+            <p><strong>Lugar:</strong> Madrid, España</p>
+        </div>
+
+        <div class="imagen-carta">
+            <h2>Tu Carta Natal</h2>
+            <img src="https://as-webhooks-production.up.railway.app/static/carta_natal_test_20250926114637.png" alt="Carta Natal">
+            <p>Posiciones planetarias exactas en el momento de tu nacimiento.</p>
+        </div>
+
+        <div class="imagen-carta">
+            <h2>Progresiones Secundarias</h2>
+            <img src="https://as-webhooks-production.up.railway.app/static/progresiones_test_20250926114637.png" alt="Progresiones">
+            <p>Evolución de tu personalidad a lo largo de los años.</p>
+        </div>
+
+        <div class="imagen-carta">
+            <h2>Tránsitos Actuales</h2>
+            <img src="https://as-webhooks-production.up.railway.app/static/transitos_test_20250926114637.png" alt="Tránsitos">
+            <p>Influencias planetarias actuales en tu vida.</p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Este es exactamente el contenido que iría en el PDF final</strong></p>
+            <p>Generado por AS Cartastral - Servicios Astrológicos IA</p>
+        </div>
+    </body>
+    </html>
+    """
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
