@@ -12796,7 +12796,7 @@ def probar_weasyprint_directo():
                 'error': 'PDF no se creó'
             })
             
-        except Exception as e:
+    except Exception as e:
             return jsonify({
                 'error': str(e),
                 'weasyprint_disponible': False
