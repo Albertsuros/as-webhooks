@@ -12295,200 +12295,41 @@ def generar_pdf_as_cartastral(especialidad):
         }
         
 def crear_archivos_unicos_testing(tipo_servicio):
-    """Función simple que llama a la principal"""
-    return crear_archivos_unicos_AS_CARTASTRAL(tipo_servicio)
+    """Usar las cartas REALES que ya existen en cartas_generadas/"""
+    import glob
+    import os
     
-@app.route('/test/debug_wkhtmltopdf_directo')
-def debug_wkhtmltopdf_directo():
-    """Debug específico de wkhtmltopdf para ver exactamente qué falla"""
-    try:
-        import subprocess
-        import os
-        from datetime import datetime
+    # Buscar las cartas más recientes que SÍ existen
+    cartas_natal = glob.glob('cartas_generadas/carta_*.png')
+    progresiones = glob.glob('progresiones_generadas/progresiones_*.png')
+    
+    if cartas_natal and progresiones:
+        # Usar las más recientes
+        carta_natal = max(cartas_natal, key=os.path.getmtime)
+        progresion = max(progresiones, key=os.path.getmtime)
         
-        resultado = {
-            'paso_1_verificacion_binario': {},
-            'paso_2_html_simple': {},
-            'paso_3_conversion_basica': {},
-            'paso_4_conversion_completa': {},
-            'logs_completos': []
+        return {
+            'carta_natal_img': carta_natal,
+            'progresiones_img': progresion, 
+            'transitos_img': carta_natal  # Usar carta natal como tránsitos por ahora
         }
-        
-        # PASO 1: Verificar que wkhtmltopdf existe
-        try:
-            cmd_version = ['wkhtmltopdf', '--version']
-            version_result = subprocess.run(cmd_version, capture_output=True, text=True, timeout=10)
-            
-            resultado['paso_1_verificacion_binario'] = {
-                'comando': ' '.join(cmd_version),
-                'returncode': version_result.returncode,
-                'stdout': version_result.stdout,
-                'stderr': version_result.stderr,
-                'disponible': version_result.returncode == 0
-            }
-            
-            if version_result.returncode != 0:
-                return jsonify({
-                    'error': 'wkhtmltopdf no está disponible',
-                    'debug': resultado
-                })
-                
-        except Exception as e:
-            resultado['paso_1_verificacion_binario'] = {'error': str(e)}
-            return jsonify({'error': f'Error verificando wkhtmltopdf: {e}', 'debug': resultado})
-        
-        # PASO 2: Crear HTML muy simple
-        try:
-            os.makedirs('templates', exist_ok=True)
-            os.makedirs('informes', exist_ok=True)
-            
-            html_simple = """<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Test wkhtmltopdf</title>
-</head>
-<body>
-    <h1>Prueba de PDF</h1>
-    <p>Este es un HTML muy simple para probar wkhtmltopdf.</p>
-    <p>Fecha de generación: """ + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + """</p>
-    <div style="background-color: #f0f0f0; padding: 20px; margin: 20px 0;">
-        <h2>Sección de prueba</h2>
-        <p>Contenido adicional para verificar que el PDF se genera correctamente.</p>
-    </div>
-</body>
-</html>"""
-            
-            archivo_html_simple = 'templates/test_wkhtmltopdf_simple.html'
-            
-            with open(archivo_html_simple, 'w', encoding='utf-8') as f:
-                f.write(html_simple)
-            
-            resultado['paso_2_html_simple'] = {
-                'archivo': archivo_html_simple,
-                'existe': os.path.exists(archivo_html_simple),
-                'tamaño_bytes': os.path.getsize(archivo_html_simple) if os.path.exists(archivo_html_simple) else 0,
-                'contenido_preview': html_simple[:200] + '...'
-            }
-            
-        except Exception as e:
-            resultado['paso_2_html_simple'] = {'error': str(e)}
-            return jsonify({'error': f'Error creando HTML: {e}', 'debug': resultado})
-        
-        # PASO 3: Conversión básica con opciones mínimas
-        try:
-            archivo_pdf_basico = 'informes/test_basico_wkhtmltopdf.pdf'
-            
-            # Comando súper básico
-            cmd_basico = [
-                'wkhtmltopdf',
-                '--quiet',  # Menos output
-                archivo_html_simple,
-                archivo_pdf_basico
-            ]
-            
-            print(f"🔧 Ejecutando comando básico: {' '.join(cmd_basico)}")
-            
-            result_basico = subprocess.run(
-                cmd_basico,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            
-            resultado['paso_3_conversion_basica'] = {
-                'comando': ' '.join(cmd_basico),
-                'returncode': result_basico.returncode,
-                'stdout': result_basico.stdout,
-                'stderr': result_basico.stderr,
-                'archivo_creado': os.path.exists(archivo_pdf_basico),
-                'tamaño_pdf': os.path.getsize(archivo_pdf_basico) if os.path.exists(archivo_pdf_basico) else 0,
-                'exito': result_basico.returncode == 0 and os.path.exists(archivo_pdf_basico),
-                'download_url': f'/test/descargar_pdf/test_basico_wkhtmltopdf.pdf' if os.path.exists(archivo_pdf_basico) else None
-            }
-            
-            resultado['logs_completos'].append(f"BÁSICO - Return code: {result_basico.returncode}")
-            resultado['logs_completos'].append(f"BÁSICO - STDOUT: {result_basico.stdout}")
-            resultado['logs_completos'].append(f"BÁSICO - STDERR: {result_basico.stderr}")
-            
-        except subprocess.TimeoutExpired:
-            resultado['paso_3_conversion_basica'] = {'error': 'Timeout en conversión básica'}
-        except Exception as e:
-            resultado['paso_3_conversion_basica'] = {'error': str(e)}
-        
-        # PASO 4: Solo si el básico funciona, probar con opciones avanzadas
-        if resultado['paso_3_conversion_basica'].get('exito'):
-            try:
-                archivo_pdf_avanzado = 'informes/test_avanzado_wkhtmltopdf.pdf'
-                
-                # Comando con opciones avanzadas como en informes.py
-                cmd_avanzado = [
-                    'wkhtmltopdf',
-                    '--page-size', 'A4',
-                    '--margin-top', '0.75in',
-                    '--margin-right', '0.75in',
-                    '--margin-bottom', '0.75in',
-                    '--margin-left', '0.75in',
-                    '--encoding', 'UTF-8',
-                    '--no-stop-slow-scripts',
-                    '--javascript-delay', '1000',
-                    '--enable-local-file-access',
-                    '--load-error-handling', 'ignore',
-                    '--load-media-error-handling', 'ignore',
-                    archivo_html_simple,
-                    archivo_pdf_avanzado
-                ]
-                
-                print(f"🔧 Ejecutando comando avanzado: {' '.join(cmd_avanzado)}")
-                
-                result_avanzado = subprocess.run(
-                    cmd_avanzado,
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
-                
-                resultado['paso_4_conversion_completa'] = {
-                    'comando': ' '.join(cmd_avanzado),
-                    'returncode': result_avanzado.returncode,
-                    'stdout': result_avanzado.stdout,
-                    'stderr': result_avanzado.stderr,
-                    'archivo_creado': os.path.exists(archivo_pdf_avanzado),
-                    'tamaño_pdf': os.path.getsize(archivo_pdf_avanzado) if os.path.exists(archivo_pdf_avanzado) else 0,
-                    'exito': result_avanzado.returncode == 0 and os.path.exists(archivo_pdf_avanzado),
-                    'download_url': f'/test/descargar_pdf/test_avanzado_wkhtmltopdf.pdf' if os.path.exists(archivo_pdf_avanzado) else None
-                }
-                
-                resultado['logs_completos'].append(f"AVANZADO - Return code: {result_avanzado.returncode}")
-                resultado['logs_completos'].append(f"AVANZADO - STDOUT: {result_avanzado.stdout}")
-                resultado['logs_completos'].append(f"AVANZADO - STDERR: {result_avanzado.stderr}")
-                
-            except Exception as e:
-                resultado['paso_4_conversion_completa'] = {'error': str(e)}
-        else:
-            resultado['paso_4_conversion_completa'] = {'no_ejecutado': 'Conversión básica falló'}
-        
-        # RESUMEN FINAL
-        basico_ok = resultado['paso_3_conversion_basica'].get('exito', False)
-        avanzado_ok = resultado['paso_4_conversion_completa'].get('exito', False)
-        
-        return jsonify({
-            'resumen': {
-                'wkhtmltopdf_disponible': resultado['paso_1_verificacion_binario'].get('disponible', False),
-                'conversion_basica_ok': basico_ok,
-                'conversion_avanzada_ok': avanzado_ok,
-                'recomendacion': 'OK' if basico_ok else 'REVISAR_LOGS'
-            },
-            'debug_completo': resultado,
-            'instrucciones': 'Si conversion_basica_ok=true, wkhtmltopdf funciona. Revisar logs_completos para errores específicos.'
-        })
-        
-    except Exception as e:
-        import traceback
-        return jsonify({
-            'error_critico': str(e),
-            'traceback': traceback.format_exc()
-        })
+    
+    # Fallback si no encuentra nada
+    return {
+        'carta_natal_img': 'carta.png',
+        'progresiones_img': 'carta_astral_corregida.png',
+        'transitos_img': 'carta.png'
+    }
+    
+Y AÑADIR rutas para servir estos archivos:
+    
+@app.route('/cartas_generadas/<filename>')
+def serve_cartas_generadas(filename):
+    return send_from_directory('cartas_generadas', filename)
+
+@app.route('/progresiones_generadas/<filename>')  
+def serve_progresiones_generadas(filename):
+    return send_from_directory('progresiones_generadas', filename)
         
 # AÑADIR ESTA FUNCIÓN A main.py para debug específico de Playwright
 
@@ -12995,6 +12836,34 @@ def listar_archivos_static():
         
     except Exception as e:
         return f"<h1>Error: {str(e)}</h1>"
+        
+@app.route('/test/debug_donde_guarda_sofia')
+def debug_donde_guarda_sofia():
+    import os
+    
+    # Simular lo que hace Sofia
+    timestamp = "20250926170000"
+    archivos_esperados = {
+        'carta_natal_img': f'static/carta_natal_test_{timestamp}.png',
+        'progresiones_img': f'static/progresiones_test_{timestamp}.png',
+        'transitos_img': f'static/transitos_test_{timestamp}.png'
+    }
+    
+    resultado = {}
+    for nombre, ruta in archivos_esperados.items():
+        resultado[nombre] = {
+            'ruta_esperada': ruta,
+            'directorio_existe': os.path.exists(os.path.dirname(ruta)),
+            'archivo_existe': os.path.exists(ruta),
+            'permisos_directorio': oct(os.stat(os.path.dirname(ruta)).st_mode)[-3:] if os.path.exists(os.path.dirname(ruta)) else 'No existe'
+        }
+    
+    return jsonify({
+        'directorio_actual': os.getcwd(),
+        'usuario': os.getenv('USER'),
+        'archivos_test': resultado,
+        'problema': 'Sofia dice que guarda pero no guarda realmente'
+    })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
