@@ -12488,6 +12488,320 @@ def debug_wkhtmltopdf_directo():
             'error_critico': str(e),
             'traceback': traceback.format_exc()
         })
+        
+# AÑADIR ESTA FUNCIÓN A main.py para debug específico de Playwright
+
+@app.route('/test/debug_playwright_directo')
+def debug_playwright_directo():
+    """Debug específico de Playwright para ver exactamente qué falla"""
+    try:
+        import os
+        from datetime import datetime
+        
+        resultado = {
+            'paso_1_import': {},
+            'paso_2_browser_launch': {},
+            'paso_3_html_simple': {},
+            'paso_4_pdf_basico': {},
+            'logs_detallados': []
+        }
+        
+        # PASO 1: Verificar import de Playwright
+        try:
+            from playwright.sync_api import sync_playwright
+            resultado['paso_1_import'] = {
+                'import_ok': True,
+                'playwright_disponible': True
+            }
+            resultado['logs_detallados'].append("✅ Import playwright exitoso")
+        except Exception as e:
+            resultado['paso_1_import'] = {
+                'import_ok': False,
+                'error': str(e)
+            }
+            return jsonify({
+                'error': f'Playwright no se puede importar: {e}',
+                'debug': resultado
+            })
+        
+        # PASO 2: Verificar que se puede lanzar browser
+        try:
+            with sync_playwright() as p:
+                resultado['logs_detallados'].append("🔧 Intentando lanzar browser...")
+                
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-web-security'
+                    ]
+                )
+                
+                resultado['logs_detallados'].append("✅ Browser lanzado exitosamente")
+                
+                page = browser.new_page()
+                resultado['logs_detallados'].append("✅ Page creada exitosamente")
+                
+                # Test básico
+                page.set_content("<h1>Test</h1>")
+                content = page.content()
+                
+                browser.close()
+                resultado['logs_detallados'].append("✅ Browser cerrado exitosamente")
+                
+                resultado['paso_2_browser_launch'] = {
+                    'launch_ok': True,
+                    'content_test': content[:100] + '...' if len(content) > 100 else content
+                }
+                
+        except Exception as e:
+            resultado['paso_2_browser_launch'] = {
+                'launch_ok': False,
+                'error': str(e)
+            }
+            resultado['logs_detallados'].append(f"❌ Error lanzando browser: {e}")
+            
+            # Si falla el browser, no continuar
+            return jsonify({
+                'error': f'No se puede lanzar Chromium: {e}',
+                'debug': resultado,
+                'solucion': 'Probar weasyprint en su lugar'
+            })
+        
+        # PASO 3: Crear HTML de prueba
+        try:
+            os.makedirs('templates', exist_ok=True)
+            os.makedirs('informes', exist_ok=True)
+            
+            html_test = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Playwright PDF</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; }}
+        .header {{ background: #3498db; color: white; padding: 20px; text-align: center; }}
+        .content {{ margin: 20px 0; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Prueba de PDF con Playwright</h1>
+    </div>
+    <div class="content">
+        <h2>Información de prueba</h2>
+        <p>Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p>Este es un HTML de prueba para verificar que Playwright puede generar PDFs correctamente.</p>
+        
+        <h3>Lista de verificación:</h3>
+        <ul>
+            <li>✅ HTML generado</li>
+            <li>✅ Estilos CSS aplicados</li>
+            <li>🔄 Conversión PDF en proceso...</li>
+        </ul>
+    </div>
+</body>
+</html>"""
+            
+            archivo_html_test = 'templates/test_playwright.html'
+            
+            with open(archivo_html_test, 'w', encoding='utf-8') as f:
+                f.write(html_test)
+            
+            resultado['paso_3_html_simple'] = {
+                'archivo': archivo_html_test,
+                'existe': os.path.exists(archivo_html_test),
+                'tamaño': os.path.getsize(archivo_html_test) if os.path.exists(archivo_html_test) else 0
+            }
+            resultado['logs_detallados'].append(f"✅ HTML test creado: {archivo_html_test}")
+            
+        except Exception as e:
+            resultado['paso_3_html_simple'] = {'error': str(e)}
+            resultado['logs_detallados'].append(f"❌ Error creando HTML: {e}")
+            return jsonify({'error': f'Error creando HTML: {e}', 'debug': resultado})
+        
+        # PASO 4: Intentar conversión PDF
+        try:
+            archivo_pdf_test = 'informes/test_playwright.pdf'
+            
+            resultado['logs_detallados'].append("🔧 Iniciando conversión PDF...")
+            
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-web-security',
+                        '--allow-file-access-from-files'
+                    ]
+                )
+                
+                page = browser.new_page()
+                
+                # Cargar HTML
+                with open(archivo_html_test, 'r', encoding='utf-8') as f:
+                    html_content = f.read()
+                
+                resultado['logs_detallados'].append("📄 HTML leído, configurando página...")
+                
+                page.set_content(html_content)
+                page.wait_for_load_state('networkidle', timeout=5000)
+                
+                resultado['logs_detallados'].append("⏳ Página cargada, generando PDF...")
+                
+                # Generar PDF con configuración básica
+                page.pdf(
+                    path=archivo_pdf_test,
+                    format='A4',
+                    print_background=True
+                )
+                
+                browser.close()
+                resultado['logs_detallados'].append("🔒 Browser cerrado")
+            
+            # Verificar resultado
+            if os.path.exists(archivo_pdf_test):
+                tamaño = os.path.getsize(archivo_pdf_test)
+                resultado['paso_4_pdf_basico'] = {
+                    'pdf_creado': True,
+                    'archivo': archivo_pdf_test,
+                    'tamaño_bytes': tamaño,
+                    'tamaño_kb': round(tamaño / 1024, 2),
+                    'download_url': f'/test/descargar_pdf/test_playwright.pdf',
+                    'exito': tamaño > 1000
+                }
+                resultado['logs_detallados'].append(f"✅ PDF creado exitosamente: {tamaño} bytes")
+            else:
+                resultado['paso_4_pdf_basico'] = {
+                    'pdf_creado': False,
+                    'error': 'Archivo PDF no existe después de la conversión'
+                }
+                resultado['logs_detallados'].append("❌ PDF no se creó")
+                
+        except Exception as e:
+            resultado['paso_4_pdf_basico'] = {
+                'pdf_creado': False,
+                'error': str(e)
+            }
+            resultado['logs_detallados'].append(f"❌ Error en conversión PDF: {e}")
+            
+            # Capturar traceback completo
+            import traceback
+            resultado['paso_4_pdf_basico']['traceback'] = traceback.format_exc()
+        
+        # RESUMEN FINAL
+        import_ok = resultado['paso_1_import'].get('import_ok', False)
+        browser_ok = resultado['paso_2_browser_launch'].get('launch_ok', False) 
+        pdf_ok = resultado['paso_4_pdf_basico'].get('exito', False)
+        
+        return jsonify({
+            'resumen': {
+                'playwright_import': import_ok,
+                'chromium_launch': browser_ok,
+                'pdf_generation': pdf_ok,
+                'estado_general': 'OK' if pdf_ok else 'ERROR',
+                'siguiente_paso': 'Playwright funciona' if pdf_ok else 'Probar weasyprint'
+            },
+            'debug_completo': resultado,
+            'recomendacion': 'Todo OK - usar Playwright' if pdf_ok else 'Playwright falla - cambiar a weasyprint'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error_critico': str(e),
+            'traceback': traceback.format_exc(),
+            'recomendacion': 'Error crítico - usar weasyprint'
+        })
+
+# FUNCIÓN ALTERNATIVA DIRECTA PARA PROBAR WEASYPRINT
+
+@app.route('/test/probar_weasyprint_directo')
+def probar_weasyprint_directo():
+    """Probar weasyprint directamente"""
+    try:
+        # Intentar importar weasyprint
+        try:
+            import weasyprint
+            weasyprint_disponible = True
+            error_import = None
+        except ImportError as e:
+            weasyprint_disponible = False
+            error_import = str(e)
+        
+        if not weasyprint_disponible:
+            return jsonify({
+                'weasyprint_disponible': False,
+                'error': error_import,
+                'instruccion': 'Añadir weasyprint a requirements.txt y dependencias al Dockerfile'
+            })
+        
+        # Si está disponible, probar conversión
+        import os
+        from datetime import datetime
+        
+        os.makedirs('templates', exist_ok=True)
+        os.makedirs('informes', exist_ok=True)
+        
+        # HTML simple
+        html_simple = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test weasyprint</title>
+    <style>
+        body {{ font-family: Arial; margin: 40px; }}
+        .box {{ background: #e74c3c; color: white; padding: 20px; margin: 20px 0; }}
+    </style>
+</head>
+<body>
+    <h1>Test weasyprint PDF</h1>
+    <div class="box">
+        <p>Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p>Este PDF fue generado con weasyprint.</p>
+    </div>
+</body>
+</html>"""
+        
+        archivo_html = 'templates/test_weasyprint.html'
+        archivo_pdf = 'informes/test_weasyprint.pdf'
+        
+        # Escribir HTML
+        with open(archivo_html, 'w', encoding='utf-8') as f:
+            f.write(html_simple)
+        
+        # Convertir a PDF
+        weasyprint.HTML(string=html_simple).write_pdf(archivo_pdf)
+        
+        # Verificar
+        if os.path.exists(archivo_pdf):
+            tamaño = os.path.getsize(archivo_pdf)
+            return jsonify({
+                'weasyprint_disponible': True,
+                'pdf_generado': True,
+                'archivo_pdf': archivo_pdf,
+                'tamaño_bytes': tamaño,
+                'download_url': '/test/descargar_pdf/test_weasyprint.pdf',
+                'exito': True,
+                'mensaje': 'weasyprint funciona perfectamente'
+            })
+        else:
+            return jsonify({
+                'weasyprint_disponible': True,
+                'pdf_generado': False,
+                'error': 'PDF no se creó'
+            })
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
