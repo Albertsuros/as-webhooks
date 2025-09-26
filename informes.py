@@ -1047,139 +1047,64 @@ def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_
         traceback.print_exc()
         return None
 
-def convertir_html_a_pdf(archivo_html, archivo_pdf):
-    """Convertir HTML a PDF usando wkhtmltopdf (ya instalado en Railway)"""
+def convertir_html_a_pdf_con_logs_completos(archivo_html, archivo_pdf):
+    """Versión con logs completos para debug"""
     try:
         import subprocess
         import os
         
-        print(f"🎯 Convirtiendo {archivo_html} → {archivo_pdf} usando wkhtmltopdf")
+        print(f"🎯 DEBUG: Convirtiendo {archivo_html} → {archivo_pdf}")
         
-        # Verificar que existe el archivo HTML
+        # Verificar archivo HTML
         if not os.path.exists(archivo_html):
-            print(f"❌ Archivo HTML no existe: {archivo_html}")
+            print(f"❌ DEBUG: HTML no existe: {archivo_html}")
             return False
         
-        # Comando wkhtmltopdf con opciones optimizadas para Railway
+        print(f"✅ DEBUG: HTML existe ({os.path.getsize(archivo_html)} bytes)")
+        
+        # Comando básico primero
         cmd = [
             'wkhtmltopdf',
             '--page-size', 'A4',
-            '--margin-top', '0.75in',
-            '--margin-right', '0.75in', 
-            '--margin-bottom', '0.75in',
-            '--margin-left', '0.75in',
             '--encoding', 'UTF-8',
-            '--no-stop-slow-scripts',
-            '--javascript-delay', '1000',
-            '--enable-local-file-access',  # Importante para imágenes locales
-            '--load-error-handling', 'ignore',
-            '--load-media-error-handling', 'ignore',
+            '--enable-local-file-access',
             archivo_html,
             archivo_pdf
         ]
         
-        # Ejecutar comando
-        print(f"🔧 Ejecutando: {' '.join(cmd)}")
+        print(f"🔧 DEBUG: Ejecutando: {' '.join(cmd)}")
         
         result = subprocess.run(
-            cmd, 
-            capture_output=True, 
-            text=True, 
-            timeout=30  # 30 segundos máximo
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=45
         )
         
+        print(f"📊 DEBUG: Return code: {result.returncode}")
+        print(f"📊 DEBUG: STDOUT: '{result.stdout}'")
+        print(f"📊 DEBUG: STDERR: '{result.stderr}'")
+        
         if result.returncode == 0:
-            # Verificar que se creó el PDF
-            if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
-                print(f"✅ PDF generado exitosamente: {archivo_pdf} ({os.path.getsize(archivo_pdf)} bytes)")
-                return True
+            if os.path.exists(archivo_pdf):
+                tamaño = os.path.getsize(archivo_pdf)
+                print(f"✅ DEBUG: PDF creado exitosamente ({tamaño} bytes)")
+                return tamaño > 1000  # Al menos 1KB
             else:
-                print(f"⚠️ PDF creado pero muy pequeño o vacío")
+                print(f"⚠️ DEBUG: Comando exitoso pero PDF no existe")
                 return False
         else:
-            print(f"❌ Error en wkhtmltopdf:")
-            print(f"   STDOUT: {result.stdout}")
-            print(f"   STDERR: {result.stderr}")
+            print(f"❌ DEBUG: Comando falló con código {result.returncode}")
+            print(f"❌ DEBUG: Error: {result.stderr}")
+            return False
             
-            # FALLBACK: Intentar con opciones más simples
-            print("🔄 Intentando con opciones básicas...")
-            
-            cmd_simple = [
-                'wkhtmltopdf',
-                '--page-size', 'A4',
-                '--enable-local-file-access',
-                archivo_html,
-                archivo_pdf
-            ]
-            
-            result2 = subprocess.run(cmd_simple, capture_output=True, text=True, timeout=30)
-            
-            if result2.returncode == 0 and os.path.exists(archivo_pdf):
-                print(f"✅ PDF generado con opciones básicas: {archivo_pdf}")
-                return True
-            else:
-                print(f"❌ Fallback también falló: {result2.stderr}")
-                return False
-                
     except subprocess.TimeoutExpired:
-        print("❌ Timeout generando PDF")
+        print("❌ DEBUG: Timeout ejecutando wkhtmltopdf")
         return False
     except Exception as e:
-        print(f"❌ Error crítico generando PDF: {e}")
+        print(f"❌ DEBUG: Excepción: {e}")
         import traceback
         traceback.print_exc()
-        return False
-
-
-# ALTERNATIVA SI WKHTMLTOPDF FALLA - Mantener Playwright como backup
-def convertir_html_a_pdf_con_fallback(archivo_html, archivo_pdf):
-    """Convertir HTML a PDF con múltiples fallbacks"""
-    try:
-        # MÉTODO 1: wkhtmltopdf (debería funcionar)
-        if convertir_html_a_pdf(archivo_html, archivo_pdf):
-            return True
-        
-        print("⚠️ wkhtmltopdf falló, probando Playwright...")
-        
-        # MÉTODO 2: Playwright (backup)
-        from playwright.sync_api import sync_playwright
-        
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox', 
-                    '--disable-dev-shm-usage',
-                    '--disable-web-security',
-                    '--allow-file-access-from-files'
-                ]
-            )
-            page = browser.new_page()
-            
-            # Leer HTML
-            with open(archivo_html, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            # Cargar HTML
-            page.set_content(html_content)
-            page.wait_for_load_state('networkidle', timeout=5000)
-            
-            # Generar PDF
-            page.pdf(
-                path=archivo_pdf,
-                format='A4',
-                margin={'top': '1cm', 'bottom': '1cm', 'left': '1cm', 'right': '1cm'},
-                print_background=True
-            )
-            
-            browser.close()
-            
-            print(f"✅ PDF generado con Playwright (fallback): {archivo_pdf}")
-            return True
-            
-    except Exception as e:
-        print(f"❌ Todos los métodos PDF fallaron: {e}")
         return False
 
 def enviar_informe_por_email(email_cliente, archivo_pdf, tipo_servicio, nombre_cliente="Cliente"):
