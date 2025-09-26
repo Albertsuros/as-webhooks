@@ -76,8 +76,6 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from logica_citas_inteligente import obtener_horarios_disponibles_inteligentes, agendar_cita_inteligente
-from test_html import test_html_bp
-app.register_blueprint(test_html_bp)
 
 load_dotenv()
 
@@ -12797,6 +12795,10 @@ def probar_weasyprint_directo():
                 'pdf_generado': False,
                 'error': 'PDF no se creó'
             })
+            
+@app.route('/test/html_basico')
+def html_basico():
+    return "<h1>HTML funciona</h1><p>Si ves esto, todo OK</p>"
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
