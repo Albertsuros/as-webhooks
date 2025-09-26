@@ -12979,6 +12979,15 @@ def cartas_funcionando():
     </body>
     </html>
     """
+    
+@app.after_request
+def add_cors_headers(response):
+    """Añadir headers CORS para que las imágenes se vean en HTML"""
+    if request.path.startswith('/static/'):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
