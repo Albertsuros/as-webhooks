@@ -38,6 +38,7 @@ import glob
 import threading
 import time
 from informes import procesar_y_enviar_informe
+from informes import generar_pdf_completo_optimizado
 from flask import send_from_directory
 from pathlib import Path
 from app import app
@@ -13387,7 +13388,7 @@ def test_integracion_sofia_base64():
         })
 
 def generar_cartas_astrales_base64(datos_natales):
-    return generar_cartas_astrales_base64_corregida(datos_natales)
+    return generar_cartas_astrales_optimizadas(datos_natales)
 
 # =======================================================================
 # ENDPOINT FINAL DE TEST
