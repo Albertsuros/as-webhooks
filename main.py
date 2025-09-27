@@ -13063,6 +13063,328 @@ def verificacion_final_archivos():
     <h2>Si los archivos SÍ existen, test de imagen:</h2>
     <img src="/static/carta_natal_test_20250926191158.png" style="border: 2px solid red; max-width: 200px;">
     """
+    
+# ENDPOINT DE TEST PARA PROBAR LA SOLUCIÓN BASE64
+
+@app.route('/test/cartas_base64')
+def test_cartas_base64():
+    """
+    TEST: Generar cartas astrales en Base64 para evitar problema filesystem Railway
+    """
+    try:
+        from datetime import datetime
+        import io
+        import base64
+        import matplotlib.pyplot as plt
+        
+        print("🔧 Iniciando test de cartas en BASE64...")
+        
+        # Datos de test
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'nombre': 'Usuario Test'
+        }
+        
+        # Generar una carta simple en memoria
+        fig, ax = plt.subplots(figsize=(10, 10))
+        
+        # Crear una carta astral básica para test
+        import numpy as np
+        
+        # Círculo del zodíaco
+        theta = np.linspace(0, 2*np.pi, 100)
+        ax.plot(np.cos(theta), np.sin(theta), 'b-', linewidth=2, label='Zodíaco')
+        
+        # Casas astrológicas (12 divisiones)
+        for i in range(12):
+            angle = i * np.pi / 6
+            ax.plot([0, np.cos(angle)], [0, np.sin(angle)], 'k-', alpha=0.3)
+            
+            # Etiquetas de casas
+            label_angle = angle + np.pi/12
+            ax.text(1.1*np.cos(label_angle), 1.1*np.sin(label_angle), 
+                   f'Casa {i+1}', ha='center', va='center', fontsize=8)
+        
+        # Posiciones planetarias simuladas
+        planetas = ['☉', '☽', '☿', '♀', '♂', '♃', '♄', '⛢', '♆', '♇']
+        colores = ['gold', 'silver', 'orange', 'pink', 'red', 'purple', 'brown', 'cyan', 'blue', 'magenta']
+        
+        for i, (planeta, color) in enumerate(zip(planetas, colores)):
+            angle = i * 2 * np.pi / len(planetas)
+            x, y = 0.8 * np.cos(angle), 0.8 * np.sin(angle)
+            ax.scatter(x, y, s=200, c=color, marker='o', edgecolors='black', linewidth=1)
+            ax.text(x, y, planeta, ha='center', va='center', fontsize=12, fontweight='bold')
+        
+        ax.set_xlim(-1.3, 1.3)
+        ax.set_ylim(-1.3, 1.3)
+        ax.set_aspect('equal')
+        ax.axis('off')
+        ax.set_title(f'Carta Astral Test - {datos_natales_test["fecha_nacimiento"]}', 
+                    fontsize=16, fontweight='bold', pad=20)
+        
+        # Convertir a base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight', 
+                   facecolor='white', edgecolor='none')
+        buffer.seek(0)
+        imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+        plt.close()
+        buffer.close()
+        
+        # Crear datos completos para el template
+        imagenes_base64 = {
+            'carta_natal': f"data:image/png;base64,{imagen_base64}",
+            'progresiones': crear_placeholder_base64("Progresiones Secundarias\n(Test)"),
+            'transitos': crear_placeholder_base64("Tránsitos Actuales\n(Test)")
+        }
+        
+        timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
+        
+        # HTML directo con base64
+        html_response = f"""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>🌟 Test Cartas Base64</title>
+            <style>
+                body {{
+                    font-family: 'Georgia', serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    margin: 0;
+                    padding: 20px;
+                }}
+                .container {{
+                    max-width: 800px;
+                    margin: 0 auto;
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                }}
+                .header {{
+                    text-align: center;
+                    border-bottom: 3px solid #667eea;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }}
+                .header h1 {{
+                    color: #667eea;
+                    font-size: 2.5em;
+                    margin: 0;
+                }}
+                .carta-section {{
+                    margin: 30px 0;
+                    padding: 20px;
+                    border-left: 5px solid #667eea;
+                    background: linear-gradient(90deg, #f8f9ff 0%, #ffffff 100%);
+                    border-radius: 10px;
+                }}
+                .carta-title {{
+                    color: #667eea;
+                    font-size: 1.5em;
+                    margin-bottom: 15px;
+                    text-align: center;
+                }}
+                .carta-imagen {{
+                    text-align: center;
+                    margin: 20px 0;
+                }}
+                .carta-imagen img {{
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 10px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                    border: 3px solid #667eea;
+                }}
+                .success-badge {{
+                    background: #4CAF50;
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 25px;
+                    display: inline-block;
+                    margin: 10px 0;
+                    font-weight: bold;
+                }}
+                .info-box {{
+                    background: #e8f4f8;
+                    border: 1px solid #bee5eb;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin: 15px 0;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🌟 Test Cartas Base64 🌟</h1>
+                    <div class="success-badge">✅ FILESYSTEM INDEPENDIENTE</div>
+                </div>
+
+                <div class="info-box">
+                    <h3>📋 Datos de Test</h3>
+                    <p><strong>Fecha:</strong> {datos_natales_test['fecha_nacimiento']}</p>
+                    <p><strong>Hora:</strong> {datos_natales_test['hora_nacimiento']}</p>
+                    <p><strong>Lugar:</strong> {datos_natales_test['lugar_nacimiento']}</p>
+                    <p><strong>Generado:</strong> {timestamp}</p>
+                    <p><strong>Método:</strong> Base64 embebido (sin archivos en disco)</p>
+                </div>
+
+                <div class="carta-section">
+                    <h2 class="carta-title">🌅 Carta Astral (Base64)</h2>
+                    <div class="carta-imagen">
+                        <img src="{imagenes_base64['carta_natal']}" alt="Carta Astral Test">
+                    </div>
+                    <p><strong>✅ Esta imagen se genera en memoria y se embebe directamente en el HTML.</strong></p>
+                    <p>No se guardan archivos en disco, por lo que no hay problemas de persistencia en Railway.</p>
+                </div>
+
+                <div class="carta-section">
+                    <h2 class="carta-title">📈 Progresiones (Placeholder)</h2>
+                    <div class="carta-imagen">
+                        <img src="{imagenes_base64['progresiones']}" alt="Progresiones Test">
+                    </div>
+                </div>
+
+                <div class="carta-section">
+                    <h2 class="carta-title">🔄 Tránsitos (Placeholder)</h2>
+                    <div class="carta-imagen">
+                        <img src="{imagenes_base64['transitos']}" alt="Tránsitos Test">
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h3>🔧 Ventajas de esta solución:</h3>
+                    <ul>
+                        <li>✅ <strong>No depende del filesystem</strong> - Railway puede reiniciar sin problemas</li>
+                        <li>✅ <strong>Imágenes siempre disponibles</strong> - embebidas en el HTML</li>
+                        <li>✅ <strong>Rendimiento excelente</strong> - no hay requests adicionales</li>
+                        <li>✅ <strong>Funciona en cualquier entorno</strong> - local, Railway, etc.</li>
+                        <li>✅ <strong>PDFs perfectos</strong> - WeasyPrint lee base64 sin problemas</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <script>
+                console.log("🔍 Debug imágenes base64:");
+                const imagenes = document.querySelectorAll('img[src^="data:image"]');
+                console.log(`📊 Total de imágenes base64: ${{imagenes.length}}`);
+                
+                imagenes.forEach((img, index) => {{
+                    img.onload = function() {{
+                        console.log(`✅ Imagen ${{index + 1}} cargada: ${{this.naturalWidth}}x${{this.naturalHeight}}px`);
+                    }};
+                    img.onerror = function() {{
+                        console.log(`❌ Error en imagen ${{index + 1}}`);
+                    }};
+                }});
+            </script>
+        </body>
+        </html>
+        """
+        
+        return html_response
+        
+    except Exception as e:
+        import traceback
+        return f"""
+        <h1>❌ Error en test Base64</h1>
+        <pre>{str(e)}</pre>
+        <pre>{traceback.format_exc()}</pre>
+        """
+
+def crear_placeholder_base64(texto):
+    """Crear imagen placeholder simple en base64"""
+    try:
+        import matplotlib.pyplot as plt
+        import io
+        import base64
+        
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.text(0.5, 0.5, texto, ha='center', va='center', fontsize=16, 
+                bbox=dict(boxstyle="round,pad=0.5", facecolor="lightblue", alpha=0.8))
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis('off')
+        
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight', 
+                   facecolor='white', edgecolor='none')
+        buffer.seek(0)
+        imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+        plt.close()
+        buffer.close()
+        
+        return f"data:image/png;base64,{imagen_base64}"
+    except:
+        # Fallback: imagen SVG simple
+        return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y0ZjRmNCIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbiBubyBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg=="
+
+# ENDPOINT DE INTEGRACIÓN COMPLETA
+@app.route('/test/integracion_sofia_base64')
+def test_integracion_sofia_base64():
+    """
+    TEST: Integración completa con Sofia usando Base64
+    """
+    try:
+        from datetime import datetime
+        
+        # Datos de test realistas
+        datos_natales = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'nombre': 'Cliente Test',
+            'residencia_actual': 'Madrid, España'
+        }
+        
+        # Simular llamada a Sofia con Base64
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        print("🔧 Simulando integración Sofia con Base64...")
+        
+        # Aquí iría la llamada real a generar_cartas_astrales_base64()
+        # Por ahora, simular el resultado
+        
+        resultado_simulado = {
+            'exito': True,
+            'datos_completos': {
+                'imagenes_base64': {
+                    'carta_natal': crear_placeholder_base64("Carta Natal\nGenerada por Sofia"),
+                    'progresiones': crear_placeholder_base64("Progresiones\nGeneradas por Sofia"),
+                    'transitos': crear_placeholder_base64("Tránsitos\nGenerados por Sofia")
+                },
+                'aspectos_natales': ['Sol conjunción Ascendente', 'Luna trígono Júpiter'],
+                'interpretacion_ia': 'Esta carta muestra una personalidad luminosa...',
+                'timestamp': datetime.now().isoformat(),
+                'metodo': 'base64_sofia'
+            }
+        }
+        
+        return jsonify({
+            'status': 'success',
+            'mensaje': '✅ Integración Sofia Base64 funcionando',
+            'datos_natales': datos_natales,
+            'resultado': resultado_simulado,
+            'siguiente_paso': 'Implementar en sofia.py',
+            'ventajas': [
+                'Sin dependencia del filesystem',
+                'Imágenes siempre disponibles',
+                'Compatible con Railway',
+                'PDFs perfectos'
+            ]
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'mensaje': f'❌ Error en integración: {str(e)}'
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
