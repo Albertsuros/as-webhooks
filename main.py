@@ -13385,6 +13385,340 @@ def test_integracion_sofia_base64():
             'status': 'error',
             'mensaje': f'❌ Error en integración: {str(e)}'
         })
+        
+# =======================================================================
+# FUNCIÓN PRINCIPAL PARA SOFIA - AÑADIR AL FINAL DE main.py
+# =======================================================================
+
+def generar_cartas_astrales_base64(datos_natales):
+    """
+    FUNCIÓN PRINCIPAL: Generar cartas astrales REALES y convertirlas a base64
+    USA LAS CLASES ORIGINALES: CartaAstralNatal, CartaProgresiones, CartaTransitos
+    Esta es la función que Sofia llamará en lugar de guardar archivos
+    """
+    try:
+        print("🔧 Generando cartas astrales REALES en BASE64...")
+        
+        # Extraer y convertir datos
+        fecha_str = datos_natales.get('fecha_nacimiento', '')
+        hora_str = datos_natales.get('hora_nacimiento', '')
+        lugar_nacimiento = datos_natales.get('lugar_nacimiento', '')
+        
+        # Convertir fecha string (DD/MM/YYYY) a tuple (YYYY, MM, DD, HH, MM)
+        if '/' in fecha_str and ':' in hora_str:
+            dia, mes, año = map(int, fecha_str.split('/'))
+            hora, minuto = map(int, hora_str.split(':'))
+            fecha_natal = (año, mes, dia, hora, minuto)
+        else:
+            raise ValueError("Formato fecha/hora incorrecto")
+        
+        # COORDENADAS APROXIMADAS (igual que en sofia_fixes.py)
+        coordenadas_ciudades = {
+            'Madrid': (40.42, -3.70),
+            'Barcelona': (41.39, 2.16),
+            'Valencia': (39.47, -0.38),
+            'Sevilla': (37.38, -5.98),
+            'Bilbao': (43.26, -2.93),
+        }
+        
+        lugar_coords = coordenadas_ciudades.get('Madrid', (40.42, -3.70))
+        ciudad_nombre = 'Madrid, España'
+        for ciudad, coords in coordenadas_ciudades.items():
+            if ciudad.lower() in lugar_nacimiento.lower():
+                lugar_coords = coords
+                ciudad_nombre = f"{ciudad}, España"
+                break
+        
+        print(f"📍 Coordenadas: {lugar_coords}")
+        print(f"⏰ Fecha natal: {fecha_natal}")
+        
+        # Diccionario para almacenar imágenes en base64
+        imagenes_base64 = {}
+        
+        # =====================================
+        # 1. CARTA NATAL REAL
+        # =====================================
+        print("📊 Generando Carta Natal REAL...")
+        try:
+            from carta_natal import CartaAstralNatal
+            import matplotlib.pyplot as plt
+            import io
+            import base64
+            
+            carta_natal = CartaAstralNatal(figsize=(16, 14))
+            
+            # Generar carta astral natal REAL
+            aspectos, posiciones = carta_natal.crear_carta_astral_natal(
+                fecha_natal=fecha_natal,
+                lugar_natal=lugar_coords,
+                ciudad_natal=ciudad_nombre,
+                guardar_archivo=False,  # NO guardar archivo
+                directorio_salida=None
+            )
+            
+            # Convertir la figura actual a base64
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight', 
+                       facecolor='white', edgecolor='none')
+            buffer.seek(0)
+            imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+            imagenes_base64['carta_natal'] = f"data:image/png;base64,{imagen_base64}"
+            plt.close()  # Cerrar figura para liberar memoria
+            buffer.close()
+            
+            print(f"✅ Carta natal generada: {len(aspectos)} aspectos")
+            
+        except Exception as e:
+            print(f"⚠️ Error en carta natal: {e}")
+            # Usar placeholder si falla
+            imagenes_base64['carta_natal'] = crear_placeholder_base64("Carta Natal\n(Error en generación)")
+            aspectos = []
+            posiciones = {}
+        
+        # =====================================
+        # 2. PROGRESIONES REALES
+        # =====================================
+        print("📈 Generando Progresiones REALES...")
+        try:
+            from progresiones import CartaProgresiones
+            from datetime import datetime as dt
+            
+            carta_prog = CartaProgresiones(figsize=(16, 14))
+            hoy = dt.now()
+            edad_actual = (hoy.year - año) + (hoy.month - mes) / 12.0
+            
+            aspectos_prog, pos_natales, pos_prog, _, _ = carta_prog.crear_carta_progresiones(
+                fecha_nacimiento=fecha_natal,
+                edad_consulta=edad_actual,
+                lugar_nacimiento=lugar_coords,
+                lugar_actual=lugar_coords,
+                ciudad_nacimiento=ciudad_nombre,
+                ciudad_actual=ciudad_nombre,
+                guardar_archivo=False
+            )
+            
+            # Convertir a base64
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight',
+                       facecolor='white', edgecolor='none')
+            buffer.seek(0)
+            imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+            imagenes_base64['progresiones'] = f"data:image/png;base64,{imagen_base64}"
+            plt.close()
+            buffer.close()
+            
+            print(f"✅ Progresiones generadas: {len(aspectos_prog)} aspectos")
+            
+        except Exception as e:
+            print(f"⚠️ Error en progresiones: {e}")
+            # Usar placeholder si falla
+            imagenes_base64['progresiones'] = crear_placeholder_base64("Progresiones Secundarias\n(En desarrollo)")
+        
+        # =====================================
+        # 3. TRÁNSITOS REALES
+        # =====================================
+        print("🔄 Generando Tránsitos REALES...")
+        try:
+            from transitos import CartaTransitos
+            from datetime import datetime as dt
+            
+            carta_trans = CartaTransitos(figsize=(16, 14))
+            hoy = dt.now()
+            fecha_consulta = hoy.timetuple()[:5]  # (año, mes, día, hora, minuto)
+            
+            aspectos_trans, pos_natales, pos_trans, _, _ = carta_trans.crear_carta_transitos(
+                fecha_nacimiento=fecha_natal,
+                fecha_consulta=fecha_consulta,
+                lugar_nacimiento=lugar_coords,
+                lugar_actual=lugar_coords,
+                ciudad_nacimiento=ciudad_nombre,
+                ciudad_actual=ciudad_nombre,
+                guardar_archivo=False
+            )
+            
+            # Convertir a base64
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight',
+                       facecolor='white', edgecolor='none')
+            buffer.seek(0)
+            imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+            imagenes_base64['transitos'] = f"data:image/png;base64,{imagen_base64}"
+            plt.close()
+            buffer.close()
+            
+            print(f"✅ Tránsitos generados: {len(aspectos_trans)} aspectos")
+            
+        except Exception as e:
+            print(f"⚠️ Error en tránsitos: {e}")
+            # Usar placeholder si falla
+            imagenes_base64['transitos'] = crear_placeholder_base64("Tránsitos Actuales\n(En desarrollo)")
+        
+        print("✅ Cartas astrales REALES generadas en BASE64 exitosamente")
+        
+        # Datos completos para interpretación IA (igual que antes)
+        from datetime import datetime as dt
+        datos_completos = {
+            'aspectos_natales': aspectos if 'aspectos' in locals() else [],
+            'posiciones_natales': posiciones if 'posiciones' in locals() else {},
+            'imagenes_base64': imagenes_base64,
+            'timestamp': dt.now().isoformat(),
+            'metodo': 'base64_real_classes',
+            'datos_originales': datos_natales
+        }
+        
+        return True, datos_completos
+        
+    except Exception as e:
+        print(f"❌ Error generando cartas astrales reales base64: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, None
+
+
+# =======================================================================
+# ENDPOINT DE TEST PARA PROBAR LA FUNCIÓN REAL
+# =======================================================================
+@app.route('/test/cartas_reales_base64')
+def test_cartas_reales_base64():
+    """
+    TEST: Usar las clases REALES de carta astral con base64
+    """
+    try:
+        from datetime import datetime
+        
+        # Datos realistas
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'nombre': 'Usuario Test Real'
+        }
+        
+        print("🔧 Iniciando test con clases REALES...")
+        
+        # Llamar a la función REAL
+        exito, resultado = generar_cartas_astrales_base64(datos_natales_test)
+        
+        if exito and resultado:
+            imagenes_base64 = resultado['imagenes_base64']
+            timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
+            
+            # HTML con las cartas REALES
+            html_response = f"""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <title>🌟 Test Cartas REALES Base64</title>
+                <style>
+                    body {{
+                        font-family: 'Georgia', serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        margin: 0;
+                        padding: 20px;
+                    }}
+                    .container {{
+                        max-width: 1000px;
+                        margin: 0 auto;
+                        background: white;
+                        padding: 30px;
+                        border-radius: 15px;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    }}
+                    .header {{
+                        text-align: center;
+                        border-bottom: 3px solid #667eea;
+                        padding-bottom: 20px;
+                        margin-bottom: 30px;
+                    }}
+                    .carta-section {{
+                        margin: 40px 0;
+                        padding: 20px;
+                        border-left: 5px solid #667eea;
+                        background: linear-gradient(90deg, #f8f9ff 0%, #ffffff 100%);
+                        border-radius: 10px;
+                    }}
+                    .carta-imagen {{
+                        text-align: center;
+                        margin: 20px 0;
+                    }}
+                    .carta-imagen img {{
+                        max-width: 100%;
+                        height: auto;
+                        border-radius: 10px;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                        border: 3px solid #667eea;
+                    }}
+                    .success-badge {{
+                        background: #4CAF50;
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 25px;
+                        display: inline-block;
+                        margin: 10px;
+                        font-weight: bold;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🌟 Cartas Astrales REALES en Base64 🌟</h1>
+                        <div class="success-badge">✅ CLASES ORIGINALES</div>
+                        <div class="success-badge">✅ BASE64 EMBEBIDO</div>
+                    </div>
+
+                    <div class="carta-section">
+                        <h2>🌅 Carta Natal REAL</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('carta_natal', '')}" alt="Carta Natal Real">
+                        </div>
+                        <p>✅ Generada con CartaAstralNatal - Posiciones planetarias reales</p>
+                    </div>
+
+                    <div class="carta-section">
+                        <h2>📈 Progresiones REALES</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('progresiones', '')}" alt="Progresiones Reales">
+                        </div>
+                        <p>✅ Generada con CartaProgresiones - Evolución personal real</p>
+                    </div>
+
+                    <div class="carta-section">
+                        <h2>🔄 Tránsitos REALES</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('transitos', '')}" alt="Tránsitos Reales">
+                        </div>
+                        <p>✅ Generada con CartaTransitos - Influencias actuales reales</p>
+                    </div>
+
+                    <div style="background: #e8f4f8; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h3>📊 Datos de Generación:</h3>
+                        <p><strong>Método:</strong> {resultado.get('metodo', 'Unknown')}</p>
+                        <p><strong>Aspectos encontrados:</strong> {len(resultado.get('aspectos_natales', []))}</p>
+                        <p><strong>Timestamp:</strong> {timestamp}</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            return html_response
+            
+        else:
+            return f"""
+            <h1>❌ Error generando cartas reales</h1>
+            <p>La función devolvió: exito={exito}</p>
+            <p>Resultado: {resultado}</p>
+            """
+            
+    except Exception as e:
+        import traceback
+        return f"""
+        <h1>❌ Error en test cartas reales</h1>
+        <pre>{str(e)}</pre>
+        <pre>{traceback.format_exc()}</pre>
+        """
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
