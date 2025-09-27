@@ -15751,6 +15751,132 @@ def test_generar_pdf_final_corregido():
             "mensaje": f"Error crítico: {str(e)}",
             "traceback": traceback.format_exc()
         })
+        
+@app.route('/test/debug_generar_pdf_especialidad')
+def debug_generar_pdf_especialidad():
+    """
+    Debug específico del endpoint que da error timestamp
+    """
+    try:
+        import inspect
+        
+        # Ver qué función está siendo llamada por generar_pdf_especialidad
+        debug_info = {
+            'endpoint_actual': '/test/generar_pdf_especialidad/carta_astral_ia',
+            'funciones_disponibles': [],
+            'cadena_llamadas': []
+        }
+        
+        # Datos de test
+        datos_cliente = {
+            'nombre': 'Cliente Debug',
+            'email': 'debug@test.com',
+            'telefono': '+34600000000',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'codigo_servicio': 'debug'
+        }
+        
+        especialidad = 'carta_astral_ia'
+        
+        # PASO 1: Verificar qué función está en generar_solo_pdf
+        try:
+            codigo_generar_solo_pdf = inspect.getsource(generar_solo_pdf)
+            debug_info['codigo_generar_solo_pdf'] = codigo_generar_solo_pdf[:500] + "..." if len(codigo_generar_solo_pdf) > 500 else codigo_generar_solo_pdf
+        except:
+            debug_info['codigo_generar_solo_pdf'] = "No se pudo obtener"
+        
+        # PASO 2: Llamar directamente a generar_solo_pdf y capturar error
+        try:
+            resultado_directo = generar_solo_pdf(datos_cliente, especialidad)
+            debug_info['generar_solo_pdf_directo'] = {
+                'success': resultado_directo.get('success', False) if resultado_directo else False,
+                'keys': list(resultado_directo.keys()) if resultado_directo else [],
+                'error': resultado_directo.get('error') if resultado_directo else None
+            }
+        except Exception as e:
+            debug_info['generar_solo_pdf_directo'] = {
+                'success': False,
+                'error_exception': str(e),
+                'error_type': type(e).__name__
+            }
+        
+        # PASO 3: Verificar generar_pdf_completo_optimizado
+        try:
+            resultado_optimizado = generar_pdf_completo_optimizado(datos_cliente, especialidad)
+            debug_info['generar_pdf_completo_optimizado'] = {
+                'success': resultado_optimizado.get('success', False) if resultado_optimizado else False,
+                'keys': list(resultado_optimizado.keys()) if resultado_optimizado else [],
+                'error': resultado_optimizado.get('error') if resultado_optimizado else None
+            }
+        except Exception as e:
+            debug_info['generar_pdf_completo_optimizado'] = {
+                'success': False,
+                'error_exception': str(e),
+                'error_type': type(e).__name__
+            }
+        
+        # PASO 4: Verificar si las funciones están actualizadas
+        debug_info['funciones_importadas'] = {
+            'generar_solo_pdf_existe': 'generar_solo_pdf' in globals(),
+            'generar_pdf_completo_optimizado_existe': 'generar_pdf_completo_optimizado' in globals(),
+            'procesar_y_enviar_informe_existe': 'procesar_y_enviar_informe' in globals()
+        }
+        
+        return jsonify(debug_info)
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error_debug': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/test/llamar_directamente_optimizado')
+def test_llamar_directamente_optimizado():
+    """
+    Llamar directamente a la función optimizada sin pasar por otras
+    """
+    try:
+        datos_cliente = {
+            'nombre': 'Cliente Directo',
+            'email': 'directo@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # Llamar directamente a la función nueva
+        resultado = generar_pdf_completo_optimizado(datos_cliente, 'carta_astral_ia', "Test directo")
+        
+        if resultado.get('success'):
+            archivo_pdf = resultado.get('archivo_pdf', '')
+            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+            
+            return jsonify({
+                "status": "success",
+                "mensaje": "PDF generado llamando directamente a función optimizada",
+                "archivo": archivo_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "aspectos_incluidos": resultado.get('aspectos_incluidos', {}),
+                "metodo": resultado.get('metodo', ''),
+                "timestamp": resultado.get('timestamp', '')
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "mensaje": f"Error en función optimizada: {resultado.get('error', 'Error desconocido')}",
+                "resultado_completo": resultado
+            })
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "status": "error", 
+            "mensaje": f"Error crítico: {str(e)}",
+            "traceback": traceback.format_exc()
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
