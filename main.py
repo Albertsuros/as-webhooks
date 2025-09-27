@@ -14764,6 +14764,544 @@ def test_solo_natal_transitos():
     except Exception as e:
         import traceback
         return jsonify({'status': 'error', 'error': str(e), 'traceback': traceback.format_exc()})
+        
+# =======================================================================
+# DEBUG COMPLETO Y CORRECCIÓN - AÑADIR A main.py
+# =======================================================================
+
+@app.route('/test/debug_template_data_completo')
+def debug_template_data_completo():
+    """
+    Debug completo: Ver exactamente qué datos llegan al template
+    """
+    try:
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        exito, resultado = generar_cartas_astrales_base64(datos_natales_test)
+        
+        if exito and resultado:
+            # Extraer todos los datos
+            aspectos_natales = resultado.get('aspectos_natales', [])
+            aspectos_progresiones = resultado.get('aspectos_progresiones', [])
+            aspectos_transitos = resultado.get('aspectos_transitos', [])
+            imagenes_base64 = resultado.get('imagenes_base64', {})
+            template_data = resultado.get('template_data', {})
+            
+            debug_info = {
+                'resultado_principal': {
+                    'keys': list(resultado.keys()),
+                    'aspectos_natales_count': len(aspectos_natales),
+                    'aspectos_progresiones_count': len(aspectos_progresiones),
+                    'aspectos_transitos_count': len(aspectos_transitos),
+                    'imagenes_disponibles': list(imagenes_base64.keys())
+                },
+                'template_data_estructura': {
+                    'existe': 'template_data' in resultado,
+                    'keys': list(template_data.keys()) if template_data else 'NO EXISTE',
+                    'aspectos_natales_en_template': len(template_data.get('aspectos_natales', [])) if template_data else 0,
+                    'aspectos_progresiones_en_template': len(template_data.get('aspectos_progresiones', [])) if template_data else 0,
+                    'imagenes_en_template': list(template_data.get('imagenes_base64', {}).keys()) if template_data else []
+                },
+                'muestra_aspectos_natales': {
+                    'total': len(aspectos_natales),
+                    'primeros_3': [
+                        {
+                            'planeta1': asp.get('planeta1', 'N/A'),
+                            'aspecto': asp.get('aspecto', 'N/A'),
+                            'planeta2': asp.get('planeta2', 'N/A'),
+                            'orbe': asp.get('orbe', 0)
+                        } for asp in aspectos_natales[:3]
+                    ] if aspectos_natales else []
+                },
+                'muestra_aspectos_progresiones': {
+                    'total': len(aspectos_progresiones),
+                    'primeros_3': [
+                        {
+                            'planeta_progresion': asp.get('planeta_progresion', 'N/A'),
+                            'tipo': asp.get('tipo', 'N/A'),
+                            'planeta_natal': asp.get('planeta_natal', 'N/A'),
+                            'orbe': asp.get('orbe', 0)
+                        } for asp in aspectos_progresiones[:3]
+                    ] if aspectos_progresiones else []
+                },
+                'problema_identificado': None
+            }
+            
+            # Identificar el problema específico
+            if len(imagenes_base64) < 3:
+                debug_info['problema_identificado'] = f"Solo {len(imagenes_base64)} imágenes generadas de 3 esperadas"
+            elif len(aspectos_progresiones) == 0:
+                debug_info['problema_identificado'] = "Aspectos de progresiones están vacíos"
+            elif 'template_data' not in resultado:
+                debug_info['problema_identificado'] = "Falta template_data en resultado"
+            elif len(template_data.get('aspectos_progresiones', [])) == 0:
+                debug_info['problema_identificado'] = "template_data no tiene aspectos_progresiones"
+            else:
+                debug_info['problema_identificado'] = "Datos parecen correctos, problema en template HTML"
+            
+            return jsonify(debug_info)
+        else:
+            return jsonify({'error': 'No se pudieron generar las cartas', 'exito': exito})
+            
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()})
+
+@app.route('/test/aspectos_reales_corregidos')
+def test_aspectos_reales_corregidos():
+    """
+    Test con aspectos REALES mostrados correctamente
+    """
+    try:
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        exito, resultado = generar_cartas_astrales_base64(datos_natales_test)
+        
+        if exito and resultado:
+            aspectos_natales = resultado.get('aspectos_natales', [])
+            aspectos_progresiones = resultado.get('aspectos_progresiones', [])
+            aspectos_transitos = resultado.get('aspectos_transitos', [])
+            imagenes_base64 = resultado.get('imagenes_base64', {})
+            
+            # HTML con aspectos REALES
+            html_response = f"""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <title>🌟 Test Aspectos REALES Corregidos</title>
+                <style>
+                    body {{ font-family: 'Georgia', serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; }}
+                    .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }}
+                    .carta-section {{ margin: 30px 0; padding: 20px; border-left: 5px solid #667eea; background: #f8f9ff; border-radius: 10px; }}
+                    .carta-imagen {{ text-align: center; margin: 20px 0; }}
+                    .carta-imagen img {{ max-width: 100%; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); border: 3px solid #667eea; }}
+                    .aspectos-section {{ background: #f8f9ff; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea; }}
+                    .aspectos-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px; margin-top: 10px; }}
+                    .aspecto-item {{ background: white; padding: 10px 15px; border-radius: 6px; border: 1px solid #e0e6ed; display: flex; justify-content: space-between; align-items: center; }}
+                    .aspecto-planetas {{ font-weight: 500; color: #333; }}
+                    .aspecto-orbe {{ font-size: 0.85em; color: #666; background: #f0f2f5; padding: 3px 8px; border-radius: 4px; }}
+                    .debug-info {{ background: #fffacd; padding: 15px; border-radius: 8px; margin: 15px 0; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🌟 Test de Aspectos REALES Corregidos</h1>
+                    
+                    <div class="debug-info">
+                        <h3>📊 Estado actual:</h3>
+                        <p><strong>Aspectos Natales:</strong> {len(aspectos_natales)} encontrados</p>
+                        <p><strong>Aspectos Progresiones:</strong> {len(aspectos_progresiones)} encontrados</p>
+                        <p><strong>Aspectos Tránsitos:</strong> {len(aspectos_transitos)} encontrados</p>
+                        <p><strong>Imágenes:</strong> {list(imagenes_base64.keys())}</p>
+                    </div>
+
+                    <!-- CARTA NATAL CON ASPECTOS REALES -->
+                    <div class="carta-section">
+                        <h2>🌅 Carta Natal</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('carta_natal', '')}" alt="Carta Natal">
+                        </div>
+                        
+                        <div class="aspectos-section">
+                            <h3>⭐ Aspectos Natales REALES ({len(aspectos_natales)})</h3>
+                            <div class="aspectos-grid">
+            """
+            
+            # Añadir aspectos natales REALES
+            for aspecto in aspectos_natales[:12]:
+                planeta1 = aspecto.get('planeta1', 'Planeta1')
+                planeta2 = aspecto.get('planeta2', 'Planeta2')
+                tipo_aspecto = aspecto.get('aspecto', 'aspecto')
+                orbe = aspecto.get('orbe', 0)
+                
+                html_response += f"""
+                                <div class="aspecto-item">
+                                    <span class="aspecto-planetas">{planeta1} {tipo_aspecto} {planeta2}</span>
+                                    <span class="aspecto-orbe">{orbe:.1f}°</span>
+                                </div>
+                """
+            
+            if len(aspectos_natales) > 12:
+                html_response += f"""
+                                <div class="aspecto-item" style="grid-column: 1 / -1; text-align: center; font-style: italic; color: #667eea;">
+                                    + {len(aspectos_natales) - 12} aspectos más...
+                                </div>
+                """
+            
+            html_response += """
+                            </div>
+                        </div>
+                    </div>
+            """
+            
+            # PROGRESIONES CON ASPECTOS REALES
+            if 'progresiones' in imagenes_base64 and aspectos_progresiones:
+                html_response += f"""
+                    <div class="carta-section">
+                        <h2>📈 Progresiones Secundarias</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('progresiones', '')}" alt="Progresiones">
+                        </div>
+                        
+                        <div class="aspectos-section">
+                            <h3>🌱 Aspectos de Progresión REALES ({len(aspectos_progresiones)})</h3>
+                            <div class="aspectos-grid">
+                """
+                
+                for aspecto in aspectos_progresiones[:10]:
+                    planeta_progresion = aspecto.get('planeta_progresion', 'PlanetaProg')
+                    planeta_natal = aspecto.get('planeta_natal', 'PlanetaNatal')
+                    tipo = aspecto.get('tipo', 'aspecto')
+                    orbe = aspecto.get('orbe', 0)
+                    
+                    html_response += f"""
+                                    <div class="aspecto-item">
+                                        <span class="aspecto-planetas">{planeta_progresion} {tipo} {planeta_natal}</span>
+                                        <span class="aspecto-orbe">{orbe:.1f}°</span>
+                                    </div>
+                    """
+                
+                if len(aspectos_progresiones) > 10:
+                    html_response += f"""
+                                    <div class="aspecto-item" style="grid-column: 1 / -1; text-align: center; font-style: italic; color: #667eea;">
+                                        + {len(aspectos_progresiones) - 10} aspectos más...
+                                    </div>
+                    """
+                
+                html_response += """
+                            </div>
+                        </div>
+                    </div>
+                """
+            else:
+                html_response += """
+                    <div class="carta-section">
+                        <h2>📈 Progresiones Secundarias</h2>
+                        <div style="background: #ffebee; padding: 20px; border-radius: 8px; text-align: center;">
+                            <p><strong>⚠️ Progresiones no disponibles</strong></p>
+                            <p>Imagen disponible: {'progresiones' in imagenes_base64}</p>
+                            <p>Aspectos disponibles: {len(aspectos_progresiones) > 0}</p>
+                        </div>
+                    </div>
+                """
+            
+            # TRÁNSITOS CON ASPECTOS REALES
+            if 'transitos' in imagenes_base64:
+                html_response += f"""
+                    <div class="carta-section">
+                        <h2>🔄 Tránsitos Actuales</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('transitos', '')}" alt="Tránsitos">
+                        </div>
+                        
+                        <div class="aspectos-section">
+                            <h3>⚡ Aspectos de Tránsito REALES ({len(aspectos_transitos)})</h3>
+                            <div class="aspectos-grid">
+                """
+                
+                for aspecto in aspectos_transitos[:10]:
+                    planeta_transito = aspecto.get('planeta_transito', 'PlanetaTrans')
+                    planeta_natal = aspecto.get('planeta_natal', 'PlanetaNatal')
+                    tipo = aspecto.get('tipo', 'aspecto')
+                    orbe = aspecto.get('orbe', 0)
+                    
+                    html_response += f"""
+                                    <div class="aspecto-item">
+                                        <span class="aspecto-planetas">{planeta_transito} {tipo} {planeta_natal}</span>
+                                        <span class="aspecto-orbe">{orbe:.1f}°</span>
+                                    </div>
+                    """
+                
+                if len(aspectos_transitos) > 10:
+                    html_response += f"""
+                                    <div class="aspecto-item" style="grid-column: 1 / -1; text-align: center; font-style: italic; color: #667eea;">
+                                        + {len(aspectos_transitos) - 10} aspectos más...
+                                    </div>
+                    """
+                
+                html_response += """
+                            </div>
+                        </div>
+                    </div>
+                """
+            
+            html_response += """
+                </div>
+            </body>
+            </html>
+            """
+            
+            return html_response
+        else:
+            return f"<h1>❌ Error generando cartas</h1><p>Exito: {exito}</p>"
+            
+    except Exception as e:
+        import traceback
+        return f"<h1>❌ Error crítico</h1><pre>{traceback.format_exc()}</pre>"
+
+# =======================================================================
+# FUNCIÓN CORREGIDA CON TIMESTAMP Y DATOS COMPLETOS
+# =======================================================================
+
+def generar_cartas_astrales_base64_corregida(datos_natales):
+    """
+    Versión CORREGIDA que asegura todos los campos necesarios
+    """
+    try:
+        print("🔧 Generando cartas astrales CORREGIDAS...")
+        
+        # [Código de generación igual que antes...]
+        fecha_str = datos_natales.get('fecha_nacimiento', '')
+        hora_str = datos_natales.get('hora_nacimiento', '')
+        lugar_nacimiento = datos_natales.get('lugar_nacimiento', '')
+        
+        if '/' in fecha_str and ':' in hora_str:
+            dia, mes, año = map(int, fecha_str.split('/'))
+            hora, minuto = map(int, hora_str.split(':'))
+            fecha_natal = (año, mes, dia, hora, minuto)
+        else:
+            raise ValueError("Formato fecha/hora incorrecto")
+        
+        coordenadas_ciudades = {
+            'Madrid': (40.42, -3.70),
+            'Barcelona': (41.39, 2.16),
+        }
+        lugar_coords = coordenadas_ciudades.get('Madrid', (40.42, -3.70))
+        ciudad_nombre = 'Madrid, España'
+        
+        imagenes_base64 = {}
+        datos_aspectos = {}
+        
+        # 1. CARTA NATAL
+        print("📊 Generando Carta Natal...")
+        try:
+            from carta_natal import CartaAstralNatal
+            import matplotlib.pyplot as plt
+            import io
+            import base64
+            
+            carta_natal = CartaAstralNatal(figsize=(16, 14))
+            aspectos_natal, posiciones_natal = carta_natal.crear_carta_astral_natal(
+                fecha_natal=fecha_natal,
+                lugar_natal=lugar_coords,
+                ciudad_natal=ciudad_nombre,
+                guardar_archivo=False,
+                directorio_salida=None
+            )
+            
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight', 
+                       facecolor='white', edgecolor='none')
+            buffer.seek(0)
+            imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+            imagenes_base64['carta_natal'] = f"data:image/png;base64,{imagen_base64}"
+            plt.close()
+            buffer.close()
+            
+            datos_aspectos['natal'] = {
+                'aspectos': aspectos_natal,
+                'posiciones': posiciones_natal
+            }
+            
+            print(f"✅ Carta natal: {len(aspectos_natal)} aspectos")
+            
+        except Exception as e:
+            print(f"⚠️ Error en carta natal: {e}")
+            imagenes_base64['carta_natal'] = crear_placeholder_base64("Carta Natal\n(Error)")
+            datos_aspectos['natal'] = {'aspectos': [], 'posiciones': {}}
+        
+        # 2. PROGRESIONES
+        print("📈 Generando Progresiones...")
+        try:
+            from progresiones import CartaProgresiones
+            from datetime import datetime as dt
+            
+            carta_prog = CartaProgresiones(figsize=(16, 14))
+            hoy = dt.now()
+            edad_actual = (hoy.year - año) + (hoy.month - mes) / 12.0
+            
+            aspectos_prog, pos_natales, pos_prog, _, _ = carta_prog.crear_carta_progresiones(
+                fecha_nacimiento=fecha_natal,
+                edad_consulta=edad_actual,
+                lugar_nacimiento=lugar_coords,
+                lugar_actual=lugar_coords,
+                ciudad_nacimiento=ciudad_nombre,
+                ciudad_actual=ciudad_nombre,
+                guardar_archivo=False
+            )
+            
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight',
+                       facecolor='white', edgecolor='none')
+            buffer.seek(0)
+            imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+            imagenes_base64['progresiones'] = f"data:image/png;base64,{imagen_base64}"
+            plt.close()
+            buffer.close()
+            
+            datos_aspectos['progresiones'] = {
+                'aspectos': aspectos_prog,
+                'posiciones_natales': pos_natales,
+                'posiciones_progresadas': pos_prog
+            }
+            
+            print(f"✅ Progresiones: {len(aspectos_prog)} aspectos")
+            
+        except Exception as e:
+            print(f"⚠️ Error en progresiones: {e}")
+            imagenes_base64['progresiones'] = crear_placeholder_base64("Progresiones\n(Error)")
+            datos_aspectos['progresiones'] = {'aspectos': []}
+        
+        # 3. TRÁNSITOS
+        print("🔄 Generando Tránsitos...")
+        try:
+            from transitos import CartaTransitos
+            from datetime import datetime as dt
+            
+            carta_trans = CartaTransitos(figsize=(16, 14))
+            hoy = dt.now()
+            fecha_consulta = (hoy.year, hoy.month, hoy.day, hoy.hour, hoy.minute)
+            
+            resultado = carta_trans.crear_carta_transitos(
+                fecha_nacimiento=fecha_natal,
+                fecha_transito=fecha_consulta,
+                lugar_nacimiento=lugar_coords,
+                guardar_archivo=False
+            )
+            
+            if resultado and len(resultado) >= 3:
+                aspectos_trans, pos_natales, pos_transitos = resultado[:3]
+                
+                buffer = io.BytesIO()
+                plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight',
+                           facecolor='white', edgecolor='none')
+                buffer.seek(0)
+                imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+                imagenes_base64['transitos'] = f"data:image/png;base64,{imagen_base64}"
+                plt.close()
+                buffer.close()
+                
+                datos_aspectos['transitos'] = {
+                    'aspectos': aspectos_trans,
+                    'posiciones_natales': pos_natales,
+                    'posiciones_transitos': pos_transitos
+                }
+                
+                print(f"✅ Tránsitos: {len(aspectos_trans)} aspectos")
+            else:
+                raise Exception("Resultado de tránsitos vacío")
+                
+        except Exception as e:
+            print(f"⚠️ Error en tránsitos: {e}")
+            imagenes_base64['transitos'] = crear_placeholder_base64("Tránsitos\n(Error)")
+            datos_aspectos['transitos'] = {'aspectos': []}
+        
+        # COMPILAR DATOS COMPLETOS CON TODOS LOS CAMPOS NECESARIOS
+        from datetime import datetime as dt
+        timestamp = dt.now().strftime('%Y%m%d_%H%M%S')
+        
+        aspectos_natales = datos_aspectos['natal']['aspectos']
+        posiciones_natales = datos_aspectos['natal']['posiciones']
+        aspectos_progresiones = datos_aspectos['progresiones']['aspectos']
+        aspectos_transitos = datos_aspectos['transitos']['aspectos']
+        
+        estadisticas = {
+            'total_aspectos_natal': len(aspectos_natales),
+            'total_aspectos_progresiones': len(aspectos_progresiones),
+            'total_aspectos_transitos': len(aspectos_transitos)
+        }
+        
+        # ESTRUCTURA COMPLETA CON TODOS LOS CAMPOS NECESARIOS
+        datos_completos = {
+            # Datos principales
+            'aspectos_natales': aspectos_natales,
+            'posiciones_natales': posiciones_natales,
+            'aspectos_progresiones': aspectos_progresiones,
+            'aspectos_transitos': aspectos_transitos,
+            'imagenes_base64': imagenes_base64,
+            'estadisticas': estadisticas,
+            
+            # Campos requeridos por el sistema
+            'timestamp': timestamp,
+            'informe_html': f"templates/informe_carta_astral_ia_{timestamp}.html",
+            'informe_pdf': f"informes/informe_carta_astral_ia_{timestamp}.pdf",
+            'es_producto_m': False,
+            'duracion_minutos': 40,
+            
+            # Datos completos para debugging
+            'datos_completos_aspectos': datos_aspectos,
+            'metodo': 'base64_corregido_v3',
+            'datos_originales': datos_natales,
+            
+            # Template data (estructura específica para templates)
+            'template_data': {
+                'aspectos_natales': aspectos_natales,
+                'posiciones_natales': posiciones_natales,
+                'aspectos_progresiones': aspectos_progresiones,
+                'aspectos_transitos': aspectos_transitos,
+                'estadisticas': estadisticas,
+                'imagenes_base64': imagenes_base64,
+                'timestamp': timestamp
+            }
+        }
+        
+        print("✅ Cartas astrales CORREGIDAS generadas exitosamente")
+        return True, datos_completos
+        
+    except Exception as e:
+        print(f"❌ Error en cartas corregidas: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, None
+
+# =======================================================================
+# REEMPLAZAR LA FUNCIÓN PRINCIPAL EN main.py
+# =======================================================================
+
+# COMENTAR/REEMPLAZAR la función generar_cartas_astrales_base64 existente por:
+# generar_cartas_astrales_base64 = generar_cartas_astrales_base64_corregida
+
+@app.route('/test/usar_funcion_corregida')
+def test_usar_funcion_corregida():
+    """
+    Test usando la función corregida
+    """
+    try:
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        exito, resultado = generar_cartas_astrales_base64_corregida(datos_natales_test)
+        
+        if exito and resultado:
+            return jsonify({
+                'status': 'success',
+                'timestamp_incluido': 'timestamp' in resultado,
+                'campos_principales': list(resultado.keys()),
+                'aspectos_natales_count': len(resultado.get('aspectos_natales', [])),
+                'aspectos_progresiones_count': len(resultado.get('aspectos_progresiones', [])),
+                'aspectos_transitos_count': len(resultado.get('aspectos_transitos', [])),
+                'imagenes_disponibles': list(resultado.get('imagenes_base64', {}).keys()),
+                'template_data_ok': 'template_data' in resultado,
+                'test_pdf_url': '/test/generar_pdf_especialidad/carta_astral_ia'
+            })
+        else:
+            return jsonify({'status': 'error', 'exito': exito})
+            
+    except Exception as e:
+        import traceback
+        return jsonify({'status': 'error', 'error': str(e), 'traceback': traceback.format_exc()})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
