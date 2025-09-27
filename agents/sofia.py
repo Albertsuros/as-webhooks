@@ -753,7 +753,14 @@ def calcular_año_revolucion_solar(fecha_nacimiento_str, preferencia_año):
 
 def generar_cartas_astrales_completas(datos_natales, archivos_unicos):
     """Generar cartas usando BASE64 - NO filesystem"""
-    return generar_cartas_astrales_base64(datos_natales)
+    exito, datos_completos = generar_cartas_astrales_base64(datos_natales)
+    
+    if exito:
+        # IMPORTANTE: Pasar TODOS los datos a archivos_unicos
+        archivos_unicos.update(datos_completos)
+        return True, datos_completos
+    else:
+        return False, None
     
 def generar_revoluciones_solares_completas(datos_natales, archivos_unicos, año_revolucion):
     """Generar revolución solar completa (5 cartas)"""
