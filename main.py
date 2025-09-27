@@ -15129,6 +15129,360 @@ def debug_timestamp_error():
             'error_debug': str(e),
             'traceback': traceback.format_exc()
         })
+        
+# AÑADIR A main.py - Debug completo del flujo que falla
+
+@app.route('/test/debug_flujo_completo_timestamp')
+def debug_flujo_completo_timestamp():
+    """
+    Rastrear exactamente dónde ocurre el error timestamp
+    """
+    try:
+        datos_cliente_test = {
+            'nombre': 'Cliente Test',
+            'email': 'test@test.com', 
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        especialidad = 'carta_astral_ia'
+        debug_steps = []
+        
+        # STEP 1: Probar crear_archivos_unicos_testing
+        try:
+            archivos_unicos = crear_archivos_unicos_testing(especialidad)
+            debug_steps.append({
+                'step': '1_crear_archivos_unicos',
+                'success': True,
+                'data': archivos_unicos,
+                'has_timestamp': 'timestamp' in archivos_unicos
+            })
+        except Exception as e:
+            debug_steps.append({
+                'step': '1_crear_archivos_unicos',
+                'success': False,
+                'error': str(e)
+            })
+            return jsonify({'debug_steps': debug_steps, 'failed_at': 'crear_archivos_unicos'})
+        
+        # STEP 2: Probar generar_cartas_astrales_base64
+        try:
+            exito_base64, datos_base64 = generar_cartas_astrales_base64(datos_cliente_test)
+            debug_steps.append({
+                'step': '2_generar_cartas_base64',
+                'success': exito_base64,
+                'data_keys': list(datos_base64.keys()) if datos_base64 else None,
+                'has_timestamp': 'timestamp' in datos_base64 if datos_base64 else False,
+                'timestamp_value': datos_base64.get('timestamp') if datos_base64 else None
+            })
+            
+            if exito_base64 and datos_base64:
+                # Actualizar archivos_unicos con datos de Sofia
+                archivos_unicos.update(datos_base64)
+                debug_steps.append({
+                    'step': '2b_update_archivos_unicos',
+                    'success': True,
+                    'archivos_unicos_keys': list(archivos_unicos.keys()),
+                    'has_timestamp_after_update': 'timestamp' in archivos_unicos
+                })
+            
+        except Exception as e:
+            debug_steps.append({
+                'step': '2_generar_cartas_base64',
+                'success': False,
+                'error': str(e)
+            })
+            return jsonify({'debug_steps': debug_steps, 'failed_at': 'generar_cartas_base64'})
+        
+        # STEP 3: Probar generar_informe_html
+        try:
+            archivo_html = generar_informe_html(
+                datos_cliente=datos_cliente_test,
+                tipo_servicio=especialidad,
+                archivos_unicos=archivos_unicos,
+                resumen_sesion="Test de debug timestamp"
+            )
+            debug_steps.append({
+                'step': '3_generar_informe_html',
+                'success': archivo_html is not None,
+                'archivo_html': archivo_html,
+                'archivos_unicos_passed': {
+                    'keys': list(archivos_unicos.keys()),
+                    'has_timestamp': 'timestamp' in archivos_unicos,
+                    'timestamp_value': archivos_unicos.get('timestamp')
+                }
+            })
+        except Exception as e:
+            debug_steps.append({
+                'step': '3_generar_informe_html',
+                'success': False,
+                'error': str(e),
+                'archivos_unicos_keys': list(archivos_unicos.keys()),
+                'has_timestamp': 'timestamp' in archivos_unicos
+            })
+            return jsonify({'debug_steps': debug_steps, 'failed_at': 'generar_informe_html'})
+        
+        # STEP 4: Probar convertir_html_a_pdf
+        try:
+            archivo_pdf = archivos_unicos.get('informe_pdf', f"informes/test_debug_{archivos_unicos.get('timestamp', 'no_timestamp')}.pdf")
+            pdf_success = convertir_html_a_pdf(archivo_html, archivo_pdf)
+            debug_steps.append({
+                'step': '4_convertir_html_a_pdf',
+                'success': pdf_success,
+                'archivo_pdf': archivo_pdf,
+                'timestamp_used': archivos_unicos.get('timestamp')
+            })
+        except Exception as e:
+            debug_steps.append({
+                'step': '4_convertir_html_a_pdf',
+                'success': False,
+                'error': str(e)
+            })
+            return jsonify({'debug_steps': debug_steps, 'failed_at': 'convertir_html_a_pdf'})
+        
+        # STEP 5: Probar generar_solo_pdf directamente
+        try:
+            resultado_pdf = generar_solo_pdf(datos_cliente_test, especialidad)
+            debug_steps.append({
+                'step': '5_generar_solo_pdf_directo',
+                'success': resultado_pdf.get('success', False) if resultado_pdf else False,
+                'resultado': resultado_pdf
+            })
+        except Exception as e:
+            debug_steps.append({
+                'step': '5_generar_solo_pdf_directo', 
+                'success': False,
+                'error': str(e)
+            })
+        
+        return jsonify({
+            'debug_steps': debug_steps,
+            'final_archivos_unicos': archivos_unicos,
+            'diagnostico': 'Flujo completo rastreado',
+            'problema_localizado': 'Ver step que falla'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error_general': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+
+@app.route('/test/debug_generar_solo_pdf_especifico')
+def debug_generar_solo_pdf_especifico():
+    """
+    Debug específico de la función generar_solo_pdf que usa el endpoint que falla
+    """
+    try:
+        import inspect
+        
+        # Ver el código actual de generar_solo_pdf
+        try:
+            codigo_fuente = inspect.getsource(generar_solo_pdf)
+        except:
+            codigo_fuente = "No se pudo obtener el código fuente"
+        
+        # Probar ejecutar paso a paso
+        datos_cliente_test = {
+            'nombre': 'Cliente Test',
+            'email': 'test@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        especialidad = 'carta_astral_ia'
+        
+        debug_info = {
+            'codigo_fuente': codigo_fuente,
+            'steps': []
+        }
+        
+        # Step 1: Crear archivos_unicos
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        archivos_unicos = crear_archivos_unicos_testing(especialidad, timestamp)
+        debug_info['steps'].append({
+            'step': 'crear_archivos_unicos',
+            'result': archivos_unicos,
+            'has_timestamp': 'timestamp' in archivos_unicos
+        })
+        
+        # Step 2: Llamar procesar_y_enviar_informe
+        try:
+            resultado = procesar_y_enviar_informe(
+                datos_cliente=datos_cliente_test,
+                tipo_servicio=especialidad,
+                datos_astrales=archivos_unicos,
+                resumen_sesion="PDF generado directamente"
+            )
+            debug_info['steps'].append({
+                'step': 'procesar_y_enviar_informe',
+                'success': True,
+                'resultado': resultado
+            })
+        except Exception as e:
+            debug_info['steps'].append({
+                'step': 'procesar_y_enviar_informe',
+                'success': False,
+                'error': str(e),
+                'error_type': type(e).__name__
+            })
+        
+        return jsonify(debug_info)
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+
+# FUNCIÓN CORREGIDA PARA generar_solo_pdf que GARANTIZA timestamp
+def generar_solo_pdf_corregido(datos_cliente, especialidad, client_id=None):
+    """
+    Versión corregida de generar_solo_pdf que garantiza timestamp
+    """
+    try:
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Crear archivos_unicos con timestamp garantizado
+        archivos_unicos = {
+            'timestamp': timestamp,
+            'informe_html': f"templates/informe_{especialidad}_{timestamp}.html",
+            'informe_pdf': f"informes/informe_{especialidad}_{timestamp}.pdf",
+            'es_producto_m': False,
+            'duracion_minutos': 40
+        }
+        
+        # IMPORTANTE: Llamar a Sofia para obtener datos astrales
+        try:
+            exito_sofia, datos_sofia = generar_cartas_astrales_base64(datos_cliente)
+            if exito_sofia and datos_sofia:
+                # Añadir todos los datos de Sofia a archivos_unicos
+                archivos_unicos.update(datos_sofia)
+                print(f"Sofia exitosa: {len(datos_sofia.get('aspectos_natales', []))} aspectos natales")
+            else:
+                print("Sofia falló, usando datos básicos")
+        except Exception as e:
+            print(f"Error en Sofia: {e}")
+        
+        # Procesar informe con datos completos
+        resultado = procesar_y_enviar_informe(
+            datos_cliente=datos_cliente,
+            tipo_servicio=especialidad,
+            datos_astrales=archivos_unicos,
+            resumen_sesion="PDF generado con datos astrales completos"
+        )
+        
+        return resultado
+        
+    except Exception as e:
+        print(f"Error en generar_solo_pdf_corregido: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+
+@app.route('/test/usar_generar_solo_pdf_corregido')
+def test_usar_generar_solo_pdf_corregido():
+    """
+    Test usando la versión corregida de generar_solo_pdf
+    """
+    try:
+        datos_cliente_test = {
+            'nombre': 'Cliente Test',
+            'email': 'test@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        resultado = generar_solo_pdf_corregido(datos_cliente_test, 'carta_astral_ia')
+        
+        return jsonify({
+            'test_resultado': resultado,
+            'success': resultado.get('success', False),
+            'tiene_timestamp': 'timestamp' in resultado,
+            'archivo_pdf': resultado.get('archivo_pdf'),
+            'mensaje': 'Test de función corregida completado'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+
+# ENDPOINT FINAL QUE REEMPLAZA EL QUE FALLA
+@app.route('/test/generar_pdf_carta_astral_corregido')
+def test_generar_pdf_carta_astral_corregido():
+    """
+    Versión corregida del endpoint que falla con timestamp
+    """
+    try:
+        # Datos de test
+        datos_cliente = {
+            'nombre': 'Usuario Prueba',
+            'email': 'prueba@test.com',
+            'telefono': '+34600000000',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'codigo_servicio': 'test'
+        }
+        
+        especialidad = 'carta_astral_ia'
+        
+        print(f"Generando PDF para {especialidad}...")
+        
+        # Usar función corregida
+        resultado = generar_solo_pdf_corregido(datos_cliente, especialidad)
+        
+        if resultado.get('success'):
+            archivo_pdf = resultado.get('archivo_pdf', '')
+            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+            
+            return jsonify({
+                "status": "success",
+                "mensaje": f"PDF generado correctamente con timestamp incluido",
+                "archivo": archivo_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "especialidad": especialidad,
+                "timestamp": resultado.get('timestamp'),
+                "metodo": "corregido_con_sofia_base64",
+                "aspectos_incluidos": {
+                    "natal": len(resultado.get('aspectos_natales', [])),
+                    "progresiones": len(resultado.get('aspectos_progresiones', [])),
+                    "transitos": len(resultado.get('aspectos_transitos', []))
+                }
+            })
+        else:
+            return jsonify({
+                "status": "error", 
+                "mensaje": f"Error generando PDF: {resultado.get('error', 'Error desconocido')}",
+                "resultado_completo": resultado
+            })
+            
+    except Exception as e:
+        print(f"Error en endpoint corregido: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error",
+            "mensaje": f"Error general: {str(e)}",
+            "traceback": traceback.format_exc()
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
