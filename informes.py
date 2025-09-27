@@ -535,3 +535,245 @@ def obtener_portada_con_logo(tipo_servicio, nombre):
         <h3 style="margin: 0;">Para {nombre}</h3>
     </div>
     """
+    
+# =======================================================================
+# FUNCIÓN FALTANTE - AÑADIR AL FINAL DE informes.py
+# =======================================================================
+
+def generar_y_enviar_informe_desde_agente(datos_cliente, tipo_servicio, resumen_sesion="", archivos_cartas=None):
+    """
+    Función para generar y procesar informe desde agentes
+    VERSIÓN ACTUALIZADA para sistema base64
+    """
+    try:
+        print(f"📧 Generando informe desde agente: {tipo_servicio}")
+        
+        # Crear archivos_unicos si no se proporciona
+        if not archivos_cartas:
+            import uuid
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            id_unico = str(uuid.uuid4())[:8]
+            
+            archivos_cartas = {
+                'informe_html': f"templates/informe_{tipo_servicio}_{id_unico}.html",
+                'informe_pdf': f"informes/informe_{tipo_servicio}_{id_unico}.pdf",
+                'timestamp': timestamp,
+                'es_producto_m': False,
+                'duracion_minutos': 40
+            }
+        
+        # PASO 1: Generar HTML
+        archivo_html = generar_informe_html(
+            datos_cliente=datos_cliente,
+            tipo_servicio=tipo_servicio,
+            archivos_unicos=archivos_cartas,
+            resumen_sesion=resumen_sesion
+        )
+        
+        if not archivo_html:
+            return {
+                'success': False,
+                'error': 'No se pudo generar el HTML',
+                'archivo_html': None,
+                'archivo_pdf': None
+            }
+        
+        # PASO 2: Convertir a PDF
+        archivo_pdf = archivos_cartas.get('informe_pdf', f"informes/informe_{tipo_servicio}_{archivos_cartas.get('timestamp', 'unknown')}.pdf")
+        
+        # Crear directorio si no existe
+        directorio_pdf = os.path.dirname(archivo_pdf)
+        if directorio_pdf and not os.path.exists(directorio_pdf):
+            os.makedirs(directorio_pdf)
+        
+        pdf_generado = convertir_html_a_pdf(archivo_html, archivo_pdf)
+        
+        if pdf_generado:
+            return {
+                'success': True,
+                'mensaje': f'Informe {tipo_servicio} generado correctamente',
+                'archivo_html': archivo_html,
+                'archivo_pdf': archivo_pdf,
+                'tipo_servicio': tipo_servicio,
+                'cliente': datos_cliente.get('nombre', 'Cliente'),
+                'timestamp': archivos_cartas.get('timestamp'),
+                'metodo': 'base64_system'
+            }
+        else:
+            return {
+                'success': False,
+                'error': 'No se pudo generar el PDF',
+                'archivo_html': archivo_html,
+                'archivo_pdf': archivo_pdf
+            }
+            
+    except Exception as e:
+        print(f"❌ Error en generar_y_enviar_informe_desde_agente: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'archivo_html': None,
+            'archivo_pdf': None,
+            'traceback': traceback.format_exc()
+        }
+
+# =======================================================================
+# FUNCIONES ADICIONALES DE COMPATIBILIDAD
+# =======================================================================
+
+def generar_informe_completo(datos_cliente, tipo_servicio, datos_astrales=None, resumen_sesion=""):
+    """
+    Función wrapper para compatibilidad con sistema anterior
+    """
+    try:
+        # Preparar archivos_unicos con datos astrales si están disponibles
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        archivos_unicos = {
+            'timestamp': timestamp,
+            'es_producto_m': False,
+            'duracion_minutos': 40
+        }
+        
+        # Si se proporcionan datos astrales, añadirlos
+        if datos_astrales:
+            archivos_unicos.update(datos_astrales)
+        
+        # Generar informe
+        resultado = generar_y_enviar_informe_desde_agente(
+            datos_cliente=datos_cliente,
+            tipo_servicio=tipo_servicio,
+            resumen_sesion=resumen_sesion,
+            archivos_cartas=archivos_unicos
+        )
+        
+        return resultado
+        
+    except Exception as e:
+        print(f"❌ Error en generar_informe_completo: {e}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+def procesar_informe_con_aspectos(datos_cliente, tipo_servicio, aspectos_data, resumen_sesion=""):
+    """
+    Procesar informe con datos de aspectos específicos
+    """
+    try:
+        # Estructurar datos de aspectos para el template
+        archivos_cartas = {
+            'timestamp': datetime.now().strftime('%Y%m%d_%H%M%S'),
+            'aspectos_natales': aspectos_data.get('aspectos_natales', []),
+            'aspectos_progresiones': aspectos_data.get('aspectos_progresiones', []),
+            'aspectos_transitos': aspectos_data.get('aspectos_transitos', []),
+            'posiciones_natales': aspectos_data.get('posiciones_natales', {}),
+            'imagenes_base64': aspectos_data.get('imagenes_base64', {}),
+            'estadisticas': aspectos_data.get('estadisticas', {}),
+            'duracion_minutos': 40
+        }
+        
+        return generar_y_enviar_informe_desde_agente(
+            datos_cliente=datos_cliente,
+            tipo_servicio=tipo_servicio,
+            resumen_sesion=resumen_sesion,
+            archivos_cartas=archivos_cartas
+        )
+        
+    except Exception as e:
+        print(f"❌ Error en procesar_informe_con_aspectos: {e}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+# =======================================================================
+# FUNCIÓN DE COMPATIBILIDAD PARA EMAILS (si se usa)
+# =======================================================================
+
+def enviar_informe_por_email(datos_cliente, archivo_pdf, tipo_servicio):
+    """
+    Enviar informe por email (función placeholder para compatibilidad)
+    """
+    try:
+        print(f"📧 Enviando informe por email: {archivo_pdf}")
+        
+        # NOTA: Aquí iría la lógica de envío de email real
+        # Por ahora es un placeholder que simula el envío
+        
+        if os.path.exists(archivo_pdf):
+            return {
+                'success': True,
+                'mensaje': f'Informe {tipo_servicio} preparado para envío',
+                'email': datos_cliente.get('email', ''),
+                'archivo': archivo_pdf
+            }
+        else:
+            return {
+                'success': False,
+                'error': 'Archivo PDF no encontrado para envío'
+            }
+            
+    except Exception as e:
+        print(f"❌ Error enviando informe por email: {e}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
+# =======================================================================
+# ENDPOINT DE TEST PARA LA FUNCIÓN RECUPERADA
+# =======================================================================
+
+def test_funcion_desde_agente():
+    """
+    Test de la función generar_y_enviar_informe_desde_agente recuperada
+    """
+    try:
+        # Datos de test
+        datos_cliente_test = {
+            'nombre': 'Cliente Test',
+            'email': 'test@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        resumen_test = "Esta es una sesión de prueba para verificar que la función recuperada funciona correctamente."
+        
+        # Simular datos astrales
+        archivos_test = {
+            'imagenes_base64': {
+                'carta_natal': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzY2N2VlYSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5DYXJ0YSBOYXRhbCBUZXN0PC90ZXh0Pjwvc3ZnPg=='
+            },
+            'aspectos_natales': [
+                {'planeta1': 'Sol', 'aspecto': 'conjuncion', 'planeta2': 'Marte', 'orbe': 0.8},
+                {'planeta1': 'Luna', 'aspecto': 'sextil', 'planeta2': 'Venus', 'orbe': 2.1}
+            ],
+            'estadisticas': {
+                'total_aspectos_natal': 2,
+                'total_aspectos_transitos': 0
+            }
+        }
+        
+        # Probar la función
+        resultado = generar_y_enviar_informe_desde_agente(
+            datos_cliente=datos_cliente_test,
+            tipo_servicio='carta_astral_ia',
+            resumen_sesion=resumen_test,
+            archivos_cartas=archivos_test
+        )
+        
+        return resultado
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'error': f'Error en test: {str(e)}',
+            'traceback': traceback.format_exc()
+        }
