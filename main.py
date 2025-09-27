@@ -14396,6 +14396,374 @@ def test_cartas_mejoradas_base64():
     except Exception as e:
         import traceback
         return f"<h1>❌ Error crítico</h1><pre>{traceback.format_exc()}</pre>"
+        
+# =======================================================================
+# DEBUG ESPECÍFICO PARA VER QUÉ DATOS LLEGAN - AÑADIR A main.py
+# =======================================================================
+
+@app.route('/test/debug_aspectos_datos')
+def debug_aspectos_datos():
+    """
+    Debug: Ver exactamente qué datos de aspectos se están generando
+    """
+    try:
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        exito, resultado = generar_cartas_astrales_base64(datos_natales_test)
+        
+        if exito and resultado:
+            # Extraer aspectos
+            aspectos_natales = resultado.get('aspectos_natales', [])
+            aspectos_transitos = resultado.get('aspectos_transitos', [])
+            aspectos_progresiones = resultado.get('aspectos_progresiones', [])
+            
+            # Debug detallado
+            debug_info = {
+                'resultado_keys': list(resultado.keys()),
+                'aspectos_natales': {
+                    'count': len(aspectos_natales),
+                    'tipo_datos': type(aspectos_natales).__name__,
+                    'primer_aspecto': aspectos_natales[0] if aspectos_natales else 'VACÍO',
+                    'primer_aspecto_keys': list(aspectos_natales[0].keys()) if aspectos_natales and hasattr(aspectos_natales[0], 'keys') else 'NO ES DICT',
+                    'primer_aspecto_attrs': [attr for attr in dir(aspectos_natales[0]) if not attr.startswith('_')] if aspectos_natales else 'NO HAY ATTRS'
+                },
+                'aspectos_transitos': {
+                    'count': len(aspectos_transitos),
+                    'tipo_datos': type(aspectos_transitos).__name__,
+                    'primer_aspecto': aspectos_transitos[0] if aspectos_transitos else 'VACÍO',
+                },
+                'aspectos_progresiones': {
+                    'count': len(aspectos_progresiones),
+                    'tipo_datos': type(aspectos_progresiones).__name__,
+                    'primer_aspecto': aspectos_progresiones[0] if aspectos_progresiones else 'VACÍO',
+                },
+                'imagenes_disponibles': list(resultado.get('imagenes_base64', {}).keys()),
+                'template_data_keys': list(resultado.get('template_data', {}).keys()) if 'template_data' in resultado else 'NO TEMPLATE_DATA'
+            }
+            
+            # Si hay aspectos, examinar estructura del primero
+            if aspectos_natales:
+                primer_aspecto = aspectos_natales[0]
+                debug_info['estructura_aspecto_natal'] = {
+                    'tipo_objeto': type(primer_aspecto).__name__,
+                    'es_dict': isinstance(primer_aspecto, dict),
+                    'es_objeto': hasattr(primer_aspecto, '__dict__'),
+                    'contenido_str': str(primer_aspecto)[:200],
+                    'atributos_disponibles': [attr for attr in dir(primer_aspecto) if not attr.startswith('_')] if hasattr(primer_aspecto, '__dict__') else 'NO HAY ATRIBUTOS'
+                }
+                
+                # Si es un objeto, intentar acceder a sus propiedades
+                if hasattr(primer_aspecto, '__dict__'):
+                    debug_info['propiedades_aspecto'] = vars(primer_aspecto)
+                elif isinstance(primer_aspecto, dict):
+                    debug_info['propiedades_aspecto'] = primer_aspecto
+            
+            return jsonify(debug_info)
+        else:
+            return jsonify({'error': 'No se pudieron generar las cartas', 'exito': exito, 'resultado': resultado})
+            
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()})
+
+# =======================================================================
+# FUNCIÓN CORREGIDA PARA MOSTRAR ASPECTOS REALES
+# =======================================================================
+
+@app.route('/test/aspectos_reales_formateados')
+def test_aspectos_reales_formateados():
+    """
+    Test: Mostrar aspectos reales formateados correctamente
+    """
+    try:
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        exito, resultado = generar_cartas_astrales_base64(datos_natales_test)
+        
+        if exito and resultado:
+            aspectos_natales = resultado.get('aspectos_natales', [])
+            aspectos_transitos = resultado.get('aspectos_transitos', [])
+            imagenes_base64 = resultado.get('imagenes_base64', {})
+            
+            # Función helper para formatear aspectos
+            def formatear_aspecto(aspecto):
+                try:
+                    if isinstance(aspecto, dict):
+                        # Si es diccionario
+                        planeta1 = aspecto.get('planeta1', aspecto.get('planeta_1', 'Planeta1'))
+                        planeta2 = aspecto.get('planeta2', aspecto.get('planeta_2', 'Planeta2'))
+                        tipo = aspecto.get('tipo', aspecto.get('aspecto', 'Aspecto'))
+                        orbe = aspecto.get('orbe', 0)
+                        return f"{planeta1} {tipo} {planeta2}", f"{orbe:.1f}°"
+                    elif hasattr(aspecto, '__dict__'):
+                        # Si es objeto con atributos
+                        attrs = vars(aspecto)
+                        planeta1 = getattr(aspecto, 'planeta1', getattr(aspecto, 'planeta_1', 'Planeta1'))
+                        planeta2 = getattr(aspecto, 'planeta2', getattr(aspecto, 'planeta_2', 'Planeta2'))
+                        tipo = getattr(aspecto, 'tipo', getattr(aspecto, 'aspecto', 'Aspecto'))
+                        orbe = getattr(aspecto, 'orbe', 0)
+                        return f"{planeta1} {tipo} {planeta2}", f"{orbe:.1f}°"
+                    else:
+                        # Si es string o otro tipo
+                        return str(aspecto)[:50], "N/A"
+                except:
+                    return str(aspecto)[:50], "Error"
+            
+            # HTML con aspectos REALES
+            html_response = f"""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <title>🌟 Aspectos Reales Formateados</title>
+                <style>
+                    body {{ font-family: 'Georgia', serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; }}
+                    .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }}
+                    .carta-section {{ margin: 30px 0; padding: 20px; border-left: 5px solid #667eea; background: #f8f9ff; border-radius: 10px; }}
+                    .carta-imagen {{ text-align: center; margin: 20px 0; }}
+                    .carta-imagen img {{ max-width: 100%; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); border: 3px solid #667eea; }}
+                    .aspectos-section {{ background: #f8f9ff; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea; }}
+                    .aspectos-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px; margin-top: 10px; }}
+                    .aspecto-item {{ background: white; padding: 10px 15px; border-radius: 6px; border: 1px solid #e0e6ed; display: flex; justify-content: space-between; align-items: center; }}
+                    .aspecto-planetas {{ font-weight: 500; color: #333; }}
+                    .aspecto-orbe {{ font-size: 0.85em; color: #666; background: #f0f2f5; padding: 3px 8px; border-radius: 4px; }}
+                    .debug-info {{ background: #fffacd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #ddd; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🌟 Test de Aspectos Reales Formateados</h1>
+                    
+                    <div class="debug-info">
+                        <h3>📊 Debug Info:</h3>
+                        <p><strong>Aspectos Natales encontrados:</strong> {len(aspectos_natales)}</p>
+                        <p><strong>Aspectos Tránsitos encontrados:</strong> {len(aspectos_transitos)}</p>
+                        <p><strong>Imágenes disponibles:</strong> {list(imagenes_base64.keys())}</p>
+                    </div>
+
+                    <div class="carta-section">
+                        <h2>🌅 Carta Natal</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('carta_natal', '')}" alt="Carta Natal">
+                        </div>
+                        
+                        <div class="aspectos-section">
+                            <h3>⭐ Aspectos Natales REALES ({len(aspectos_natales)})</h3>
+                            <div class="aspectos-grid">
+            """
+            
+            # Añadir aspectos natales REALES
+            for i, aspecto in enumerate(aspectos_natales[:12]):
+                aspecto_texto, orbe_texto = formatear_aspecto(aspecto)
+                html_response += f"""
+                                <div class="aspecto-item">
+                                    <span class="aspecto-planetas">{aspecto_texto}</span>
+                                    <span class="aspecto-orbe">{orbe_texto}</span>
+                                </div>
+                """
+            
+            if len(aspectos_natales) > 12:
+                html_response += f"""
+                                <div class="aspecto-item" style="grid-column: 1 / -1; text-align: center; font-style: italic; color: #667eea;">
+                                    + {len(aspectos_natales) - 12} aspectos más...
+                                </div>
+                """
+            
+            html_response += """
+                            </div>
+                        </div>
+                    </div>
+            """
+            
+            # Solo mostrar tránsitos si hay imagen
+            if 'transitos' in imagenes_base64:
+                html_response += f"""
+                    <div class="carta-section">
+                        <h2>🔄 Tránsitos Actuales</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('transitos', '')}" alt="Tránsitos">
+                        </div>
+                        
+                        <div class="aspectos-section">
+                            <h3>⚡ Aspectos de Tránsito REALES ({len(aspectos_transitos)})</h3>
+                            <div class="aspectos-grid">
+                """
+                
+                # Añadir aspectos de tránsito REALES
+                for i, aspecto in enumerate(aspectos_transitos[:10]):
+                    aspecto_texto, orbe_texto = formatear_aspecto(aspecto)
+                    html_response += f"""
+                                <div class="aspecto-item">
+                                    <span class="aspecto-planetas">{aspecto_texto}</span>
+                                    <span class="aspecto-orbe">{orbe_texto}</span>
+                                </div>
+                    """
+                
+                if len(aspectos_transitos) > 10:
+                    html_response += f"""
+                                <div class="aspecto-item" style="grid-column: 1 / -1; text-align: center; font-style: italic; color: #667eea;">
+                                    + {len(aspectos_transitos) - 10} aspectos más...
+                                </div>
+                    """
+                
+                html_response += """
+                            </div>
+                        </div>
+                    </div>
+                """
+            
+            html_response += """
+                </div>
+            </body>
+            </html>
+            """
+            
+            return html_response
+        else:
+            return f"<h1>❌ Error generando cartas</h1><p>Exito: {exito}</p>"
+            
+    except Exception as e:
+        import traceback
+        return f"<h1>❌ Error crítico</h1><pre>{traceback.format_exc()}</pre>"
+
+# =======================================================================
+# DEBUG ESPECÍFICO PARA PROGRESIONES
+# =======================================================================
+
+@app.route('/test/debug_progresiones_especifico')
+def debug_progresiones_especifico():
+    """
+    Debug específico para entender por qué fallan las progresiones
+    """
+    try:
+        from datetime import datetime
+        
+        # Datos de test
+        fecha_str = '15/07/1985'
+        hora_str = '10:30'
+        
+        dia, mes, año = map(int, fecha_str.split('/'))
+        hora, minuto = map(int, hora_str.split(':'))
+        fecha_natal = (año, mes, dia, hora, minuto)
+        lugar_coords = (40.42, -3.70)
+        ciudad_nombre = 'Madrid, España'
+        
+        resultado_debug = {
+            'fecha_natal': fecha_natal,
+            'lugar_coords': lugar_coords,
+            'pasos': [],
+            'error_final': None
+        }
+        
+        # PASO 1: Verificar importación
+        try:
+            from progresiones import CartaProgresiones
+            resultado_debug['pasos'].append('✅ Importación CartaProgresiones OK')
+        except Exception as e:
+            resultado_debug['pasos'].append(f'❌ Error importando CartaProgresiones: {e}')
+            return jsonify(resultado_debug)
+        
+        # PASO 2: Crear instancia
+        try:
+            carta_prog = CartaProgresiones(figsize=(12, 12))
+            resultado_debug['pasos'].append('✅ Instancia CartaProgresiones creada')
+        except Exception as e:
+            resultado_debug['pasos'].append(f'❌ Error creando instancia: {e}')
+            return jsonify(resultado_debug)
+        
+        # PASO 3: Calcular edad actual
+        try:
+            hoy = datetime.now()
+            edad_actual = (hoy.year - año) + (hoy.month - mes) / 12.0
+            resultado_debug['edad_actual'] = edad_actual
+            resultado_debug['pasos'].append(f'✅ Edad calculada: {edad_actual:.2f} años')
+        except Exception as e:
+            resultado_debug['pasos'].append(f'❌ Error calculando edad: {e}')
+            return jsonify(resultado_debug)
+        
+        # PASO 4: Intentar generar progresiones
+        try:
+            resultado_debug['pasos'].append('🔄 Intentando crear_carta_progresiones...')
+            
+            aspectos_prog, pos_natales, pos_prog, _, _ = carta_prog.crear_carta_progresiones(
+                fecha_nacimiento=fecha_natal,
+                edad_consulta=edad_actual,
+                lugar_nacimiento=lugar_coords,
+                lugar_actual=lugar_coords,
+                ciudad_nacimiento=ciudad_nombre,
+                ciudad_actual=ciudad_nombre,
+                guardar_archivo=False
+            )
+            
+            resultado_debug['pasos'].append('✅ Progresiones generadas exitosamente!')
+            resultado_debug['aspectos_encontrados'] = len(aspectos_prog) if aspectos_prog else 0
+            resultado_debug['pos_natales_count'] = len(pos_natales) if pos_natales else 0
+            resultado_debug['pos_prog_count'] = len(pos_prog) if pos_prog else 0
+            
+        except Exception as e:
+            import traceback
+            resultado_debug['pasos'].append(f'❌ Error en crear_carta_progresiones: {str(e)}')
+            resultado_debug['error_final'] = {
+                'mensaje': str(e),
+                'tipo': type(e).__name__,
+                'traceback': traceback.format_exc()
+            }
+        
+        return jsonify(resultado_debug)
+        
+    except Exception as e:
+        return jsonify({
+            'error_critico': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+# =======================================================================
+# ENDPOINT SIMPLE PARA VERIFICAR SOLO NATAL + TRÁNSITOS
+# =======================================================================
+
+@app.route('/test/solo_natal_transitos')
+def test_solo_natal_transitos():
+    """
+    Test simplificado: Solo natal + tránsitos (sin progresiones)
+    """
+    try:
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # Generar solo natal y tránsitos
+        exito, resultado = generar_cartas_astrales_base64(datos_natales_test)
+        
+        if exito and resultado:
+            aspectos_natales = resultado.get('aspectos_natales', [])
+            aspectos_transitos = resultado.get('aspectos_transitos', [])
+            imagenes_base64 = resultado.get('imagenes_base64', {})
+            
+            return jsonify({
+                'status': 'success',
+                'cartas_disponibles': list(imagenes_base64.keys()),
+                'aspectos_natales_count': len(aspectos_natales),
+                'aspectos_transitos_count': len(aspectos_transitos),
+                'aspectos_natales_sample': [str(a)[:100] for a in aspectos_natales[:3]],
+                'aspectos_transitos_sample': [str(a)[:100] for a in aspectos_transitos[:3]],
+                'siguiente_paso': 'Usar /test/aspectos_reales_formateados para ver el HTML final'
+            })
+        else:
+            return jsonify({'status': 'error', 'exito': exito, 'resultado': resultado})
+            
+    except Exception as e:
+        import traceback
+        return jsonify({'status': 'error', 'error': str(e), 'traceback': traceback.format_exc()})
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
