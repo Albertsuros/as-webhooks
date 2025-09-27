@@ -13719,6 +13719,520 @@ def test_cartas_reales_base64():
         <pre>{str(e)}</pre>
         <pre>{traceback.format_exc()}</pre>
         """
+        
+# =======================================================================
+# DEBUG Y FIX PARA TRÁNSITOS - AÑADIR A main.py
+# =======================================================================
+
+@app.route('/test/debug_transitos_especifico')
+def debug_transitos_especifico():
+    """
+    Debug específico para entender por qué fallan los tránsitos
+    """
+    try:
+        from datetime import datetime
+        import traceback
+        
+        # Datos de test
+        fecha_str = '15/07/1985'
+        hora_str = '10:30'
+        
+        # Convertir fecha
+        dia, mes, año = map(int, fecha_str.split('/'))
+        hora, minuto = map(int, hora_str.split(':'))
+        fecha_natal = (año, mes, dia, hora, minuto)
+        
+        lugar_coords = (40.42, -3.70)  # Madrid
+        
+        # Fecha actual para tránsito
+        hoy = datetime.now()
+        fecha_consulta = (hoy.year, hoy.month, hoy.day, hoy.hour, hoy.minute)
+        
+        resultado_debug = {
+            'fecha_natal': fecha_natal,
+            'fecha_consulta': fecha_consulta,
+            'lugar_coords': lugar_coords,
+            'pasos': [],
+            'error_final': None
+        }
+        
+        # PASO 1: Verificar importación
+        try:
+            from transitos import CartaTransitos
+            resultado_debug['pasos'].append('✅ Importación CartaTransitos OK')
+        except Exception as e:
+            resultado_debug['pasos'].append(f'❌ Error importando CartaTransitos: {e}')
+            return jsonify(resultado_debug)
+        
+        # PASO 2: Crear instancia
+        try:
+            carta_trans = CartaTransitos(figsize=(12, 12))
+            resultado_debug['pasos'].append('✅ Instancia CartaTransitos creada')
+        except Exception as e:
+            resultado_debug['pasos'].append(f'❌ Error creando instancia: {e}')
+            return jsonify(resultado_debug)
+        
+        # PASO 3: Verificar métodos disponibles
+        try:
+            metodos = [m for m in dir(carta_trans) if not m.startswith('_')]
+            resultado_debug['metodos_disponibles'] = metodos
+            resultado_debug['pasos'].append(f'✅ Métodos disponibles: {len(metodos)}')
+        except Exception as e:
+            resultado_debug['pasos'].append(f'❌ Error listando métodos: {e}')
+        
+        # PASO 4: Intentar diferentes signatures de función
+        signatures_a_probar = [
+            # Signature 1: Con fecha_consulta
+            {
+                'nombre': 'crear_carta_transitos_v1',
+                'params': {
+                    'fecha_nacimiento': fecha_natal,
+                    'fecha_consulta': fecha_consulta,
+                    'lugar_nacimiento': lugar_coords,
+                    'lugar_actual': lugar_coords,
+                    'ciudad_nacimiento': 'Madrid, España',
+                    'ciudad_actual': 'Madrid, España',
+                    'guardar_archivo': False
+                }
+            },
+            # Signature 2: Con fecha_transito
+            {
+                'nombre': 'crear_carta_transitos_v2', 
+                'params': {
+                    'fecha_nacimiento': fecha_natal,
+                    'fecha_transito': fecha_consulta,
+                    'lugar_nacimiento': lugar_coords,
+                    'guardar_archivo': False,
+                    'directorio_salida': None
+                }
+            },
+            # Signature 3: Minimal
+            {
+                'nombre': 'crear_carta_transitos_v3',
+                'params': {
+                    'fecha_nacimiento': fecha_natal,
+                    'fecha_transito': fecha_consulta,
+                    'lugar_nacimiento': lugar_coords
+                }
+            }
+        ]
+        
+        for signature in signatures_a_probar:
+            try:
+                resultado_debug['pasos'].append(f'🔄 Probando {signature["nombre"]}...')
+                
+                # Intentar llamar con estos parámetros
+                resultado = carta_trans.crear_carta_transitos(**signature['params'])
+                
+                if resultado:
+                    # Si funciona, guardar los detalles
+                    if isinstance(resultado, tuple) and len(resultado) >= 3:
+                        aspectos, pos_natales, pos_transitos = resultado[:3]
+                        resultado_debug['pasos'].append(f'✅ {signature["nombre"]} FUNCIONA!')
+                        resultado_debug['signature_exitosa'] = signature
+                        resultado_debug['aspectos_encontrados'] = len(aspectos) if aspectos else 0
+                        resultado_debug['pos_natales_count'] = len(pos_natales) if pos_natales else 0
+                        resultado_debug['pos_transitos_count'] = len(pos_transitos) if pos_transitos else 0
+                        break
+                    else:
+                        resultado_debug['pasos'].append(f'⚠️ {signature["nombre"]} devolvió formato inesperado: {type(resultado)}')
+                else:
+                    resultado_debug['pasos'].append(f'⚠️ {signature["nombre"]} devolvió None')
+                    
+            except Exception as e:
+                resultado_debug['pasos'].append(f'❌ {signature["nombre"]} falló: {str(e)}')
+                
+        # PASO 5: Si todas fallan, capturar error detallado
+        if 'signature_exitosa' not in resultado_debug:
+            try:
+                # Intentar con la signature más básica y capturar error completo
+                resultado = carta_trans.crear_carta_transitos(
+                    fecha_nacimiento=fecha_natal,
+                    fecha_transito=fecha_consulta,
+                    lugar_nacimiento=lugar_coords
+                )
+            except Exception as e:
+                resultado_debug['error_final'] = {
+                    'mensaje': str(e),
+                    'tipo': type(e).__name__,
+                    'traceback': traceback.format_exc()
+                }
+        
+        return jsonify(resultado_debug)
+        
+    except Exception as e:
+        return jsonify({
+            'error_critico': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+
+# =======================================================================
+# FUNCIÓN CORREGIDA PARA TRÁNSITOS BASE64
+# =======================================================================
+
+def generar_transitos_base64_corregida(datos_natales):
+    """
+    Generar tránsitos con la signature correcta y captura de errores mejorada
+    """
+    try:
+        print("🔄 Generando Tránsitos CORREGIDOS en Base64...")
+        
+        # Extraer datos
+        fecha_str = datos_natales.get('fecha_nacimiento', '')
+        hora_str = datos_natales.get('hora_nacimiento', '')
+        lugar_nacimiento = datos_natales.get('lugar_nacimiento', '')
+        
+        # Convertir fecha
+        if '/' in fecha_str and ':' in hora_str:
+            dia, mes, año = map(int, fecha_str.split('/'))
+            hora, minuto = map(int, hora_str.split(':'))
+            fecha_natal = (año, mes, dia, hora, minuto)
+        else:
+            raise ValueError("Formato fecha/hora incorrecto")
+        
+        # Coordenadas
+        coordenadas_ciudades = {
+            'Madrid': (40.42, -3.70),
+            'Barcelona': (41.39, 2.16),
+            'Valencia': (39.47, -0.38),
+        }
+        
+        lugar_coords = coordenadas_ciudades.get('Madrid', (40.42, -3.70))
+        ciudad_nombre = 'Madrid, España'
+        for ciudad, coords in coordenadas_ciudades.items():
+            if ciudad.lower() in lugar_nacimiento.lower():
+                lugar_coords = coords
+                ciudad_nombre = f"{ciudad}, España"
+                break
+        
+        # Fecha actual
+        from datetime import datetime as dt
+        hoy = dt.now()
+        fecha_consulta = (hoy.year, hoy.month, hoy.day, hoy.hour, hoy.minute)
+        
+        print(f"📍 Lugar: {lugar_coords}")
+        print(f"⏰ Natal: {fecha_natal}")
+        print(f"🌍 Consulta: {fecha_consulta}")
+        
+        # INTENTAR MÚLTIPLES SIGNATURES HASTA QUE UNA FUNCIONE
+        from transitos import CartaTransitos
+        carta_trans = CartaTransitos(figsize=(16, 14))
+        
+        # Lista de signatures a probar en orden de preferencia
+        intentos = [
+            # Intento 1: Con fecha_consulta (como en sofia_fixes.py)
+            lambda: carta_trans.crear_carta_transitos(
+                fecha_nacimiento=fecha_natal,
+                fecha_consulta=fecha_consulta,
+                lugar_nacimiento=lugar_coords,
+                lugar_actual=lugar_coords,
+                ciudad_nacimiento=ciudad_nombre,
+                ciudad_actual=ciudad_nombre,
+                guardar_archivo=False
+            ),
+            # Intento 2: Con fecha_transito (como en main.py)
+            lambda: carta_trans.crear_carta_transitos(
+                fecha_nacimiento=fecha_natal,
+                fecha_transito=fecha_consulta,
+                lugar_nacimiento=lugar_coords,
+                guardar_archivo=False
+            ),
+            # Intento 3: Minimal con parámetros básicos
+            lambda: carta_trans.crear_carta_transitos(
+                fecha_natal,
+                fecha_consulta,
+                lugar_coords,
+                guardar_archivo=False
+            )
+        ]
+        
+        resultado_transitos = None
+        error_detallado = None
+        
+        for i, intento in enumerate(intentos, 1):
+            try:
+                print(f"🔄 Intento {i} de tránsitos...")
+                resultado_transitos = intento()
+                print(f"✅ Intento {i} exitoso!")
+                break
+            except Exception as e:
+                print(f"❌ Intento {i} falló: {e}")
+                error_detallado = str(e)
+                continue
+        
+        if resultado_transitos:
+            # Extraer datos del resultado
+            if isinstance(resultado_transitos, tuple) and len(resultado_transitos) >= 3:
+                aspectos_trans, pos_natales, pos_transitos = resultado_transitos[:3]
+                
+                # Convertir a base64
+                import io
+                import base64
+                import matplotlib.pyplot as plt
+                
+                buffer = io.BytesIO()
+                plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight',
+                           facecolor='white', edgecolor='none')
+                buffer.seek(0)
+                imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+                transitos_base64 = f"data:image/png;base64,{imagen_base64}"
+                plt.close()
+                buffer.close()
+                
+                print(f"✅ Tránsitos generados: {len(aspectos_trans)} aspectos")
+                return transitos_base64, aspectos_trans
+            else:
+                print(f"⚠️ Formato de resultado inesperado: {type(resultado_transitos)}")
+                return crear_placeholder_base64("Tránsitos\n(Formato incorrecto)"), []
+        else:
+            print(f"❌ Todos los intentos de tránsitos fallaron. Último error: {error_detallado}")
+            return crear_placeholder_base64(f"Tránsitos\n(Error: {error_detallado[:50]}...)"), []
+            
+    except Exception as e:
+        print(f"❌ Error crítico en tránsitos: {e}")
+        import traceback
+        traceback.print_exc()
+        return crear_placeholder_base64(f"Tránsitos\n(Error crítico)"), []
+
+
+# =======================================================================
+# FUNCIÓN BASE64 MEJORADA CON MEJOR MANEJO DE TRÁNSITOS
+# =======================================================================
+
+def generar_cartas_astrales_base64_mejorada(datos_natales):
+    """
+    Versión mejorada que maneja mejor los tránsitos y captura más datos astrológicos
+    """
+    try:
+        print("🔧 Generando cartas astrales MEJORADAS en BASE64...")
+        
+        # [Código inicial igual...]
+        fecha_str = datos_natales.get('fecha_nacimiento', '')
+        hora_str = datos_natales.get('hora_nacimiento', '')
+        lugar_nacimiento = datos_natales.get('lugar_nacimiento', '')
+        
+        if '/' in fecha_str and ':' in hora_str:
+            dia, mes, año = map(int, fecha_str.split('/'))
+            hora, minuto = map(int, hora_str.split(':'))
+            fecha_natal = (año, mes, dia, hora, minuto)
+        else:
+            raise ValueError("Formato fecha/hora incorrecto")
+        
+        coordenadas_ciudades = {
+            'Madrid': (40.42, -3.70),
+            'Barcelona': (41.39, 2.16),
+            'Valencia': (39.47, -0.38),
+        }
+        
+        lugar_coords = coordenadas_ciudades.get('Madrid', (40.42, -3.70))
+        ciudad_nombre = 'Madrid, España'
+        for ciudad, coords in coordenadas_ciudades.items():
+            if ciudad.lower() in lugar_nacimiento.lower():
+                lugar_coords = coords
+                ciudad_nombre = f"{ciudad}, España"
+                break
+        
+        imagenes_base64 = {}
+        datos_aspectos = {}
+        
+        # 1. CARTA NATAL (igual que antes)
+        print("📊 Generando Carta Natal...")
+        try:
+            from carta_natal import CartaAstralNatal
+            import matplotlib.pyplot as plt
+            import io
+            import base64
+            
+            carta_natal = CartaAstralNatal(figsize=(16, 14))
+            aspectos_natal, posiciones_natal = carta_natal.crear_carta_astral_natal(
+                fecha_natal=fecha_natal,
+                lugar_natal=lugar_coords,
+                ciudad_natal=ciudad_nombre,
+                guardar_archivo=False,
+                directorio_salida=None
+            )
+            
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight', 
+                       facecolor='white', edgecolor='none')
+            buffer.seek(0)
+            imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+            imagenes_base64['carta_natal'] = f"data:image/png;base64,{imagen_base64}"
+            plt.close()
+            buffer.close()
+            
+            datos_aspectos['natal'] = {
+                'aspectos': aspectos_natal,
+                'posiciones': posiciones_natal
+            }
+            
+            print(f"✅ Carta natal: {len(aspectos_natal)} aspectos")
+            
+        except Exception as e:
+            print(f"⚠️ Error en carta natal: {e}")
+            imagenes_base64['carta_natal'] = crear_placeholder_base64("Carta Natal\n(Error)")
+            datos_aspectos['natal'] = {'aspectos': [], 'posiciones': {}}
+        
+        # 2. PROGRESIONES (igual que antes)
+        print("📈 Generando Progresiones...")
+        try:
+            from progresiones import CartaProgresiones
+            from datetime import datetime as dt
+            
+            carta_prog = CartaProgresiones(figsize=(16, 14))
+            hoy = dt.now()
+            edad_actual = (hoy.year - año) + (hoy.month - mes) / 12.0
+            
+            aspectos_prog, pos_natales, pos_prog, _, _ = carta_prog.crear_carta_progresiones(
+                fecha_nacimiento=fecha_natal,
+                edad_consulta=edad_actual,
+                lugar_nacimiento=lugar_coords,
+                lugar_actual=lugar_coords,
+                ciudad_nacimiento=ciudad_nombre,
+                ciudad_actual=ciudad_nombre,
+                guardar_archivo=False
+            )
+            
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight',
+                       facecolor='white', edgecolor='none')
+            buffer.seek(0)
+            imagen_base64 = base64.b64encode(buffer.getvalue()).decode()
+            imagenes_base64['progresiones'] = f"data:image/png;base64,{imagen_base64}"
+            plt.close()
+            buffer.close()
+            
+            datos_aspectos['progresiones'] = {
+                'aspectos': aspectos_prog,
+                'posiciones_natales': pos_natales,
+                'posiciones_progresadas': pos_prog
+            }
+            
+            print(f"✅ Progresiones: {len(aspectos_prog)} aspectos")
+            
+        except Exception as e:
+            print(f"⚠️ Error en progresiones: {e}")
+            imagenes_base64['progresiones'] = crear_placeholder_base64("Progresiones\n(En desarrollo)")
+            datos_aspectos['progresiones'] = {'aspectos': [], 'posiciones_natales': {}, 'posiciones_progresadas': {}}
+        
+        # 3. TRÁNSITOS MEJORADOS
+        print("🔄 Generando Tránsitos MEJORADOS...")
+        transitos_base64, aspectos_trans = generar_transitos_base64_corregida(datos_natales)
+        imagenes_base64['transitos'] = transitos_base64
+        datos_aspectos['transitos'] = {'aspectos': aspectos_trans}
+        
+        print("✅ Cartas astrales MEJORADAS generadas en BASE64")
+        
+        # Compilar datos completos con MÁS INFORMACIÓN
+        from datetime import datetime as dt
+        datos_completos = {
+            'aspectos_natales': datos_aspectos['natal']['aspectos'],
+            'posiciones_natales': datos_aspectos['natal']['posiciones'],
+            'aspectos_progresiones': datos_aspectos['progresiones']['aspectos'],
+            'aspectos_transitos': datos_aspectos['transitos']['aspectos'],
+            'imagenes_base64': imagenes_base64,
+            'datos_completos_aspectos': datos_aspectos,
+            'timestamp': dt.now().isoformat(),
+            'metodo': 'base64_mejorado_v2',
+            'estadisticas': {
+                'total_aspectos_natal': len(datos_aspectos['natal']['aspectos']),
+                'total_aspectos_progresiones': len(datos_aspectos['progresiones']['aspectos']),
+                'total_aspectos_transitos': len(datos_aspectos['transitos']['aspectos'])
+            }
+        }
+        
+        return True, datos_completos
+        
+    except Exception as e:
+        print(f"❌ Error en cartas mejoradas: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, None
+
+
+# =======================================================================
+# ENDPOINT DE TEST PARA LA VERSIÓN MEJORADA
+# =======================================================================
+
+@app.route('/test/cartas_mejoradas_base64')
+def test_cartas_mejoradas_base64():
+    """
+    Test de la versión mejorada con mejor manejo de tránsitos
+    """
+    try:
+        datos_natales_test = {
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España',
+            'nombre': 'Test Mejorado'
+        }
+        
+        exito, resultado = generar_cartas_astrales_base64_mejorada(datos_natales_test)
+        
+        if exito and resultado:
+            imagenes_base64 = resultado['imagenes_base64']
+            estadisticas = resultado['estadisticas']
+            
+            # HTML con estadísticas detalladas
+            html_response = f"""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <title>🌟 Test Cartas MEJORADAS</title>
+                <style>
+                    body {{ font-family: 'Georgia', serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; }}
+                    .container {{ max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }}
+                    .stats {{ background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 15px 0; }}
+                    .carta-section {{ margin: 30px 0; padding: 20px; border-left: 5px solid #667eea; background: #f8f9ff; border-radius: 10px; }}
+                    .carta-imagen {{ text-align: center; margin: 20px 0; }}
+                    .carta-imagen img {{ max-width: 100%; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); border: 3px solid #667eea; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🌟 Cartas Astrales MEJORADAS</h1>
+                    
+                    <div class="stats">
+                        <h3>📊 Estadísticas de Aspectos:</h3>
+                        <p><strong>Natal:</strong> {estadisticas['total_aspectos_natal']} aspectos</p>
+                        <p><strong>Progresiones:</strong> {estadisticas['total_aspectos_progresiones']} aspectos</p>
+                        <p><strong>Tránsitos:</strong> {estadisticas['total_aspectos_transitos']} aspectos</p>
+                    </div>
+
+                    <div class="carta-section">
+                        <h2>🌅 Carta Natal</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('carta_natal', '')}" alt="Carta Natal">
+                        </div>
+                    </div>
+
+                    <div class="carta-section">
+                        <h2>📈 Progresiones</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('progresiones', '')}" alt="Progresiones">
+                        </div>
+                    </div>
+
+                    <div class="carta-section">
+                        <h2>🔄 Tránsitos</h2>
+                        <div class="carta-imagen">
+                            <img src="{imagenes_base64.get('transitos', '')}" alt="Tránsitos">
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            return html_response
+        else:
+            return f"<h1>❌ Error en test mejorado</h1><p>Resultado: {resultado}</p>"
+            
+    except Exception as e:
+        import traceback
+        return f"<h1>❌ Error crítico</h1><pre>{traceback.format_exc()}</pre>"
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
