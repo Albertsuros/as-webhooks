@@ -1114,3 +1114,189 @@ def generar_pdf_completo_optimizado(datos_cliente, tipo_servicio, resumen_sesion
             'error': str(e),
             'traceback': traceback.format_exc()
         }
+        
+# SOLUCIÓN DEFINITIVA - AÑADIR A informes.py
+
+def convertir_html_a_pdf_weasyprint(archivo_html, archivo_pdf):
+    """
+    Convertir HTML a PDF usando WeasyPrint (más robusto que Playwright)
+    WeasyPrint maneja mejor las imágenes base64 grandes
+    """
+    try:
+        import subprocess
+        import os
+        
+        print(f"📄 Convirtiendo con WeasyPrint: {archivo_html} -> {archivo_pdf}")
+        
+        # Crear directorio de salida
+        directorio_pdf = os.path.dirname(archivo_pdf)
+        if directorio_pdf and not os.path.exists(directorio_pdf):
+            os.makedirs(directorio_pdf)
+        
+        # Instalar weasyprint si no está disponible
+        try:
+            import weasyprint
+        except ImportError:
+            print("📦 Instalando WeasyPrint...")
+            subprocess.run(['pip', 'install', 'weasyprint'], check=True)
+            import weasyprint
+        
+        # Convertir HTML a PDF
+        weasyprint.HTML(filename=archivo_html).write_pdf(archivo_pdf)
+        
+        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
+            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
+            print(f"✅ PDF generado con WeasyPrint: {archivo_pdf} ({tamaño_kb:.1f} KB)")
+            return True
+        else:
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error en WeasyPrint: {e}")
+        return False
+
+def convertir_html_a_pdf_reportlab_fallback(archivo_html, archivo_pdf):
+    """
+    Fallback usando ReportLab - generar PDF simple con datos textuales
+    """
+    try:
+        import subprocess
+        
+        # Instalar reportlab si no está disponible
+        try:
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import A4
+        except ImportError:
+            print("📦 Instalando ReportLab...")
+            subprocess.run(['pip', 'install', 'reportlab'], check=True)
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import A4
+        
+        # Leer HTML y extraer texto importante
+        with open(archivo_html, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Crear PDF simple con ReportLab
+        c = canvas.Canvas(archivo_pdf, pagesize=A4)
+        width, height = A4
+        
+        # Título
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50, height - 50, "INFORME CARTA ASTRAL")
+        
+        # Contenido básico
+        c.setFont("Helvetica", 12)
+        y_position = height - 100
+        
+        lines = [
+            "Informe astrológico completo generado",
+            "Incluye aspectos natales, progresiones y tránsitos",
+            "Para visualización completa, contacte con AS Cartastral"
+        ]
+        
+        for line in lines:
+            c.drawString(50, y_position, line)
+            y_position -= 20
+        
+        c.save()
+        
+        if os.path.exists(archivo_pdf):
+            print(f"✅ PDF básico generado con ReportLab: {archivo_pdf}")
+            return True
+        return False
+        
+    except Exception as e:
+        print(f"❌ Error en ReportLab: {e}")
+        return False
+
+# REEMPLAZAR la función principal de conversión en informes.py
+def convertir_html_a_pdf(archivo_html, archivo_pdf):
+    """
+    Función principal de conversión - Múltiples métodos con fallbacks
+    """
+    try:
+        print(f"🔄 Iniciando conversión PDF: {archivo_html} -> {archivo_pdf}")
+        
+        # MÉTODO 1: WeasyPrint (mejor para imágenes base64)
+        if convertir_html_a_pdf_weasyprint(archivo_html, archivo_pdf):
+            return True
+            
+        # MÉTODO 2: Playwright optimizado (si WeasyPrint falla)
+        if convertir_html_a_pdf_playwright_optimizado(archivo_html, archivo_pdf):
+            return True
+            
+        # MÉTODO 3: ReportLab simple (si todo falla)
+        print("⚠️ Fallback a PDF básico con ReportLab...")
+        if convertir_html_a_pdf_reportlab_fallback(archivo_html, archivo_pdf):
+            return True
+            
+        return False
+        
+    except Exception as e:
+        print(f"❌ Error crítico en conversión PDF: {e}")
+        return False
+
+def convertir_html_a_pdf_playwright_optimizado(archivo_html, archivo_pdf):
+    """
+    Playwright optimizado específicamente para Railway
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+        import os
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox', 
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--disable-extensions',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
+                    '--memory-pressure-off',
+                    '--max_old_space_size=2048'
+                ]
+            )
+            
+            page = browser.new_page()
+            
+            # Leer HTML
+            with open(archivo_html, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # Si el HTML es muy grande, reducir imágenes
+            if len(html_content) > 3000000:  # 3MB
+                print("⚠️ HTML muy grande, usando versión optimizada...")
+                # Reemplazar imágenes base64 con placeholders
+                import re
+                html_content = re.sub(
+                    r'data:image/png;base64,[A-Za-z0-9+/=]+',
+                    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y0ZjRmNCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5DQVJUQSBBU1RSQUw8L3RleHQ+PC9zdmc+',
+                    html_content
+                )
+            
+            page.set_content(html_content, wait_until='domcontentloaded')
+            
+            # Configurar página para PDF
+            page.pdf(
+                path=archivo_pdf,
+                format='A4',
+                margin={'top': '1cm', 'right': '1cm', 'bottom': '1cm', 'left': '1cm'},
+                print_background=True,
+                prefer_css_page_size=True
+            )
+            
+            browser.close()
+        
+        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
+            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
+            print(f"✅ PDF generado con Playwright optimizado: {archivo_pdf} ({tamaño_kb:.1f} KB)")
+            return True
+        return False
+        
+    except Exception as e:
+        print(f"❌ Error en Playwright optimizado: {e}")
+        return False

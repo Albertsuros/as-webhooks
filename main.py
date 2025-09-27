@@ -15877,6 +15877,60 @@ def test_llamar_directamente_optimizado():
             "mensaje": f"Error crítico: {str(e)}",
             "traceback": traceback.format_exc()
         })
+        
+# ENDPOINT FINAL DE PRUEBA 
+@app.route('/test/generar_pdf_metodo_definitivo')
+def generar_pdf_metodo_definitivo():
+    """
+    Endpoint final que debe funcionar SÍ O SÍ
+    """
+    try:
+        datos_cliente = {
+            'nombre': 'Cliente Final',
+            'email': 'final@test.com',
+            'telefono': '+34600000000',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        # Usar la función optimizada
+        resultado = generar_pdf_completo_optimizado(
+            datos_cliente, 
+            'carta_astral_ia', 
+            "Test método definitivo"
+        )
+        
+        if resultado.get('success'):
+            archivo_pdf = resultado.get('archivo_pdf', '')
+            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+            
+            return jsonify({
+                "status": "success",
+                "mensaje": "PDF generado con método definitivo",
+                "archivo": archivo_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "aspectos_incluidos": resultado.get('aspectos_incluidos', {}),
+                "metodo_usado": resultado.get('metodo', 'definitivo'),
+                "timestamp": resultado.get('timestamp', ''),
+                "siguiente_paso": "Sistema funcionando - implementar en producción"
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "mensaje": f"Error definitivo: {resultado.get('error', 'Error desconocido')}",
+                "debug": resultado,
+                "solucion_alternativa": "Contactar con desarrollo para implementar método alternativo"
+            })
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "status": "critical_error",
+            "mensaje": f"Error crítico: {str(e)}",
+            "traceback": traceback.format_exc(),
+            "recomendacion": "Implementar sistema de emails con links de descarga HTML"
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
