@@ -15060,6 +15060,75 @@ def test_usar_funcion_corregida():
     except Exception as e:
         import traceback
         return jsonify({'status': 'error', 'error': str(e), 'traceback': traceback.format_exc()})
+        
+@app.route('/test/debug_timestamp_error')
+def debug_timestamp_error():
+    """Debug específico del error timestamp en generar_pdf_especialidad"""
+    try:
+        # Simular exactamente lo que hace el endpoint que falla
+        datos_cliente_test = {
+            'nombre': 'Cliente Test',
+            'email': 'test@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        especialidad = 'carta_astral_ia'
+        
+        # PASO 1: Ver si Sofia se llama correctamente
+        print("🔧 Simulando flujo completo...")
+        
+        # Crear archivos_unicos básico
+        archivos_unicos = crear_archivos_unicos_testing(especialidad)
+        
+        # Debug: ¿Se llama a Sofia?
+        try:
+            exito_sofia, datos_sofia = generar_cartas_astrales_completas(
+                datos_natales=datos_cliente_test,
+                archivos_unicos=archivos_unicos
+            )
+            
+            sofia_result = {
+                'sofia_ejecutada': True,
+                'sofia_exito': exito_sofia,
+                'datos_keys': list(datos_sofia.keys()) if datos_sofia else 'Sin datos',
+                'timestamp_en_datos': 'timestamp' in datos_sofia if datos_sofia else False,
+                'archivos_unicos_actualizado': list(archivos_unicos.keys())
+            }
+        except Exception as e:
+            sofia_result = {
+                'sofia_ejecutada': False,
+                'error_sofia': str(e)
+            }
+        
+        # PASO 2: Ver si generar_solo_pdf funciona
+        try:
+            resultado_pdf = generar_solo_pdf(datos_cliente_test, especialidad)
+            pdf_result = {
+                'pdf_ejecutado': True,
+                'pdf_exito': resultado_pdf.get('success', False) if resultado_pdf else False,
+                'pdf_error': resultado_pdf.get('error', 'Sin error') if resultado_pdf else 'Sin resultado'
+            }
+        except Exception as e:
+            pdf_result = {
+                'pdf_ejecutado': False,
+                'error_pdf': str(e)
+            }
+        
+        return jsonify({
+            'debug_sofia': sofia_result,
+            'debug_pdf': pdf_result,
+            'archivos_unicos_final': archivos_unicos,
+            'problema_identificado': 'Ver cuál step falla'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error_debug': str(e),
+            'traceback': traceback.format_exc()
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
