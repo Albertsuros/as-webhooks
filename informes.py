@@ -424,3 +424,110 @@ def generar_solo_pdf(datos_cliente, especialidad, client_id=None):
             'success': False,
             'error': str(e)
         }
+        
+# =======================================================================
+# 1. CORREGIR crear_archivos_unicos_testing en informes.py
+# =======================================================================
+
+# REEMPLAZAR en informes.py:
+def crear_archivos_unicos_testing(tipo_servicio, timestamp=None):
+    """Crear estructura de archivos para testing - CORREGIDO"""
+    if not timestamp:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    return {
+        'timestamp': timestamp,
+        'informe_html': f"templates/informe_{tipo_servicio}_{timestamp}.html",
+        'informe_pdf': f"informes/informe_{tipo_servicio}_{timestamp}.pdf",
+        'es_producto_m': False,
+        'duracion_minutos': 40,
+        'imagenes_base64': {}
+    }
+
+# =======================================================================
+# 2. CONVERTIR HTML A PDF OPTIMIZADO PARA BASE64
+# =======================================================================
+
+# REEMPLAZAR en informes.py:
+def convertir_html_a_pdf(archivo_html, archivo_pdf):
+    """Convertir HTML a PDF - VERSIÓN OPTIMIZADA PARA BASE64"""
+    try:
+        print(f"🔄 Convirtiendo HTML a PDF optimizado: {archivo_html} -> {archivo_pdf}")
+        
+        directorio_pdf = os.path.dirname(archivo_pdf)
+        if directorio_pdf and not os.path.exists(directorio_pdf):
+            os.makedirs(directorio_pdf)
+        
+        # Leer HTML
+        with open(archivo_html, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # OPTIMIZACIÓN: Reducir calidad de imágenes base64 si son muy grandes
+        if len(html_content) > 5000000:  # Si HTML > 5MB
+            print("⚠️ HTML muy grande, optimizando imágenes...")
+            # Buscar y reemplazar imágenes base64 muy grandes
+            import re
+            pattern = r'data:image/png;base64,([A-Za-z0-9+/=]{50000,})'
+            matches = re.findall(pattern, html_content)
+            print(f"🔍 Encontradas {len(matches)} imágenes grandes")
+            
+            # Por ahora, continuar con el HTML original
+            # En el futuro podríamos comprimir las imágenes aquí
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    '--no-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--memory-pressure-off',
+                    '--max_old_space_size=4096'
+                ]
+            )
+            
+            page = browser.new_page()
+            
+            # Configurar timeouts más largos para contenido pesado
+            page.set_default_timeout(60000)  # 60 segundos
+            
+            # Cargar HTML con configuración optimizada
+            page.set_content(html_content, wait_until='domcontentloaded')
+            
+            # Esperar que las imágenes base64 se procesen
+            try:
+                page.wait_for_load_state('networkidle', timeout=30000)
+            except:
+                print("⚠️ Timeout esperando networkidle, continuando...")
+            
+            # Generar PDF con configuración optimizada
+            page.pdf(
+                path=archivo_pdf,
+                format='A4',
+                margin={
+                    'top': '1cm',
+                    'right': '1cm', 
+                    'bottom': '1cm',
+                    'left': '1cm'
+                },
+                print_background=True,
+                prefer_css_page_size=True,
+                # Optimizaciones adicionales
+                scale=0.8,  # Reducir escala para contenido más compacto
+            )
+            
+            browser.close()
+        
+        if os.path.exists(archivo_pdf):
+            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
+            print(f"✅ PDF generado optimizado: {archivo_pdf} ({tamaño_kb:.1f} KB)")
+            return True
+        else:
+            print(f"❌ PDF no se creó: {archivo_pdf}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error convirtiendo HTML a PDF optimizado: {e}")
+        import traceback
+        traceback.print_exc()
+        return False

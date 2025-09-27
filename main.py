@@ -15483,6 +15483,273 @@ def test_generar_pdf_carta_astral_corregido():
             "mensaje": f"Error general: {str(e)}",
             "traceback": traceback.format_exc()
         })
+        
+# =======================================================================
+# 3. FUNCIÓN DE FALLBACK: GENERAR PDF SIN IMÁGENES
+# =======================================================================
+
+def generar_pdf_sin_imagenes_fallback(datos_cliente, tipo_servicio, aspectos_data):
+    """Generar PDF de fallback sin imágenes base64 si Playwright falla"""
+    try:
+        from datetime import datetime
+        import pytz
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        zona = pytz.timezone('Europe/Madrid')
+        ahora = datetime.now(zona)
+        
+        # HTML simplificado SIN imágenes base64
+        html_simple = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe Astrológico - {datos_cliente.get('nombre', 'Cliente')}</title>
+    <style>
+        body {{ font-family: 'Georgia', serif; line-height: 1.6; color: #333; margin: 20px; }}
+        .header {{ text-align: center; border-bottom: 2px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }}
+        .header h1 {{ color: #667eea; font-size: 2em; margin: 0; }}
+        .section {{ margin: 30px 0; padding: 20px; background: #f8f9ff; border-radius: 10px; border-left: 4px solid #667eea; }}
+        .aspectos-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin: 15px 0; }}
+        .aspecto-item {{ background: white; padding: 10px 15px; border-radius: 6px; border: 1px solid #e0e6ed; display: flex; justify-content: space-between; }}
+        .aspecto-planetas {{ font-weight: 500; color: #333; }}
+        .aspecto-orbe {{ font-size: 0.85em; color: #666; background: #f0f2f5; padding: 3px 8px; border-radius: 4px; }}
+        .datos-personales {{ background: #667eea; color: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; }}
+        .dato {{ font-weight: bold; color: #FFD700; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌟 Informe Astrológico Completo 🌟</h1>
+        <h2>{tipo_servicio.replace('_', ' ').title()}</h2>
+    </div>
+
+    <div class="datos-personales">
+        <h3>📋 Datos Personales</h3>
+        <p><span class="dato">Nombre:</span> {datos_cliente.get('nombre', 'Cliente')}</p>
+        <p><span class="dato">Email:</span> {datos_cliente.get('email', '')}</p>
+        <p><span class="dato">Fecha de nacimiento:</span> {datos_cliente.get('fecha_nacimiento', '')}</p>
+        <p><span class="dato">Hora de nacimiento:</span> {datos_cliente.get('hora_nacimiento', '')}</p>
+        <p><span class="dato">Lugar de nacimiento:</span> {datos_cliente.get('lugar_nacimiento', '')}</p>
+    </div>
+
+    <div class="section">
+        <h2>🌅 Aspectos Natales ({len(aspectos_data.get('aspectos_natales', []))})</h2>
+        <div class="aspectos-grid">
+"""
+        
+        # Añadir aspectos natales reales
+        for aspecto in aspectos_data.get('aspectos_natales', [])[:15]:
+            planeta1 = aspecto.get('planeta1', 'Planeta1')
+            planeta2 = aspecto.get('planeta2', 'Planeta2')
+            tipo_aspecto = aspecto.get('aspecto', 'aspecto')
+            orbe = aspecto.get('orbe', 0)
+            
+            html_simple += f"""
+            <div class="aspecto-item">
+                <span class="aspecto-planetas">{planeta1} {tipo_aspecto} {planeta2}</span>
+                <span class="aspecto-orbe">{orbe:.1f}°</span>
+            </div>
+            """
+        
+        html_simple += """
+        </div>
+        <p><em>Las imágenes de las cartas astrales se han omitido en esta versión optimizada del informe.</em></p>
+    </div>
+
+    <div class="section">
+        <h2>📈 Aspectos de Progresión ({len(aspectos_data.get('aspectos_progresiones', []))})</h2>
+        <div class="aspectos-grid">
+"""
+        
+        # Añadir aspectos de progresión reales
+        for aspecto in aspectos_data.get('aspectos_progresiones', [])[:10]:
+            planeta_progresion = aspecto.get('planeta_progresion', 'PlanetaProg')
+            planeta_natal = aspecto.get('planeta_natal', 'PlanetaNatal')
+            tipo = aspecto.get('tipo', 'aspecto')
+            orbe = aspecto.get('orbe', 0)
+            
+            html_simple += f"""
+            <div class="aspecto-item">
+                <span class="aspecto-planetas">{planeta_progresion} {tipo} {planeta_natal}</span>
+                <span class="aspecto-orbe">{orbe:.1f}°</span>
+            </div>
+            """
+        
+        html_simple += f"""
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔄 Aspectos de Tránsito ({len(aspectos_data.get('aspectos_transitos', []))})</h2>
+        <div class="aspectos-grid">
+"""
+        
+        # Añadir aspectos de tránsito reales
+        for aspecto in aspectos_data.get('aspectos_transitos', [])[:10]:
+            planeta_transito = aspecto.get('planeta_transito', 'PlanetaTrans')
+            planeta_natal = aspecto.get('planeta_natal', 'PlanetaNatal')
+            tipo = aspecto.get('tipo', 'aspecto')
+            orbe = aspecto.get('orbe', 0)
+            
+            html_simple += f"""
+            <div class="aspecto-item">
+                <span class="aspecto-planetas">{planeta_transito} {tipo} {planeta_natal}</span>
+                <span class="aspecto-orbe">{orbe:.1f}°</span>
+            </div>
+            """
+        
+        html_simple += f"""
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #667eea; color: #666;">
+        <p><strong>Generado:</strong> {ahora.strftime("%d/%m/%Y")} a las {ahora.strftime("%H:%M:%S")}</p>
+        <p><strong>AS Cartastral</strong> - Servicios Astrológicos IA</p>
+        <p><em>Informe optimizado sin imágenes para mejor rendimiento</em></p>
+    </div>
+</body>
+</html>"""
+        
+        # Guardar HTML simple
+        archivo_html = f"templates/informe_simple_{tipo_servicio}_{timestamp}.html"
+        archivo_pdf = f"informes/informe_simple_{tipo_servicio}_{timestamp}.pdf"
+        
+        os.makedirs('templates', exist_ok=True)
+        with open(archivo_html, 'w', encoding='utf-8') as f:
+            f.write(html_simple)
+        
+        # Convertir a PDF (debería ser mucho más rápido sin imágenes)
+        pdf_success = convertir_html_a_pdf(archivo_html, archivo_pdf)
+        
+        if pdf_success:
+            return {
+                'success': True,
+                'archivo_html': archivo_html,
+                'archivo_pdf': archivo_pdf,
+                'metodo': 'fallback_sin_imagenes',
+                'aspectos_incluidos': {
+                    'natal': len(aspectos_data.get('aspectos_natales', [])),
+                    'progresiones': len(aspectos_data.get('aspectos_progresiones', [])),
+                    'transitos': len(aspectos_data.get('aspectos_transitos', []))
+                }
+            }
+        else:
+            return {
+                'success': False,
+                'error': 'Falló incluso el PDF simple',
+                'archivo_html': archivo_html
+            }
+            
+    except Exception as e:
+        return {
+            'success': False,
+            'error': f'Error en fallback: {str(e)}'
+        }
+
+# =======================================================================
+# 4. FUNCIÓN PRINCIPAL CORREGIDA CON FALLBACK
+# =======================================================================
+
+# AÑADIR a main.py:
+def generar_pdf_con_fallback(datos_cliente, tipo_servicio):
+    """
+    Función principal que intenta generar PDF completo, con fallback si falla
+    """
+    try:
+        print(f"🔄 Generando PDF para {tipo_servicio}...")
+        
+        # PASO 1: Intentar generar datos astrales
+        exito_sofia, datos_sofia = generar_cartas_astrales_base64(datos_cliente)
+        
+        if not exito_sofia or not datos_sofia:
+            return {
+                'success': False,
+                'error': 'Sofia no pudo generar datos astrales',
+                'paso_fallo': 'generacion_datos'
+            }
+        
+        print(f"✅ Datos generados: {len(datos_sofia.get('aspectos_natales', []))} aspectos natales")
+        
+        # PASO 2: Intentar generar PDF completo con imágenes
+        try:
+            resultado_completo = generar_solo_pdf_corregido(datos_cliente, tipo_servicio)
+            if resultado_completo.get('success'):
+                return resultado_completo
+            else:
+                print("⚠️ PDF completo falló, intentando fallback...")
+        except Exception as e:
+            print(f"⚠️ Error en PDF completo: {e}")
+        
+        # PASO 3: Fallback - PDF sin imágenes pero con aspectos
+        print("🔄 Generando PDF de fallback sin imágenes...")
+        resultado_fallback = generar_pdf_sin_imagenes_fallback(datos_cliente, tipo_servicio, datos_sofia)
+        
+        if resultado_fallback.get('success'):
+            resultado_fallback['mensaje'] = 'PDF generado sin imágenes (fallback exitoso)'
+            return resultado_fallback
+        else:
+            return {
+                'success': False,
+                'error': 'Tanto PDF completo como fallback fallaron',
+                'resultado_completo': resultado_completo,
+                'resultado_fallback': resultado_fallback
+            }
+            
+    except Exception as e:
+        import traceback
+        return {
+            'success': False,
+            'error': f'Error general: {str(e)}',
+            'traceback': traceback.format_exc()
+        }
+
+# =======================================================================
+# 5. ENDPOINT DE TEST FINAL
+# =======================================================================
+
+@app.route('/test/generar_pdf_final_corregido')
+def test_generar_pdf_final_corregido():
+    """
+    TEST FINAL: Generar PDF con fallback automático
+    """
+    try:
+        datos_cliente = {
+            'nombre': 'Usuario Final',
+            'email': 'final@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        resultado = generar_pdf_con_fallback(datos_cliente, 'carta_astral_ia')
+        
+        if resultado.get('success'):
+            archivo_pdf = resultado.get('archivo_pdf', '')
+            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+            
+            return jsonify({
+                "status": "success",
+                "mensaje": resultado.get('mensaje', 'PDF generado correctamente'),
+                "archivo": archivo_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "metodo": resultado.get('metodo', 'unknown'),
+                "aspectos_incluidos": resultado.get('aspectos_incluidos', {}),
+                "timestamp": resultado.get('timestamp')
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "mensaje": f"Error: {resultado.get('error', 'Error desconocido')}",
+                "detalles": resultado
+            })
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "status": "error",
+            "mensaje": f"Error crítico: {str(e)}",
+            "traceback": traceback.format_exc()
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
