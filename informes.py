@@ -8,6 +8,8 @@ matplotlib.use('Agg')
 import traceback
 import subprocess
 import shutil
+import base64
+from flask import url_for
 
 def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=""):
     """Generar informe HTML - VERSIÓN BASE64"""
@@ -1734,57 +1736,460 @@ def generar_pdf_railway_configurado(datos_cliente, tipo_servicio, resumen_sesion
             'error': str(e),
             'traceback': traceback.format_exc()
         }
-
-# ENDPOINT DE PRUEBA - AÑADIR A main.py
-@app.route('/test/generar_pdf_railway_fix')
-def generar_pdf_railway_fix():
+        
+def guardar_imagen_carta_en_static(imagen_data, nombre_archivo):
     """
-    Test con configuración específica para Railway
+    Guardar imagen de carta en static/img/ (método probado)
     """
     try:
-        datos_cliente = {
-            'nombre': 'Cliente Railway',
-            'email': 'railway@test.com',
-            'telefono': '+34600000000',
-            'fecha_nacimiento': '15/07/1985',
-            'hora_nacimiento': '10:30',
-            'lugar_nacimiento': 'Madrid, España'
+        # Crear directorio static/img si no existe
+        static_dir = os.path.join(os.getcwd(), 'static', 'img', 'cartas')
+        os.makedirs(static_dir, exist_ok=True)
+        
+        # Guardar imagen
+        ruta_completa = os.path.join(static_dir, f"{nombre_archivo}.png")
+        
+        if isinstance(imagen_data, bytes):
+            # Si son bytes directos
+            with open(ruta_completa, 'wb') as f:
+                f.write(imagen_data)
+        else:
+            # Si es una figura de matplotlib
+            imagen_data.savefig(ruta_completa, dpi=120, bbox_inches='tight', 
+                              facecolor='white', format='png')
+        
+        # Devolver ruta relativa para url_for
+        return f"img/cartas/{nombre_archivo}.png"
+        
+    except Exception as e:
+        print(f"Error guardando imagen: {e}")
+        return None
+
+def obtener_url_imagen_publica(nombre_rel):
+    """
+    Obtener URL pública absoluta de imagen (método probado)
+    """
+    try:
+        return url_for('static', filename=nombre_rel, _external=True)
+    except RuntimeError:
+        # Fallback si no hay contexto de request
+        base = os.environ.get('APP_URL', 'https://as-webhooks-production.up.railway.app')
+        return f"{base}/static/{nombre_rel}"
+
+def generar_cartas_en_static(datos_natales):
+    """
+    Generar todas las cartas y guardarlas en static/img/cartas/
+    """
+    try:
+        from datetime import datetime
+        from datos_astrales import GraficosAstrales
+        
+        print("Generando cartas en static/img/cartas/...")
+        
+        # Timestamp único
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        graficos = GraficosAstrales()
+        
+        cartas_generadas = {}
+        
+        # 1. CARTA NATAL
+        try:
+            print("Generando carta natal...")
+            fig_natal = graficos.crear_carta_natal_figura(datos_natales)
+            ruta_natal = guardar_imagen_carta_en_static(fig_natal, f"natal_{timestamp}")
+            if ruta_natal:
+                cartas_generadas['carta_natal'] = obtener_url_imagen_publica(ruta_natal)
+                print(f"✅ Carta natal guardada: {cartas_generadas['carta_natal']}")
+        except Exception as e:
+            print(f"Error carta natal: {e}")
+        
+        # 2. PROGRESIONES
+        try:
+            print("Generando progresiones...")
+            fig_prog = graficos.crear_progresiones_figura(datos_natales)
+            ruta_prog = guardar_imagen_carta_en_static(fig_prog, f"progresiones_{timestamp}")
+            if ruta_prog:
+                cartas_generadas['progresiones'] = obtener_url_imagen_publica(ruta_prog)
+                print(f"✅ Progresiones guardada: {cartas_generadas['progresiones']}")
+        except Exception as e:
+            print(f"Error progresiones: {e}")
+        
+        # 3. TRÁNSITOS
+        try:
+            print("Generando tránsitos...")
+            fig_trans = graficos.crear_transitos_figura(datos_natales)
+            ruta_trans = guardar_imagen_carta_en_static(fig_trans, f"transitos_{timestamp}")
+            if ruta_trans:
+                cartas_generadas['transitos'] = obtener_url_imagen_publica(ruta_trans)
+                print(f"✅ Tránsitos guardada: {cartas_generadas['transitos']}")
+        except Exception as e:
+            print(f"Error tránsitos: {e}")
+        
+        # Generar aspectos
+        aspectos_data = {
+            'aspectos_natales': graficos.calcular_aspectos_natales(datos_natales),
+            'aspectos_progresiones': graficos.calcular_aspectos_progresiones(datos_natales),
+            'aspectos_transitos': graficos.calcular_aspectos_transitos(datos_natales)
         }
         
-        resultado = generar_pdf_railway_configurado(
-            datos_cliente, 
-            'carta_astral_ia', 
-            "Test Railway fix"
-        )
+        resultado = {
+            'success': True,
+            'timestamp': timestamp,
+            'cartas_urls': cartas_generadas,
+            'total_cartas': len(cartas_generadas),
+            **aspectos_data
+        }
         
-        if resultado.get('success'):
-            archivo_pdf = resultado.get('archivo_pdf', '')
-            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+        print(f"✅ {len(cartas_generadas)} cartas generadas en static/")
+        return True, resultado
+        
+    except Exception as e:
+        print(f"Error generando cartas en static: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, {'error': str(e)}
+
+def generar_html_con_urls_publicas(datos_cliente, tipo_servicio, datos_cartas, resumen_sesion=""):
+    """
+    Generar HTML usando URLs públicas (método probado)
+    """
+    try:
+        from datetime import datetime
+        import pytz
+        from jinja2 import Template
+        
+        print("Generando HTML con URLs públicas...")
+        
+        # Template HTML con base href
+        template_html = '''<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="{{ request.host_url }}">
+    <title>Informe Carta Astral - {{ datos_cliente.nombre }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .carta-seccion {
+            background: white;
+            margin: 20px 0;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .carta-imagen {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .carta-imagen img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .aspectos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .aspecto-item {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            border-left: 3px solid #667eea;
+        }
+        .estadisticas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: #e3f2fd;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        h2 {
+            color: #444;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌟 INFORME CARTA ASTRAL COMPLETO</h1>
+        <h2>{{ datos_cliente.nombre }}</h2>
+        <p>{{ datos_cliente.fecha_nacimiento }} • {{ datos_cliente.lugar_nacimiento }}</p>
+        <p>Generado: {{ fecha_generacion }}</p>
+    </div>
+    
+    <!-- CARTA NATAL -->
+    <div class="carta-seccion">
+        <h2>🌅 Carta Natal</h2>
+        {% if cartas_urls.carta_natal %}
+        <div class="carta-imagen">
+            <img src="{{ cartas_urls.carta_natal }}" alt="Carta Natal" loading="lazy">
+        </div>
+        {% endif %}
+        
+        <h3>Aspectos Natales ({{ aspectos_natales|length }})</h3>
+        <div class="aspectos-grid">
+            {% for aspecto in aspectos_natales[:20] %}
+            <div class="aspecto-item">
+                <strong>{{ aspecto.planeta1 }}</strong> {{ aspecto.aspecto }} <strong>{{ aspecto.planeta2 }}</strong>
+                <br><small>Orbe: {{ aspecto.orbe }}° | Tipo: {{ aspecto.tipo }}</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- PROGRESIONES -->
+    <div class="carta-seccion">
+        <h2>📈 Progresiones Secundarias</h2>
+        {% if cartas_urls.progresiones %}
+        <div class="carta-imagen">
+            <img src="{{ cartas_urls.progresiones }}" alt="Progresiones" loading="lazy">
+        </div>
+        {% endif %}
+        
+        <h3>Aspectos de Progresión ({{ aspectos_progresiones|length }})</h3>
+        <div class="aspectos-grid">
+            {% for aspecto in aspectos_progresiones[:15] %}
+            <div class="aspecto-item">
+                <strong>{{ aspecto.planeta1 }}</strong> {{ aspecto.aspecto }} <strong>{{ aspecto.planeta2 }}</strong>
+                <br><small>Orbe: {{ aspecto.orbe }}° | Tipo: {{ aspecto.tipo }}</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- TRÁNSITOS -->
+    <div class="carta-seccion">
+        <h2>🔄 Tránsitos Actuales</h2>
+        {% if cartas_urls.transitos %}
+        <div class="carta-imagen">
+            <img src="{{ cartas_urls.transitos }}" alt="Tránsitos" loading="lazy">
+        </div>
+        {% endif %}
+        
+        <h3>Aspectos de Tránsito ({{ aspectos_transitos|length }})</h3>
+        <div class="aspectos-grid">
+            {% for aspecto in aspectos_transitos[:15] %}
+            <div class="aspecto-item">
+                <strong>{{ aspecto.planeta1 }}</strong> {{ aspecto.aspecto }} <strong>{{ aspecto.planeta2 }}</strong>
+                <br><small>Orbe: {{ aspecto.orbe }}° | Tipo: {{ aspecto.tipo }}</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- ESTADÍSTICAS -->
+    <div class="carta-seccion">
+        <h2>📊 Resumen del Análisis</h2>
+        <div class="estadisticas">
+            <div class="stat-box">
+                <div class="stat-number">{{ aspectos_natales|length }}</div>
+                <div>Aspectos Natales</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ aspectos_progresiones|length }}</div>
+                <div>Progresiones</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ aspectos_transitos|length }}</div>
+                <div>Tránsitos</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ total_cartas }}</div>
+                <div>Cartas Generadas</div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 40px; color: #666; font-size: 0.9em;">
+        <p><strong>AS CARTASTRAL</strong> - Astrología Profesional</p>
+        <p>{{ timestamp }}</p>
+    </div>
+</body>
+</html>'''
+        
+        # Datos para el template
+        ahora = datetime.now(pytz.timezone('Europe/Madrid'))
+        
+        datos_template = {
+            'datos_cliente': datos_cliente,
+            'cartas_urls': datos_cartas.get('cartas_urls', {}),
+            'aspectos_natales': datos_cartas.get('aspectos_natales', []),
+            'aspectos_progresiones': datos_cartas.get('aspectos_progresiones', []),
+            'aspectos_transitos': datos_cartas.get('aspectos_transitos', []),
+            'total_cartas': datos_cartas.get('total_cartas', 0),
+            'timestamp': datos_cartas.get('timestamp', ''),
+            'fecha_generacion': ahora.strftime('%d/%m/%Y %H:%M'),
+            'resumen_sesion': resumen_sesion,
+            'request': {'host_url': 'https://as-webhooks-production.up.railway.app/'}
+        }
+        
+        # Renderizar template
+        template = Template(template_html)
+        html_content = template.render(**datos_template)
+        
+        # Guardar archivo HTML
+        timestamp = datos_cartas.get('timestamp', 'temp')
+        archivo_html = f"templates/informe_static_{tipo_servicio}_{timestamp}.html"
+        os.makedirs('templates', exist_ok=True)
+        
+        with open(archivo_html, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        print(f"✅ HTML con URLs públicas generado: {archivo_html}")
+        return archivo_html
+        
+    except Exception as e:
+        print(f"Error generando HTML: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def generar_pdf_desde_url_publica(url_html_publica, archivo_pdf):
+    """
+    Generar PDF desde URL pública (método probado con Playwright)
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+        
+        print(f"Generando PDF desde URL: {url_html_publica} -> {archivo_pdf}")
+        
+        # Crear directorio
+        directorio_pdf = os.path.dirname(archivo_pdf)
+        if directorio_pdf and not os.path.exists(directorio_pdf):
+            os.makedirs(directorio_pdf)
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+            )
             
-            return jsonify({
-                "status": "success",
-                "mensaje": "¡PDF generado en Railway con configuración específica!",
-                "archivo": archivo_pdf,
-                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
-                "aspectos_incluidos": resultado.get('aspectos_incluidos', {}),
-                "metodo": resultado.get('metodo', ''),
-                "tamaño_cartas_mb": resultado.get('tamaño_cartas_mb', 0),
-                "temp_dir": resultado.get('temp_dir', ''),
-                "timestamp": resultado.get('timestamp', ''),
-                "siguiente_paso": "¡Funciona! Aplicar a producción"
-            })
+            page = browser.new_page(viewport={"width": 1200, "height": 1800})
+            
+            # Navegar a URL pública (método probado)
+            page.goto(url_html_publica, wait_until="networkidle")
+            
+            # Generar PDF
+            page.pdf(
+                path=archivo_pdf,
+                print_background=True,
+                width="210mm",
+                height="297mm",
+                margin={'top': '1cm', 'right': '1cm', 'bottom': '1cm', 'left': '1cm'}
+            )
+            
+            browser.close()
+        
+        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
+            tamaño_mb = os.path.getsize(archivo_pdf) / (1024*1024)
+            print(f"✅ PDF generado desde URL: {archivo_pdf} ({tamaño_mb:.2f} MB)")
+            return True
         else:
-            return jsonify({
-                "status": "error",
-                "mensaje": f"Error Railway: {resultado.get('error', 'Error desconocido')}",
-                "debug": resultado,
-                "sugerencia": resultado.get('sugerencia', 'Revisar logs de Railway')
-            })
+            return False
             
     except Exception as e:
+        print(f"Error generando PDF desde URL: {e}")
         import traceback
-        return jsonify({
-            "status": "critical_error",
-            "mensaje": f"Error crítico Railway: {str(e)}",
-            "traceback": traceback.format_exc()
-        })
+        traceback.print_exc()
+        return False
+
+def generar_informe_completo_metodo_probado(datos_cliente, tipo_servicio, resumen_sesion=""):
+    """
+    Función principal usando el método probado con static/img/
+    """
+    try:
+        print(f"🚀 Generando informe método probado: {tipo_servicio}")
+        
+        # PASO 1: Generar cartas en static/img/
+        exito, datos_cartas = generar_cartas_en_static(datos_cliente)
+        
+        if not exito:
+            return {
+                'success': False,
+                'error': 'No se pudieron generar las cartas en static/',
+                'debug': datos_cartas
+            }
+        
+        # PASO 2: Generar HTML con URLs públicas
+        archivo_html = generar_html_con_urls_publicas(
+            datos_cliente, tipo_servicio, datos_cartas, resumen_sesion
+        )
+        
+        if not archivo_html:
+            return {
+                'success': False,
+                'error': 'No se pudo generar el HTML'
+            }
+        
+        # PASO 3: Crear endpoint público para el HTML (se hace en main.py)
+        timestamp = datos_cartas.get('timestamp')
+        url_html_publica = f"https://as-webhooks-production.up.railway.app/preview/informe/{timestamp}"
+        
+        # PASO 4: Generar PDF desde URL pública
+        archivo_pdf = f"informes/informe_metodo_probado_{tipo_servicio}_{timestamp}.pdf"
+        pdf_success = generar_pdf_desde_url_publica(url_html_publica, archivo_pdf)
+        
+        if pdf_success:
+            return {
+                'success': True,
+                'archivo_html': archivo_html,
+                'archivo_pdf': archivo_pdf,
+                'url_html_publica': url_html_publica,
+                'mensaje': '¡PDF generado con método probado!',
+                'aspectos_incluidos': {
+                    'natal': len(datos_cartas.get('aspectos_natales', [])),
+                    'progresiones': len(datos_cartas.get('aspectos_progresiones', [])),
+                    'transitos': len(datos_cartas.get('aspectos_transitos', []))
+                },
+                'cartas_generadas': list(datos_cartas.get('cartas_urls', {}).keys()),
+                'metodo': 'static_img_url_publica',
+                'timestamp': timestamp
+            }
+        else:
+            return {
+                'success': False,
+                'error': 'No se pudo generar PDF desde URL pública',
+                'archivo_html': archivo_html,
+                'url_html_publica': url_html_publica,
+                'debug': 'Verificar que las imágenes se cargan en la URL pública'
+            }
+            
+    except Exception as e:
+        print(f"Error en método probado: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }

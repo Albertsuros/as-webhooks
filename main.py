@@ -15932,20 +15932,124 @@ def generar_pdf_metodo_definitivo():
             "recomendacion": "Implementar sistema de emails con links de descarga HTML"
         })
         
+# ENDPOINT DE PRUEBA - AÑADIR A main.py
 @app.route('/test/generar_pdf_railway_fix')
 def generar_pdf_railway_fix():
-    """Test simple que funciona"""
+    """
+    Test con configuración específica para Railway
+    """
     try:
-        return jsonify({
-            "status": "success", 
-            "mensaje": "Endpoint funcionando correctamente",
-            "timestamp": datetime.now().strftime('%Y%m%d_%H%M%S')
-        })
+        datos_cliente = {
+            'nombre': 'Cliente Railway',
+            'email': 'railway@test.com',
+            'telefono': '+34600000000',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        resultado = generar_pdf_railway_configurado(
+            datos_cliente, 
+            'carta_astral_ia', 
+            "Test Railway fix"
+        )
+        
+        if resultado.get('success'):
+            archivo_pdf = resultado.get('archivo_pdf', '')
+            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+            
+            return jsonify({
+                "status": "success",
+                "mensaje": "¡PDF generado en Railway con configuración específica!",
+                "archivo": archivo_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "aspectos_incluidos": resultado.get('aspectos_incluidos', {}),
+                "metodo": resultado.get('metodo', ''),
+                "tamaño_cartas_mb": resultado.get('tamaño_cartas_mb', 0),
+                "temp_dir": resultado.get('temp_dir', ''),
+                "timestamp": resultado.get('timestamp', ''),
+                "siguiente_paso": "¡Funciona! Aplicar a producción"
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "mensaje": f"Error Railway: {resultado.get('error', 'Error desconocido')}",
+                "debug": resultado,
+                "sugerencia": resultado.get('sugerencia', 'Revisar logs de Railway')
+            })
+            
     except Exception as e:
+        import traceback
         return jsonify({
-            "status": "error",
-            "mensaje": f"Error: {str(e)}"
+            "status": "critical_error",
+            "mensaje": f"Error crítico Railway: {str(e)}",
+            "traceback": traceback.format_exc()
         })
+        
+@app.route('/test/metodo_probado_static')
+def test_metodo_probado_static():
+    """Test usando método probado con static/img/"""
+    try:
+        datos_cliente = {
+            'nombre': 'Cliente Método Probado',
+            'email': 'probado@test.com',
+            'telefono': '+34600000000',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        resultado = generar_informe_completo_metodo_probado(
+            datos_cliente, 
+            'carta_astral_ia', 
+            "Test método probado static/img/"
+        )
+        
+        if resultado.get('success'):
+            archivo_pdf = resultado.get('archivo_pdf', '')
+            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+            
+            return jsonify({
+                "status": "success",
+                "mensaje": "¡PDF generado con método probado!",
+                "archivo": archivo_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "url_html_publica": resultado.get('url_html_publica', ''),
+                "cartas_generadas": resultado.get('cartas_generadas', []),
+                "aspectos_incluidos": resultado.get('aspectos_incluidos', {}),
+                "metodo": resultado.get('metodo', ''),
+                "timestamp": resultado.get('timestamp', '')
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "mensaje": f"Error: {resultado.get('error', 'Error desconocido')}",
+                "debug": resultado
+            })
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "status": "critical_error",
+            "mensaje": f"Error crítico: {str(e)}",
+            "traceback": traceback.format_exc()
+        })
+
+@app.route('/preview/informe/<timestamp>')
+def preview_informe(timestamp):
+    """Endpoint público para mostrar HTML (necesario para PDF)"""
+    try:
+        archivo_html = f"templates/informe_static_carta_astral_ia_{timestamp}.html"
+        
+        if os.path.exists(archivo_html):
+            with open(archivo_html, 'r', encoding='utf-8') as f:
+                contenido = f.read()
+            return contenido
+        else:
+            return "Informe no encontrado", 404
+            
+    except Exception as e:
+        return f"Error cargando informe: {str(e)}", 500
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
