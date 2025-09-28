@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 import datetime as dt
 import json
 from flask import render_template, send_file
+from informes import generar_informe_completo_metodo_probado
+from informes import generar_pdf_completo_optimizado
+from informes import procesar_y_enviar_informe
 from agents.sofia import handle_sofia_webhook, obtener_numero_telefono_desde_vapi
 from agents.grafologia import handle_grafologia_webhook
 from agents.veronica import handle_veronica_webhook  
@@ -37,8 +40,6 @@ import os
 import glob
 import threading
 import time
-from informes import procesar_y_enviar_informe
-from informes import generar_pdf_completo_optimizado
 from flask import send_from_directory
 from pathlib import Path
 from app import app
@@ -16050,6 +16051,79 @@ def preview_informe(timestamp):
             
     except Exception as e:
         return f"Error cargando informe: {str(e)}", 500
+        
+def generar_informe_completo_metodo_probado(datos_cliente, tipo_servicio, resumen_sesion=""):
+    """
+    Función principal usando el método probado con static/img/
+    """
+    try:
+        print(f"Generando informe método probado: {tipo_servicio}")
+        
+        # PASO 1: Generar cartas en static/img/
+        from informes import generar_cartas_en_static
+        exito, datos_cartas = generar_cartas_en_static(datos_cliente)
+        
+        if not exito:
+            return {
+                'success': False,
+                'error': 'No se pudieron generar las cartas en static/',
+                'debug': datos_cartas
+            }
+        
+        # PASO 2: Generar HTML con URLs públicas
+        from informes import generar_html_con_urls_publicas
+        archivo_html = generar_html_con_urls_publicas(
+            datos_cliente, tipo_servicio, datos_cartas, resumen_sesion
+        )
+        
+        if not archivo_html:
+            return {
+                'success': False,
+                'error': 'No se pudo generar el HTML'
+            }
+        
+        # PASO 3: Crear URL pública para el HTML
+        timestamp = datos_cartas.get('timestamp')
+        url_html_publica = f"https://as-webhooks-production.up.railway.app/preview/informe/{timestamp}"
+        
+        # PASO 4: Generar PDF desde URL pública
+        from informes import generar_pdf_desde_url_publica
+        archivo_pdf = f"informes/informe_metodo_probado_{tipo_servicio}_{timestamp}.pdf"
+        pdf_success = generar_pdf_desde_url_publica(url_html_publica, archivo_pdf)
+        
+        if pdf_success:
+            return {
+                'success': True,
+                'archivo_html': archivo_html,
+                'archivo_pdf': archivo_pdf,
+                'url_html_publica': url_html_publica,
+                'mensaje': 'PDF generado con método probado!',
+                'aspectos_incluidos': {
+                    'natal': len(datos_cartas.get('aspectos_natales', [])),
+                    'progresiones': len(datos_cartas.get('aspectos_progresiones', [])),
+                    'transitos': len(datos_cartas.get('aspectos_transitos', []))
+                },
+                'cartas_generadas': list(datos_cartas.get('cartas_urls', {}).keys()),
+                'metodo': 'static_img_url_publica',
+                'timestamp': timestamp
+            }
+        else:
+            return {
+                'success': False,
+                'error': 'No se pudo generar PDF desde URL pública',
+                'archivo_html': archivo_html,
+                'url_html_publica': url_html_publica
+            }
+            
+    except Exception as e:
+        print(f"Error en método probado: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
