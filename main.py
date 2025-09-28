@@ -15931,6 +15931,9 @@ def generar_pdf_metodo_definitivo():
             "traceback": traceback.format_exc(),
             "recomendacion": "Implementar sistema de emails con links de descarga HTML"
         })
+        
+@app.route('/test/generar_pdf_railway_fix')
+def generar_pdf_railway_fix():
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")

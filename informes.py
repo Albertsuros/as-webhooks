@@ -1300,3 +1300,491 @@ def convertir_html_a_pdf_playwright_optimizado(archivo_html, archivo_pdf):
     except Exception as e:
         print(f"❌ Error en Playwright optimizado: {e}")
         return False
+        
+# SOLUCIÓN ESPECÍFICA PARA RAILWAY - AÑADIR A informes.py
+
+def instalar_playwright_railway():
+    """
+    Instalar Playwright y browsers específicamente para Railway
+    """
+    try:
+        import subprocess
+        import os
+        
+        print("🔧 Verificando instalación de Playwright en Railway...")
+        
+        # Verificar si Playwright está instalado
+        try:
+            from playwright.sync_api import sync_playwright
+            print("✅ Playwright importado correctamente")
+        except ImportError:
+            print("📦 Instalando Playwright...")
+            subprocess.run(['pip', 'install', 'playwright'], check=True)
+            from playwright.sync_api import sync_playwright
+        
+        # Instalar browsers de Playwright si no están disponibles
+        try:
+            print("🌐 Instalando Chromium para Playwright...")
+            subprocess.run(['playwright', 'install', 'chromium'], check=True)
+            print("✅ Chromium instalado")
+        except Exception as e:
+            print(f"⚠️ No se pudo instalar Chromium automáticamente: {e}")
+            # Intentar instalación alternativa
+            try:
+                subprocess.run(['python', '-m', 'playwright', 'install', 'chromium'], check=True)
+                print("✅ Chromium instalado (método alternativo)")
+            except Exception as e2:
+                print(f"❌ Error instalando Chromium: {e2}")
+                return False
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error en instalación Playwright: {e}")
+        return False
+
+def convertir_html_a_pdf_railway_optimizado(archivo_html, archivo_pdf):
+    """
+    Conversión PDF optimizada específicamente para Railway
+    """
+    try:
+        print(f"🚀 Conversión PDF Railway: {archivo_html} -> {archivo_pdf}")
+        
+        # Verificar instalación
+        if not instalar_playwright_railway():
+            print("❌ Playwright no disponible, intentando wkhtmltopdf...")
+            return convertir_html_a_pdf_wkhtmltopdf_railway(archivo_html, archivo_pdf)
+        
+        from playwright.sync_api import sync_playwright
+        import os
+        
+        # Crear directorio
+        directorio_pdf = os.path.dirname(archivo_pdf)
+        if directorio_pdf and not os.path.exists(directorio_pdf):
+            os.makedirs(directorio_pdf)
+        
+        # Configuración específica para Railway
+        browser_args = [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--disable-software-rasterizer',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-features=TranslateUI',
+            '--disable-extensions',
+            '--disable-component-extensions-with-background-pages',
+            '--disable-default-apps',
+            '--mute-audio',
+            '--no-first-run',
+            '--disable-web-security',
+            '--allow-running-insecure-content',
+            '--disable-features=VizDisplayCompositor',
+            '--memory-pressure-off',
+            '--max_old_space_size=4096',
+            '--aggressive-cache-discard'
+        ]
+        
+        with sync_playwright() as p:
+            print("🌐 Lanzando Chromium con configuración Railway...")
+            
+            browser = p.chromium.launch(
+                headless=True,
+                args=browser_args,
+                slow_mo=0,
+                devtools=False
+            )
+            
+            # Configurar contexto con límites de memoria
+            context = browser.new_context(
+                viewport={'width': 1200, 'height': 800},
+                device_scale_factor=1,
+                has_touch=False,
+                is_mobile=False,
+                java_script_enabled=True,
+                user_agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+            )
+            
+            page = context.new_page()
+            
+            # Configurar timeouts más largos
+            page.set_default_timeout(120000)  # 2 minutos
+            page.set_default_navigation_timeout(120000)
+            
+            print("📄 Cargando HTML...")
+            
+            # Leer HTML
+            with open(archivo_html, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # Configurar página antes de cargar contenido
+            page.add_init_script("""
+                // Optimizaciones para Railway
+                window.addEventListener('load', () => {
+                    console.log('Página cargada completamente');
+                });
+                
+                // Limpiar console para reducir memoria
+                console.log = () => {};
+                console.warn = () => {};
+                console.error = () => {};
+            """)
+            
+            # Cargar contenido
+            page.set_content(html_content, wait_until='domcontentloaded')
+            
+            print("⏳ Esperando que el contenido se procese...")
+            
+            # Esperar que las imágenes se carguen (con timeout)
+            try:
+                page.wait_for_load_state('networkidle', timeout=60000)
+                print("✅ Imágenes cargadas")
+            except:
+                print("⚠️ Timeout esperando imágenes, continuando...")
+            
+            # Pequeña pausa adicional para asegurar renderizado
+            page.wait_for_timeout(2000)
+            
+            print("📄 Generando PDF...")
+            
+            # Generar PDF con configuración optimizada
+            page.pdf(
+                path=archivo_pdf,
+                format='A4',
+                margin={
+                    'top': '1cm',
+                    'right': '1cm', 
+                    'bottom': '1cm',
+                    'left': '1cm'
+                },
+                print_background=True,
+                prefer_css_page_size=True,
+                display_header_footer=False,
+                scale=1.0
+            )
+            
+            print("🔒 Cerrando browser...")
+            context.close()
+            browser.close()
+        
+        # Verificar resultado
+        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
+            tamaño_mb = os.path.getsize(archivo_pdf) / (1024*1024)
+            print(f"✅ PDF generado exitosamente: {archivo_pdf} ({tamaño_mb:.2f} MB)")
+            return True
+        else:
+            print("❌ PDF no generado correctamente")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error en Playwright Railway: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Fallback a wkhtmltopdf
+        print("🔄 Intentando fallback con wkhtmltopdf...")
+        return convertir_html_a_pdf_wkhtmltopdf_railway(archivo_html, archivo_pdf)
+
+def convertir_html_a_pdf_wkhtmltopdf_railway(archivo_html, archivo_pdf):
+    """
+    Fallback usando wkhtmltopdf en Railway
+    """
+    try:
+        import subprocess
+        import os
+        
+        print("🔧 Intentando wkhtmltopdf en Railway...")
+        
+        # Verificar si wkhtmltopdf está disponible
+        try:
+            subprocess.run(['wkhtmltopdf', '--version'], capture_output=True, check=True)
+            print("✅ wkhtmltopdf disponible")
+        except:
+            print("❌ wkhtmltopdf no está instalado en Railway")
+            return False
+        
+        # Comando wkhtmltopdf
+        comando = [
+            'wkhtmltopdf',
+            '--page-size', 'A4',
+            '--margin-top', '1cm',
+            '--margin-right', '1cm',
+            '--margin-bottom', '1cm', 
+            '--margin-left', '1cm',
+            '--enable-local-file-access',
+            '--print-media-type',
+            '--load-error-handling', 'ignore',
+            '--load-media-error-handling', 'ignore',
+            '--disable-smart-shrinking',
+            '--zoom', '1.0',
+            archivo_html,
+            archivo_pdf
+        ]
+        
+        # Ejecutar con timeout
+        resultado = subprocess.run(
+            comando, 
+            capture_output=True, 
+            text=True, 
+            timeout=120  # 2 minutos
+        )
+        
+        if resultado.returncode == 0 and os.path.exists(archivo_pdf):
+            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
+            print(f"✅ PDF generado con wkhtmltopdf: {archivo_pdf} ({tamaño_kb:.1f} KB)")
+            return True
+        else:
+            print(f"❌ Error en wkhtmltopdf: {resultado.stderr}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print("❌ Timeout en wkhtmltopdf")
+        return False
+    except Exception as e:
+        print(f"❌ Error en wkhtmltopdf: {e}")
+        return False
+
+def generar_cartas_tamaño_original(datos_natales):
+    """
+    Generar cartas con el tamaño original que funcionaba antes
+    """
+    try:
+        import os
+        from datetime import datetime
+        from datos_astrales import GraficosAstrales
+        
+        print("🎨 Generando cartas con tamaño original...")
+        
+        # Timestamp único
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        temp_dir = f"temp_cartas_{timestamp}"
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # Inicializar clase de gráficos
+        graficos = GraficosAstrales()
+        
+        # CONFIGURACIÓN ORIGINAL (la que funcionaba antes)
+        config_original = {
+            'figsize': (14, 12),     # Tamaño que funcionaba antes
+            'dpi': 120,              # DPI balanceado
+            'format': 'png',
+            'bbox_inches': 'tight',
+            'facecolor': 'white',
+            'edgecolor': 'none'
+        }
+        
+        rutas_cartas = {}
+        aspectos_data = {}
+        
+        # 1. CARTA NATAL
+        try:
+            print("🌟 Generando carta natal (tamaño original)...")
+            ruta_natal = os.path.join(temp_dir, f"carta_natal_{timestamp}.png")
+            
+            # Generar carta natal
+            aspectos_natales = graficos.crear_carta_natal_completa(
+                datos_natales, 
+                ruta_natal, 
+                config_original
+            )
+            
+            if os.path.exists(ruta_natal):
+                tamaño_mb = os.path.getsize(ruta_natal) / (1024*1024)
+                print(f"✅ Carta natal: {ruta_natal} ({tamaño_mb:.2f} MB)")
+                rutas_cartas['carta_natal'] = ruta_natal
+                aspectos_data['aspectos_natales'] = aspectos_natales
+                
+        except Exception as e:
+            print(f"❌ Error carta natal: {e}")
+        
+        # 2. PROGRESIONES
+        try:
+            print("📈 Generando progresiones (tamaño original)...")
+            ruta_progresiones = os.path.join(temp_dir, f"progresiones_{timestamp}.png")
+            
+            aspectos_progresiones = graficos.crear_progresiones_completa(
+                datos_natales,
+                ruta_progresiones,
+                config_original
+            )
+            
+            if os.path.exists(ruta_progresiones):
+                tamaño_mb = os.path.getsize(ruta_progresiones) / (1024*1024)
+                print(f"✅ Progresiones: {ruta_progresiones} ({tamaño_mb:.2f} MB)")
+                rutas_cartas['progresiones'] = ruta_progresiones
+                aspectos_data['aspectos_progresiones'] = aspectos_progresiones
+                
+        except Exception as e:
+            print(f"❌ Error progresiones: {e}")
+        
+        # 3. TRÁNSITOS
+        try:
+            print("🔄 Generando tránsitos (tamaño original)...")
+            ruta_transitos = os.path.join(temp_dir, f"transitos_{timestamp}.png")
+            
+            aspectos_transitos = graficos.crear_transitos_completa(
+                datos_natales,
+                ruta_transitos,
+                config_original
+            )
+            
+            if os.path.exists(ruta_transitos):
+                tamaño_mb = os.path.getsize(ruta_transitos) / (1024*1024)
+                print(f"✅ Tránsitos: {ruta_transitos} ({tamaño_mb:.2f} MB)")
+                rutas_cartas['transitos'] = ruta_transitos
+                aspectos_data['aspectos_transitos'] = aspectos_transitos
+                
+        except Exception as e:
+            print(f"❌ Error tránsitos: {e}")
+        
+        # Resultado
+        resultado = {
+            'success': True,
+            'temp_dir': temp_dir,
+            'timestamp': timestamp,
+            'rutas_cartas': rutas_cartas,
+            'total_archivos': len(rutas_cartas),
+            'tamaño_total_mb': sum([
+                os.path.getsize(ruta) / (1024*1024)
+                for ruta in rutas_cartas.values() 
+                if os.path.exists(ruta)
+            ]),
+            **aspectos_data
+        }
+        
+        print(f"✅ Cartas originales generadas: {len(rutas_cartas)} archivos")
+        print(f"📏 Tamaño total: {resultado['tamaño_total_mb']:.2f} MB")
+        
+        return True, resultado
+        
+    except Exception as e:
+        print(f"❌ Error generando cartas originales: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, {'error': str(e)}
+
+# FUNCIÓN PRINCIPAL CON CONFIGURACIÓN RAILWAY
+def generar_pdf_railway_configurado(datos_cliente, tipo_servicio, resumen_sesion=""):
+    """
+    Generar PDF con configuración específica para Railway
+    """
+    try:
+        print(f"🚀 Generando PDF en Railway: {tipo_servicio}")
+        
+        # PASO 1: Generar cartas con tamaño original
+        exito, datos_cartas = generar_cartas_tamaño_original(datos_cliente)
+        
+        if not exito:
+            return {
+                'success': False,
+                'error': 'No se pudieron generar las cartas astrales',
+                'debug': datos_cartas
+            }
+        
+        # PASO 2: Generar HTML con rutas de archivos
+        archivo_html = generar_html_con_rutas_archivos(
+            datos_cliente, tipo_servicio, datos_cartas, resumen_sesion
+        )
+        
+        if not archivo_html:
+            return {
+                'success': False,
+                'error': 'No se pudo generar el HTML'
+            }
+        
+        # PASO 3: Convertir a PDF con configuración Railway
+        timestamp = datos_cartas.get('timestamp')
+        archivo_pdf = f"informes/informe_railway_{tipo_servicio}_{timestamp}.pdf"
+        
+        pdf_success = convertir_html_a_pdf_railway_optimizado(archivo_html, archivo_pdf)
+        
+        if pdf_success:
+            return {
+                'success': True,
+                'archivo_html': archivo_html,
+                'archivo_pdf': archivo_pdf,
+                'mensaje': '¡PDF generado exitosamente en Railway!',
+                'aspectos_incluidos': {
+                    'natal': len(datos_cartas.get('aspectos_natales', [])),
+                    'progresiones': len(datos_cartas.get('aspectos_progresiones', [])),
+                    'transitos': len(datos_cartas.get('aspectos_transitos', []))
+                },
+                'metodo': 'railway_optimizado',
+                'temp_dir': datos_cartas.get('temp_dir'),
+                'timestamp': timestamp,
+                'tamaño_cartas_mb': datos_cartas.get('tamaño_total_mb', 0)
+            }
+        else:
+            return {
+                'success': False,
+                'error': 'No se pudo convertir HTML a PDF en Railway',
+                'archivo_html': archivo_html,
+                'temp_dir': datos_cartas.get('temp_dir'),
+                'sugerencia': 'Verificar instalación de Playwright en Railway'
+            }
+            
+    except Exception as e:
+        print(f"❌ Error en PDF Railway: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+# ENDPOINT DE PRUEBA - AÑADIR A main.py
+@app.route('/test/generar_pdf_railway_fix')
+def generar_pdf_railway_fix():
+    """
+    Test con configuración específica para Railway
+    """
+    try:
+        datos_cliente = {
+            'nombre': 'Cliente Railway',
+            'email': 'railway@test.com',
+            'telefono': '+34600000000',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        resultado = generar_pdf_railway_configurado(
+            datos_cliente, 
+            'carta_astral_ia', 
+            "Test Railway fix"
+        )
+        
+        if resultado.get('success'):
+            archivo_pdf = resultado.get('archivo_pdf', '')
+            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+            
+            return jsonify({
+                "status": "success",
+                "mensaje": "¡PDF generado en Railway con configuración específica!",
+                "archivo": archivo_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "aspectos_incluidos": resultado.get('aspectos_incluidos', {}),
+                "metodo": resultado.get('metodo', ''),
+                "tamaño_cartas_mb": resultado.get('tamaño_cartas_mb', 0),
+                "temp_dir": resultado.get('temp_dir', ''),
+                "timestamp": resultado.get('timestamp', ''),
+                "siguiente_paso": "¡Funciona! Aplicar a producción"
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "mensaje": f"Error Railway: {resultado.get('error', 'Error desconocido')}",
+                "debug": resultado,
+                "sugerencia": resultado.get('sugerencia', 'Revisar logs de Railway')
+            })
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "status": "critical_error",
+            "mensaje": f"Error crítico Railway: {str(e)}",
+            "traceback": traceback.format_exc()
+        })
