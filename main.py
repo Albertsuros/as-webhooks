@@ -15934,6 +15934,18 @@ def generar_pdf_metodo_definitivo():
         
 @app.route('/test/generar_pdf_railway_fix')
 def generar_pdf_railway_fix():
+    """Test simple que funciona"""
+    try:
+        return jsonify({
+            "status": "success", 
+            "mensaje": "Endpoint funcionando correctamente",
+            "timestamp": datetime.now().strftime('%Y%m%d_%H%M%S')
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "mensaje": f"Error: {str(e)}"
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
