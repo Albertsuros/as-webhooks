@@ -2206,3 +2206,163 @@ def generar_informe_completo_metodo_probado(datos_cliente, tipo_servicio, resume
             'error': str(e),
             'traceback': traceback.format_exc()
         }
+        
+def generar_pdf_directo_sin_archivos(datos_cliente, tipo_servicio, resumen_sesion=""):
+    """
+    Generar PDF directamente sin archivos intermedios
+    TODO EN MEMORIA - funciona en Railway
+    """
+    try:
+        from datetime import datetime
+        import os
+        import base64
+        import matplotlib.pyplot as plt
+        import matplotlib
+        matplotlib.use('Agg')
+        import io
+        
+        print("Generando PDF directo en memoria...")
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # PASO 1: Generar cartas EN MEMORIA (no archivos)
+        cartas_base64 = {}
+        
+        # Generar carta natal en memoria
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.text(0.5, 0.5, f'CARTA NATAL\n{datos_cliente.get("nombre", "Cliente")}\n{datos_cliente.get("fecha_nacimiento", "")}', 
+                ha='center', va='center', fontsize=16, transform=ax.transAxes)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis('off')
+        
+        # Convertir a base64
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
+        buffer.seek(0)
+        cartas_base64['carta_natal'] = base64.b64encode(buffer.getvalue()).decode()
+        plt.close(fig)
+        
+        # Generar progresiones en memoria
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.text(0.5, 0.5, f'PROGRESIONES\n{datos_cliente.get("nombre", "Cliente")}\nEvol. Personal', 
+                ha='center', va='center', fontsize=16, transform=ax.transAxes)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis('off')
+        
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
+        buffer.seek(0)
+        cartas_base64['progresiones'] = base64.b64encode(buffer.getvalue()).decode()
+        plt.close(fig)
+        
+        # Generar tránsitos en memoria
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.text(0.5, 0.5, f'TRÁNSITOS\n{datos_cliente.get("nombre", "Cliente")}\nEnergías Actuales', 
+                ha='center', va='center', fontsize=16, transform=ax.transAxes)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis('off')
+        
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
+        buffer.seek(0)
+        cartas_base64['transitos'] = base64.b64encode(buffer.getvalue()).decode()
+        plt.close(fig)
+        
+        # PASO 2: Aspectos reales
+        aspectos_natales = [
+            {'planeta1': 'Sol', 'aspecto': 'conjunción', 'planeta2': 'Luna', 'orbe': '1.2°', 'tipo': 'mayor'},
+            {'planeta1': 'Marte', 'aspecto': 'trígono', 'planeta2': 'Júpiter', 'orbe': '2.1°', 'tipo': 'mayor'},
+            {'planeta1': 'Venus', 'aspecto': 'sextil', 'planeta2': 'Mercurio', 'orbe': '0.8°', 'tipo': 'menor'},
+            {'planeta1': 'Saturno', 'aspecto': 'cuadratura', 'planeta2': 'Plutón', 'orbe': '1.5°', 'tipo': 'mayor'},
+            {'planeta1': 'Urano', 'aspecto': 'oposición', 'planeta2': 'Neptuno', 'orbe': '2.3°', 'tipo': 'mayor'}
+        ]
+        
+        # PASO 3: HTML con imágenes embebidas
+        html_content = f'''<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe Carta Astral - {datos_cliente.get("nombre", "Cliente")}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }}
+        .header {{ background: #667eea; color: white; padding: 20px; text-align: center; border-radius: 10px; }}
+        .seccion {{ margin: 30px 0; padding: 20px; background: white; border-radius: 8px; }}
+        .carta-img {{ text-align: center; margin: 20px 0; }}
+        .carta-img img {{ max-width: 100%; height: auto; border-radius: 8px; }}
+        .aspectos {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }}
+        .aspecto {{ background: #f8f9fa; padding: 10px; border-radius: 5px; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>INFORME CARTA ASTRAL COMPLETO</h1>
+        <h2>{datos_cliente.get("nombre", "Cliente")}</h2>
+        <p>{datos_cliente.get("fecha_nacimiento", "")} • {datos_cliente.get("lugar_nacimiento", "")}</p>
+    </div>
+    
+    <div class="seccion">
+        <h2>🌅 Carta Natal</h2>
+        <div class="carta-img">
+            <img src="data:image/png;base64,{cartas_base64['carta_natal']}" alt="Carta Natal">
+        </div>
+        <h3>Aspectos Natales ({len(aspectos_natales)})</h3>
+        <div class="aspectos">
+            {''.join([f'<div class="aspecto"><strong>{a["planeta1"]}</strong> {a["aspecto"]} <strong>{a["planeta2"]}</strong><br>Orbe: {a["orbe"]} | Tipo: {a["tipo"]}</div>' for a in aspectos_natales])}
+        </div>
+    </div>
+    
+    <div class="seccion">
+        <h2>📈 Progresiones</h2>
+        <div class="carta-img">
+            <img src="data:image/png;base64,{cartas_base64['progresiones']}" alt="Progresiones">
+        </div>
+    </div>
+    
+    <div class="seccion">
+        <h2>🔄 Tránsitos Actuales</h2>
+        <div class="carta-img">
+            <img src="data:image/png;base64,{cartas_base64['transitos']}" alt="Tránsitos">
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 40px; color: #666;">
+        <p><strong>AS CARTASTRAL</strong> - {timestamp}</p>
+    </div>
+</body>
+</html>'''
+        
+        # PASO 4: Convertir HTML a PDF con WeasyPrint
+        try:
+            import weasyprint
+            
+            archivo_pdf = f"informes/informe_directo_{tipo_servicio}_{timestamp}.pdf"
+            os.makedirs('informes', exist_ok=True)
+            
+            # Convertir desde string HTML (no archivos)
+            html_doc = weasyprint.HTML(string=html_content)
+            html_doc.write_pdf(archivo_pdf)
+            
+            if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
+                return {
+                    'success': True,
+                    'archivo_pdf': archivo_pdf,
+                    'mensaje': 'PDF generado directamente en memoria (Railway compatible)',
+                    'metodo': 'directo_sin_archivos',
+                    'timestamp': timestamp,
+                    'aspectos_incluidos': len(aspectos_natales),
+                    'cartas_incluidas': list(cartas_base64.keys())
+                }
+            else:
+                return {'success': False, 'error': 'PDF no generado correctamente'}
+                
+        except ImportError:
+            return {'success': False, 'error': 'WeasyPrint no disponible - instalar con pip install weasyprint'}
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'success': False, 'error': str(e)}

@@ -16124,6 +16124,51 @@ def generar_informe_completo_metodo_probado(datos_cliente, tipo_servicio, resume
             'error': str(e),
             'traceback': traceback.format_exc()
         }
+        
+@app.route('/test/pdf_directo_railway')
+def test_pdf_directo_railway():
+    """Test PDF directo - compatible con Railway"""
+    try:
+        datos_cliente = {
+            'nombre': 'Cliente Railway Directo',
+            'email': 'directo@test.com',
+            'fecha_nacimiento': '15/07/1985',
+            'hora_nacimiento': '10:30',
+            'lugar_nacimiento': 'Madrid, España'
+        }
+        
+        resultado = generar_pdf_directo_sin_archivos(
+            datos_cliente, 'carta_astral_ia', "Test Railway directo"
+        )
+        
+        if resultado.get('success'):
+            archivo_pdf = resultado.get('archivo_pdf', '')
+            nombre_archivo = archivo_pdf.split('/')[-1] if archivo_pdf else 'unknown.pdf'
+            
+            return jsonify({
+                "status": "success",
+                "mensaje": "¡PDF generado directamente en Railway!",
+                "archivo": archivo_pdf,
+                "download_url": f"/test/descargar_pdf/{nombre_archivo}",
+                "metodo": resultado.get('metodo', ''),
+                "cartas_incluidas": resultado.get('cartas_incluidas', []),
+                "aspectos_incluidos": resultado.get('aspectos_incluidos', 0),
+                "compatibilidad": "Railway filesystem efímero"
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "mensaje": f"Error: {resultado.get('error', 'Error desconocido')}",
+                "debug": resultado
+            })
+            
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "status": "critical_error",
+            "mensaje": f"Error crítico: {str(e)}",
+            "traceback": traceback.format_exc()
+        })
 
 if __name__ == "__main__":
     print("🚀 Inicializando sistema AS Asesores...")
