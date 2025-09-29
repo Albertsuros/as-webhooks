@@ -16180,7 +16180,7 @@ if __name__ == "__main__":
 
     # Ejecutar limpieza inicial al arrancar
     print("Ejecutando limpieza inicial...")
-    limpiar_archivos_antiguos()
+    # limpiar_archivos_antiguos()  # DESACTIVADO temporalmente
     
     # Inicializar sistema de limpieza automática
     iniciar_limpieza_automatica()
