@@ -9,6 +9,7 @@ from flask import render_template, send_file
 from informes import generar_informe_completo_metodo_probado
 from informes import generar_pdf_completo_optimizado
 from informes import procesar_y_enviar_informe
+from informes import generar_pdf_directo_sin_archivos
 from agents.sofia import handle_sofia_webhook, obtener_numero_telefono_desde_vapi
 from agents.grafologia import handle_grafologia_webhook
 from agents.veronica import handle_veronica_webhook  
@@ -532,6 +533,9 @@ def obtener_nombres_archivos_unicos(tipo_servicio, codigo_cliente):
     return nombres, id_unico
 
 def limpiar_archivos_antiguos():
+    """DESACTIVADO - Estaba borrando archivos necesarios"""
+    print("Limpieza automática desactivada")
+    return  # Termina aquí, no ejecuta nada más
     """
     Elimina archivos antiguos con tiempos específicos por servicio
     - General: 7 días
@@ -559,7 +563,6 @@ def limpiar_archivos_antiguos():
                 # Otros servicios: 7 días
                 else:
                     if fecha_archivo < hace_7_dias:
-                        os.remove(archivo)
                         archivos_eliminados += 1
                         print(f"Eliminado archivo antiguo (7 días): {archivo}")
                         
