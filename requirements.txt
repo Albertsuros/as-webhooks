@@ -16,11 +16,8 @@ pyyaml==6.0.2
 jinja2==3.1.4
 gunicorn==21.2.0
 playwright==1.40.0
-cairocffi==1.6.1
-cffi==1.16.0
-pycparser==2.21
 Flask-CORS==4.0.0
 retell-sdk
-weasyprint>=60.0
-reportlab
-fpdf2
+reportlab==4.0.4
+fpdf2==2.7.6
+Pillow==10.1.0
