@@ -532,6 +532,7 @@ def obtener_nombres_archivos_unicos(tipo_servicio, codigo_cliente):
     
     return nombres, id_unico
 
+'''
 def limpiar_archivos_antiguos():
     """DESACTIVADO - Estaba borrando archivos necesarios"""
     print("Limpieza automática desactivada")
@@ -596,6 +597,7 @@ def limpiar_archivos_antiguos():
         
     except Exception as e:
         print(f"Error en limpieza automática: {e}")
+'''
 
 def iniciar_limpieza_automatica():
     """
