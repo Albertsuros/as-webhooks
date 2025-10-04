@@ -13,8 +13,8 @@ from datetime import datetime, timedelta
 
 # IMPORTACIONES para generar cartas astrales
 from carta_natal import CartaAstralNatal
-from progresiones import generar_progresiones_personalizada as generar_progresiones
-from transitos import generar_transitos_personalizada as generar_transitos
+from progresiones import CartaProgresiones
+from transitos import CartaTransitos
 
 # IMPORTACIONES para revolución solar
 from revolucion_sola import generar_revolucion_solar_sola_personalizada as generar_revolucion_sola
@@ -732,33 +732,114 @@ def calcular_año_revolucion_solar(fecha_nacimiento_str, preferencia_año):
         return datetime.now().year
 
 def generar_cartas_astrales_completas(datos_natales, archivos_unicos):
-    """Generar cartas astrales completas (natal, progresiones, tránsitos)"""
+    """Generar cartas astrales completas (natal, progresiones, tránsitos) - CORREGIDO"""
     try:
-        # Generar carta natal
-        carta_natal = CartaAstralNatal(
-            nombre=datos_natales['nombre'],
-            fecha_nacimiento=datos_natales['fecha_nacimiento'],
-            hora_nacimiento=datos_natales['hora_nacimiento'],
-            lugar_nacimiento=datos_natales['lugar_nacimiento'],
-            residencia_actual=datos_natales['residencia_actual']
+        from carta_natal import CartaAstralNatal
+        
+        # Extraer y parsear datos
+        fecha_str = datos_natales.get('fecha_nacimiento', '')
+        hora_str = datos_natales.get('hora_nacimiento', '')
+        lugar_nacimiento = datos_natales.get('lugar_nacimiento', '')
+        
+        # Parsear fecha DD/MM/YYYY y hora HH:MM
+        if '/' in fecha_str and ':' in hora_str:
+            dia, mes, año = map(int, fecha_str.split('/'))
+            hora, minuto = map(int, hora_str.split(':'))
+            fecha_natal = (año, mes, dia, hora, minuto)
+        else:
+            raise ValueError("Formato fecha/hora incorrecto")
+        
+        # Coordenadas de ciudades
+        coordenadas_ciudades = {
+            'Madrid': (40.42, -3.70),
+            'Barcelona': (41.39, 2.16),
+            'Valencia': (39.47, -0.38),
+            'Sevilla': (37.39, -5.98),
+            'Zaragoza': (41.65, -0.89),
+        }
+        
+        lugar_coords = coordenadas_ciudades.get('Madrid', (40.42, -3.70))
+        for ciudad, coords in coordenadas_ciudades.items():
+            if ciudad.lower() in lugar_nacimiento.lower():
+                lugar_coords = coords
+                break
+        
+        # GENERAR CARTA NATAL (forma CORRECTA)
+        carta = CartaAstralNatal(figsize=(16, 14))
+        carta.nombre_archivo_personalizado = archivos_unicos['carta_natal_img']
+        
+        aspectos_natal, posiciones_natal = carta.crear_carta_astral_natal(
+            fecha_natal=fecha_natal,
+            lugar_natal=lugar_coords,
+            ciudad_natal=lugar_nacimiento,
+            guardar_archivo=True,
+            directorio_salida="static"
         )
         
-        carta_natal.generar_carta_completa(archivo_salida=archivos_unicos['carta_natal_img'])
+        # Generar progresiones (forma correcta)
+        carta_prog = CartaProgresiones(figsize=(16, 14))
+        carta_prog.nombre_archivo_personalizado = archivos_unicos['progresiones_img']
         
-        # Generar progresiones
-        datos_progresiones = generar_progresiones(datos_natales, archivos_unicos['progresiones_img'])
+        # Calcular edad actual
+        hoy = datetime.now()
+        edad_actual = (hoy.year - año) + (hoy.month - mes) / 12.0
         
-        # Generar tránsitos
-        datos_transitos = generar_transitos(datos_natales, archivos_unicos['transitos_img'])
+        aspectos_prog, pos_nat_prog, pos_prog, fecha_consulta, fecha_prog = carta_prog.crear_carta_progresiones(
+            fecha_nacimiento=fecha_natal,
+            edad_consulta=edad_actual,
+            lugar_nacimiento=lugar_coords,
+            lugar_actual=lugar_coords,
+            ciudad_nacimiento=lugar_nacimiento,
+            ciudad_actual=lugar_nacimiento,
+            guardar_archivo=True,
+            directorio_salida="static",
+            nombre_archivo=archivos_unicos['progresiones_img']
+        )
         
-        # Extraer datos para interpretación
-        datos_completos = extraer_datos_para_interpretacion(carta_natal, datos_progresiones, datos_transitos)
+        datos_progresiones = {
+            'aspectos': aspectos_prog,
+            'posiciones_natales': pos_nat_prog,
+            'posiciones_progresadas': pos_prog
+        }
+        
+        # Generar tránsitos (forma correcta)
+        carta_trans = CartaTransitos(figsize=(16, 14))
+        carta_trans.nombre_archivo_personalizado = archivos_unicos['transitos_img']
+        
+        fecha_transito = (hoy.year, hoy.month, hoy.day, hoy.hour, hoy.minute)
+        
+        aspectos_trans, pos_nat_trans, pos_trans, fecha_trans_dt, edad = carta_trans.crear_carta_transitos(
+            fecha_nacimiento=fecha_natal,
+            fecha_transito=fecha_transito,
+            lugar_nacimiento=lugar_coords,
+            guardar_archivo=True,
+            directorio_salida="static",
+            nombre_archivo=archivos_unicos['transitos_img']
+        )
+        
+        datos_transitos = {
+            'aspectos': aspectos_trans,
+            'posiciones_natales': pos_nat_trans,
+            'posiciones_transito': pos_trans
+        }
+        
+        # Preparar datos completos
+        datos_completos = {
+            'carta_natal': {
+                'aspectos': aspectos_natal,
+                'posiciones': posiciones_natal
+            },
+            'progresiones': datos_progresiones,
+            'transitos': datos_transitos
+        }
         
         print("✅ Cartas astrales generadas correctamente")
         return True, datos_completos
         
     except Exception as e:
         print(f"❌ Error generando cartas astrales: {e}")
+        import traceback
+        traceback.print_exc()
         return False, None
 
 def generar_revoluciones_solares_completas(datos_natales, archivos_unicos, año_revolucion):
@@ -1514,3 +1595,317 @@ def handle_sofia_webhook(data):
         import traceback
         traceback.print_exc()
         return {"status": "ok"}  # ✅ CAMBIADO: Evitar loops en errores
+        
+# ========================================
+# FUNCIONES DE REPROGRAMACIÓN - AÑADIDAS DE V2
+# ========================================
+
+import re
+
+def detectar_reprogramacion_sofia(mensaje_usuario):
+    """Detectar si cliente quiere reprogramar una cita"""
+    patrones_reprogramacion = [
+        r'reprogramar', r'cambiar.*cita', r'cambiar.*horario', r'cambiar.*fecha',
+        r'mover.*cita', r'otro.*día', r'otro.*horario', r'postponer',
+        r'aplazar', r'reagendar', r'modificar.*cita', r'cambiar.*día'
+    ]
+    
+    for patron in patrones_reprogramacion:
+        if re.search(patron, mensaje_usuario.lower()):
+            return True
+    return False
+
+
+def detectar_fecha_en_mensaje(mensaje):
+    """Detectar fecha en formato natural del mensaje"""
+    from datetime import datetime, timedelta
+    
+    mensaje_lower = mensaje.lower()
+    
+    # Detectar "mañana"
+    if 'mañana' in mensaje_lower or 'manana' in mensaje_lower:
+        mañana = datetime.now() + timedelta(days=1)
+        return mañana.strftime('%Y-%m-%d')
+    
+    # Detectar "pasado mañana"
+    if 'pasado mañana' in mensaje_lower or 'pasado manana' in mensaje_lower:
+        pasado = datetime.now() + timedelta(days=2)
+        return pasado.strftime('%Y-%m-%d')
+    
+    # Detectar formato DD/MM/YYYY o DD-MM-YYYY
+    patron_fecha = r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})'
+    match = re.search(patron_fecha, mensaje)
+    if match:
+        dia, mes, año = match.groups()
+        try:
+            fecha = datetime(int(año), int(mes), int(dia))
+            return fecha.strftime('%Y-%m-%d')
+        except:
+            pass
+    
+    return None
+
+
+def detectar_horario_en_mensaje(mensaje):
+    """Detectar horario en formato HH:MM o natural"""
+    # Formato HH:MM
+    patron_hora = r'(\d{1,2}):(\d{2})'
+    match = re.search(patron_hora, mensaje)
+    if match:
+        hora, minuto = match.groups()
+        return f"{hora.zfill(2)}:{minuto}"
+    
+    # Formato natural "a las 11" o "11 de la mañana"
+    patron_natural = r'(?:a las|las)?\s*(\d{1,2})\s*(?:de la)?\s*(mañana|tarde)?'
+    match = re.search(patron_natural, mensaje.lower())
+    if match:
+        hora = int(match.group(1))
+        periodo = match.group(2)
+        
+        if periodo == 'tarde' and hora < 12:
+            hora += 12
+        
+        return f"{hora:02d}:00"
+    
+    return None
+
+
+def detectar_nombre_en_mensaje(mensaje):
+    """Detectar nombre en el mensaje"""
+    # Buscar patrón "mi nombre es X" o "me llamo X" o "soy X"
+    patrones = [
+        r'mi nombre es\s+([A-ZÁ-Ú][a-zá-ú]+(?:\s+[A-ZÁ-Ú][a-zá-ú]+)*)',
+        r'me llamo\s+([A-ZÁ-Ú][a-zá-ú]+(?:\s+[A-ZÁ-Ú][a-zá-ú]+)*)',
+        r'soy\s+([A-ZÁ-Ú][a-zá-ú]+(?:\s+[A-ZÁ-Ú][a-zá-ú]+)*)'
+    ]
+    
+    for patron in patrones:
+        match = re.search(patron, mensaje, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    
+    return None
+
+
+def obtener_horarios_disponibles_sofia(tipo_servicio, fecha):
+    """
+    Obtener horarios disponibles para Sofía
+    Llama a la función de main.py si está disponible
+    """
+    try:
+        # Importar desde main
+        import sys
+        if 'main' in sys.modules:
+            from main import obtener_horarios_disponibles_dinamicos
+            return obtener_horarios_disponibles_dinamicos(fecha, tipo_servicio)
+        else:
+            # Horarios por defecto si no está main
+            return ['11:00-12:00', '12:00-13:00', '16:00-17:00', '17:00-18:00']
+    except Exception as e:
+        print(f"⚠️ Error obteniendo horarios: {e}")
+        return ['11:00-12:00', '12:00-13:00', '16:00-17:00', '17:00-18:00']
+
+
+def manejar_reprogramacion_sofia(mensaje_usuario, session_id, numero_telefono):
+    """
+    Manejar proceso de reprogramación desde Sofía
+    Esta función gestiona el flujo conversacional de reprogramación
+    """
+    try:
+        from datetime import datetime, timedelta
+        
+        # Obtener contexto de sesión
+        contexto = sessions.get(session_id, {})
+        
+        # Detectar datos en el mensaje actual
+        fecha_detectada = detectar_fecha_en_mensaje(mensaje_usuario)
+        horario_detectado = detectar_horario_en_mensaje(mensaje_usuario)
+        nombre_detectado = detectar_nombre_en_mensaje(mensaje_usuario)
+        
+        # Estado del proceso de reprogramación
+        estado_reprog = contexto.get('estado_reprogramacion', 'inicio')
+        
+        print(f"🔄 Reprogramación - Estado: {estado_reprog}")
+        
+        # ========================================
+        # FLUJO DE REPROGRAMACIÓN
+        # ========================================
+        
+        if estado_reprog == 'inicio':
+            # Inicio del proceso
+            contexto['estado_reprogramacion'] = 'datos_actuales'
+            contexto['datos_reprogramacion'] = {}
+            sessions[session_id] = contexto
+            
+            return {
+                "type": "speak",
+                "text": "Perfecto, te ayudo a reprogramar tu cita. Dime tu nombre completo y la fecha de tu cita actual."
+            }
+        
+        elif estado_reprog == 'datos_actuales':
+            # Recopilar nombre y fecha actual
+            datos_reprog = contexto.get('datos_reprogramacion', {})
+            
+            if nombre_detectado and not datos_reprog.get('nombre'):
+                datos_reprog['nombre'] = nombre_detectado
+            
+            if fecha_detectada and not datos_reprog.get('fecha_actual'):
+                datos_reprog['fecha_actual'] = fecha_detectada
+            
+            contexto['datos_reprogramacion'] = datos_reprog
+            
+            # Verificar si tenemos ambos datos
+            if datos_reprog.get('nombre') and datos_reprog.get('fecha_actual'):
+                contexto['estado_reprogramacion'] = 'nueva_fecha'
+                sessions[session_id] = contexto
+                
+                return {
+                    "type": "speak",
+                    "text": f"Entendido {datos_reprog['nombre']}, tu cita del {datos_reprog['fecha_actual']}. ¿Para qué fecha quieres reprogramarla?"
+                }
+            else:
+                sessions[session_id] = contexto
+                falta = "nombre" if not datos_reprog.get('nombre') else "fecha de tu cita actual"
+                return {
+                    "type": "speak",
+                    "text": f"Todavía necesito tu {falta}. ¿Puedes decírmelo?"
+                }
+        
+        elif estado_reprog == 'nueva_fecha':
+            # Recopilar nueva fecha
+            datos_reprog = contexto.get('datos_reprogramacion', {})
+            
+            if fecha_detectada:
+                datos_reprog['nueva_fecha'] = fecha_detectada
+                contexto['datos_reprogramacion'] = datos_reprog
+                contexto['estado_reprogramacion'] = 'nuevo_horario'
+                sessions[session_id] = contexto
+                
+                # Obtener horarios disponibles
+                try:
+                    fecha_obj = datetime.strptime(fecha_detectada, '%Y-%m-%d')
+                    tipo_servicio = contexto.get('tipo_servicio_humano', 'sofia_astrologo')
+                    horarios = obtener_horarios_disponibles_sofia(tipo_servicio, fecha_obj)
+                    
+                    if horarios:
+                        horarios_texto = ", ".join(horarios[:5])
+                        return {
+                            "type": "speak",
+                            "text": f"Para el {fecha_detectada} tengo disponible: {horarios_texto}. ¿Cuál prefieres?"
+                        }
+                    else:
+                        return {
+                            "type": "speak",
+                            "text": f"Lo siento, no tengo horarios disponibles para el {fecha_detectada}. ¿Te sirve otra fecha?"
+                        }
+                except Exception as e:
+                    print(f"Error obteniendo horarios: {e}")
+                    return {
+                        "type": "speak",
+                        "text": "¿A qué hora te vendría bien?"
+                    }
+            else:
+                return {
+                    "type": "speak",
+                    "text": "¿Para qué fecha quieres reprogramar? Dime el día, por ejemplo: mañana, o 15 de enero"
+                }
+        
+        elif estado_reprog == 'nuevo_horario':
+            # Recopilar nuevo horario y confirmar
+            datos_reprog = contexto.get('datos_reprogramacion', {})
+            
+            if horario_detectado:
+                datos_reprog['nuevo_horario'] = horario_detectado
+                contexto['datos_reprogramacion'] = datos_reprog
+                sessions[session_id] = contexto
+                
+                # Aquí llamarías a la API de reprogramación
+                try:
+                    import requests
+                    
+                    # Llamar a API de reprogramación
+                    response = requests.post(
+                        'http://localhost:5000/api/reprogramar-cita',
+                        json={
+                            'nombre_cliente': datos_reprog['nombre'],
+                            'fecha_original': datos_reprog['fecha_actual'],
+                            'nueva_fecha': datos_reprog['nueva_fecha'],
+                            'nuevo_horario': f"{horario_detectado}-{int(horario_detectado.split(':')[0])+1}:00",
+                            'tipo_servicio': contexto.get('tipo_servicio_humano', 'sofia_astrologo')
+                        }
+                    )
+                    
+                    if response.status_code == 200:
+                        # Limpiar estado de reprogramación
+                        contexto['estado_reprogramacion'] = None
+                        contexto['datos_reprogramacion'] = {}
+                        sessions[session_id] = contexto
+                        
+                        return {
+                            "type": "speak",
+                            "text": f"¡Perfecto! He reprogramado tu cita para el {datos_reprog['nueva_fecha']} a las {horario_detectado}. Recibirás una confirmación por email."
+                        }
+                    else:
+                        return {
+                            "type": "speak",
+                            "text": "Hubo un problema reprogramando tu cita. Por favor, inténtalo de nuevo más tarde."
+                        }
+                        
+                except Exception as e:
+                    print(f"Error reprogramando cita: {e}")
+                    return {
+                        "type": "speak",
+                        "text": "Hubo un error reprogramando. Por favor, inténtalo de nuevo."
+                    }
+            else:
+                return {
+                    "type": "speak",
+                    "text": "¿A qué hora te vendría bien? Dime la hora, por ejemplo: a las 11, o 16:30"
+                }
+        
+        # Estado desconocido - resetear
+        contexto['estado_reprogramacion'] = 'inicio'
+        sessions[session_id] = contexto
+        return manejar_reprogramacion_sofia(mensaje_usuario, session_id, numero_telefono)
+        
+    except Exception as e:
+        print(f"❌ Error en reprogramación: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "type": "speak",
+            "text": "Disculpa, hubo un error. ¿Puedes intentarlo de nuevo?"
+        }
+
+
+# ========================================
+# INSTRUCCIONES DE INTEGRACIÓN
+# ========================================
+
+"""
+PARA INTEGRAR EN handle_sofia_webhook():
+
+Buscar en handle_sofia_webhook() la sección donde se procesa el mensaje_usuario,
+y AÑADIR esta línea DESPUÉS de verificar sesión activa:
+
+    # NUEVA DETECCIÓN: Reprogramación de citas
+    if detectar_reprogramacion_sofia(mensaje_usuario):
+        return manejar_reprogramacion_sofia(mensaje_usuario, session_id, numero_telefono)
+
+Ejemplo de ubicación:
+
+def handle_sofia_webhook():
+    # ... código existente ...
+    
+    if sesion_activa:
+        # ... código de sesión activa ...
+    
+    # ⬇️ AÑADIR AQUÍ ⬇️
+    # NUEVA DETECCIÓN: Reprogramación de citas
+    if detectar_reprogramacion_sofia(mensaje_usuario):
+        return manejar_reprogramacion_sofia(mensaje_usuario, session_id, numero_telefono)
+    
+    # ... resto del código ...
+"""
+
+print("✅ Funciones de reprogramación cargadas correctamente")
