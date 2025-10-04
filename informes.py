@@ -1,1123 +1,1441 @@
-import os
-import gc
-from datetime import datetime
-import pytz
-from jinja2 import Template
-import matplotlib
-matplotlib.use('Agg')
-import traceback
-import subprocess
-import shutil
-import base64
-from flask import url_for
+"""
+Sistema de generación de informes personalizados para AS Cartastral
+Genera informes HTML y PDF para los 7 tipos de servicios IA
+"""
 
-def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=""):
-    """Generar informe HTML - VERSIÓN BASE64"""
-    try:
-        print(f"📄 Generando HTML para AS Cartastral: {tipo_servicio}")
-        
-        if not archivos_unicos or not isinstance(archivos_unicos, dict):
-            import uuid
-            id_unico = str(uuid.uuid4())[:8]
-            archivos_unicos = {
-                'informe_html': f"templates/informe_{tipo_servicio}_{id_unico}.html",
-                'es_producto_m': False,
-                'imagenes_base64': {}
-            }
-        
-        # TEMPLATE HTML SIMPLIFICADO PERO COMPLETO
-        template_html = f"""<!DOCTYPE html>
+import os
+import pytz
+from datetime import datetime
+# from weasyprint import HTML # Comentado - importar dentro de funciones
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from jinja2 import Template
+
+def obtener_portada_con_logo(tipo_servicio, nombre_cliente=''):
+    """Generar portada con logo AS Cartastral + imagen del servicio"""
+    
+    # MAPEO CORREGIDO CON RUTAS Y EXTENSIONES REALES
+    imagenes_servicios = {
+        'carta_astral_ia': 'astrologia-3.JPG',
+        'carta_natal': 'astrologia-3.JPG',
+        'revolucion_solar_ia': 'Tarot y astrologia-5.JPG', 
+        'revolucion_solar': 'Tarot y astrologia-5.JPG',
+        'sinastria_ia': 'Sinastria.JPG',
+        'sinastria': 'Sinastria.JPG',
+        'astrologia_horaria_ia': 'astrologia-1.JPG',
+        'astrol_horaria': 'astrologia-1.JPG',
+        'lectura_manos_ia': 'Lectura-de-manos-p.jpg',
+        'lectura_manos': 'Lectura-de-manos-p.jpg',
+        'lectura_facial_ia': 'lectura facial.JPG',
+        'lectura_facial': 'lectura facial.JPG',
+        'psico_coaching_ia': 'coaching-4.JPG',
+        'psico_coaching': 'coaching-4.JPG',
+        'grafologia_ia': 'grafologia_2.jpeg',
+        'grafologia': 'grafologia_2.jpeg'
+    }
+    
+    # Títulos completos
+    titulos_servicios = {
+        'carta_astral_ia': '🌟 CARTA ASTRAL PERSONALIZADA 🌟',
+        'carta_natal': '🌟 CARTA ASTRAL PERSONALIZADA 🌟',
+        'revolucion_solar_ia': '🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟',
+        'revolucion_solar': '🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟',
+        'sinastria_ia': '💕 SINASTRÍA ASTROLÓGICA 💕',
+        'sinastria': '💕 SINASTRÍA ASTROLÓGICA 💕',
+        'astrologia_horaria_ia': '⏰ ASTROLOGÍA HORARIA ⏰',
+        'astrol_horaria': '⏰ ASTROLOGÍA HORARIA ⏰',
+        'lectura_manos_ia': '👋 LECTURA DE MANOS PERSONALIZADA 👋',
+        'lectura_manos': '👋 LECTURA DE MANOS PERSONALIZADA 👋',
+        'lectura_facial_ia': '😊 LECTURA FACIAL PERSONALIZADA 😊',
+        'lectura_facial': '😊 LECTURA FACIAL PERSONALIZADA 😊',
+        'psico_coaching_ia': '🧠 SESIÓN DE PSICO-COACHING 🧠',
+        'psico_coaching': '🧠 SESIÓN DE PSICO-COACHING 🧠',
+        'grafologia_ia': '✍️ ANÁLISIS GRAFOLÓGICO PERSONALIZADO ✍️',
+        'grafologia': '✍️ ANÁLISIS GRAFOLÓGICO PERSONALIZADO ✍️'
+    }
+    
+    imagen_servicio = imagenes_servicios.get(tipo_servicio, 'logo.JPG')
+    titulo_servicio = titulos_servicios.get(tipo_servicio, '🌟 INFORME PERSONALIZADO 🌟')
+    fecha_actual = datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d de %B de %Y')
+    
+    return f"""
+    <div class="portada">
+        <div class="logo-header">
+            <img src="file:///home/runner/workspace/flask-server/static/logo.JPG" ...>
+            <span class="nombre-empresa">AS Cartastral</span>
+        </div>
+        <h1 class="titulo-principal">{titulo_servicio}</h1>
+        <div class="imagen-servicio">
+            <img src="file:///home/runner/workspace/flask-server/static/{imagen_servicio}" ...>
+        </div>
+        <h2 class="nombre-cliente">{{{{ nombre }}}}</h2>
+        <h3 class="subtitulo">Tu análisis personalizado</h3>
+        <div class="fecha-portada">
+            <p>Generado el {fecha_actual}</p>
+        </div>
+    </div>
+    """
+
+# ========================================
+# ACTUALIZAR ESTILOS CON LOGO DORADO E ITALICS
+# ========================================
+
+def obtener_estilos_portada_mejorada():
+    """Estilos CSS para la nueva portada con logo e imagen"""
+    return """
+    .portada {
+        text-align: center;
+        margin-top: 30px;
+        page-break-after: always;
+        position: relative;
+        min-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    /* LOGO EN ESQUINA SUPERIOR */
+    .logo-header {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .logo-esquina {
+        height: 4cm;  /* 4cm de altura como solicitaste */
+        width: auto;
+        object-fit: contain;
+    }
+    
+    .nombre-empresa {
+        font-size: 24px;
+        font-weight: bold;
+        color: #DAA520;  /* Color dorado */
+        font-family: 'Georgia', serif;
+        font-style: italic;  /* Italic como solicitaste */
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    /* TÍTULO PRINCIPAL */
+    .titulo-principal {
+        font-size: 32px;
+        margin: 120px 0 40px 0;  /* Más espacio por logo más grande */
+        color: #2c5aa0;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    /* IMAGEN CENTRAL DEL SERVICIO */
+    .imagen-servicio {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 40px 0;
+    }
+    
+    .imagen-central {
+        width: 14cm;  /* 14x14 cm como solicitaste */
+        height: 14cm;
+        object-fit: cover;  /* Cambié a cover para que llene el espacio */
+        border: 3px solid #2c5aa0;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        background: white;
+        padding: 10px;
+    }
+    
+    /* NOMBRE DEL CLIENTE */
+    .nombre-cliente {
+        font-size: 28px;
+        color: #333;
+        margin: 20px 0;
+        font-weight: normal;
+    }
+    
+    /* SUBTÍTULO */
+    .subtitulo {
+        font-size: 18px;
+        color: #666;
+        font-style: italic;
+        margin: 10px 0;
+    }
+    
+    /* FECHA EN PORTADA */
+    .fecha-portada {
+        margin-top: 40px;
+        font-size: 14px;
+        color: #888;
+    }
+    
+    @media print {
+        .portada {
+            page-break-after: always;
+        }
+        .imagen-central {
+            width: 14cm;
+            height: 14cm;
+        }
+        .logo-esquina {
+            height: 4cm;
+        }
+    }
+    """
+
+def generar_nombre_archivo_unico(tipo_servicio, codigo_cliente):
+    """Generar nombre único para archivos"""
+    timestamp = datetime.now(pytz.timezone('Europe/Madrid')).strftime("%Y%m%d%H%M%S")
+    
+    prefijos = {
+        'carta_astral_ia': 'AI',
+        'carta_natal': 'AI',  # Alias
+        'revolucion_solar_ia': 'RS', 
+        'revolucion_solar': 'RS',  # Alias
+        'sinastria_ia': 'SI',
+        'sinastria': 'SI',  # Alias
+        'astrologia_horaria_ia': 'AH',
+        'astrol_horaria': 'AH',  # Alias
+        'psico_coaching_ia': 'PC',
+        'psico_coaching': 'PC',  # Alias
+        'lectura_manos_ia': 'LM',
+        'lectura_manos': 'LM',  # Alias
+        'lectura_facial_ia': 'LF',
+        'lectura_facial': 'LF',  # Alias
+        'grafologia_ia': 'GR',
+        'grafologia': 'GR'  # Alias
+    }
+    
+    prefijo = prefijos.get(tipo_servicio, 'AI')
+    numero = codigo_cliente[-4:] if len(codigo_cliente) >= 4 else '0001'
+    
+    return f"{prefijo}_{numero}_{timestamp}"
+
+def obtener_template_html(tipo_servicio):
+    """Obtener template HTML según tipo de servicio"""
+    
+    import os
+    dir_base = os.path.dirname(os.path.abspath(__file__))
+    
+    # Mapeo de imágenes
+    imagenes_servicios = {
+        'carta_astral_ia': 'astrologia-3.JPG',
+        'carta_natal': 'astrologia-3.JPG',
+        'revolucion_solar_ia': 'Tarot y astrologia-5.JPG', 
+        'revolucion_solar': 'Tarot y astrologia-5.JPG',
+        'sinastria_ia': 'Sinastria.JPG',
+        'sinastria': 'Sinastria.JPG',
+        'astrologia_horaria_ia': 'astrologia-1.JPG',
+        'astrol_horaria': 'astrologia-1.JPG',
+        'lectura_manos_ia': 'Lectura-de-manos-p.jpg',
+        'lectura_manos': 'Lectura-de-manos-p.jpg',
+        'lectura_facial_ia': 'lectura facial.JPG',
+        'lectura_facial': 'lectura facial.JPG',
+        'psico_coaching_ia': 'coaching-4.JPG',
+        'psico_coaching': 'coaching-4.JPG',
+        'grafologia_ia': 'grafologia_2.jpeg',
+        'grafologia': 'grafologia_2.jpeg'
+    }
+    
+    imagen_servicio = imagenes_servicios.get(tipo_servicio, 'logo.JPG')
+    
+    # CSS común para todos
+    estilos_comunes = """
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            margin: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        @page {
+            margin: 1.5cm 1.5cm;
+        }
+        .portada {
+            text-align: center;
+            page-break-after: always;
+            padding: 40px 0;
+        }
+        .logo-portada {
+            width: 120px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        .imagen-especialidad {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin: 30px auto;
+            display: block;
+            border: 3px solid #2c5aa0;
+        }
+        .portada h1 {
+            font-size: 32px;
+            color: #2c5aa0;
+            margin: 20px 0;
+        }
+        .portada h2 {
+            font-size: 24px;
+            color: #666;
+            font-weight: normal;
+        }
+        .seccion {
+            margin: 40px 0;
+            page-break-inside: avoid;
+        }
+        h2 {
+            font-size: 22px;
+            color: #2c5aa0;
+            border-bottom: 2px solid #2c5aa0;
+            padding-bottom: 8px;
+            margin-top: 40px;
+        }
+        h3 {
+            font-size: 18px;
+            color: #666;
+            margin-top: 20px;
+        }
+        .datos-natales {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .dato {
+            font-weight: bold;
+            color: #2c5aa0;
+        }
+        .carta-img {
+            text-align: center;
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+        .carta-img img {
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .carta-img p {
+            font-style: italic;
+            color: #666;
+            margin-top: 10px;
+        }
+        ul.planetas {
+            column-count: 2;
+            column-gap: 40px;
+            list-style-type: none;
+            padding: 0;
+        }
+        ul.planetas li {
+            padding: 8px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+        .resumen-sesion {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+            margin: 30px 0;
+        }
+        .interpretacion {
+            background: #fff8e1;
+            padding: 15px;
+            border-left: 4px solid #ff9800;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        @media print {
+            .portada { page-break-after: always; }
+            .seccion { page-break-inside: avoid; }
+        }
+    </style>
+    """
+    
+    # CARTA ASTRAL
+    if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
+        return f"""
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{{{ nombre }}}} - {tipo_servicio.replace('_', ' ').title()} - AS Cartastral</title>
+    <title>Informe Carta Astral - AS Cartastral</title>
+    {estilos_comunes}
     <style>
-        body {{ font-family: 'Georgia', serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }}
-        .container {{ max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }}
-        .header {{ text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }}
-        .header h1 {{ color: #667eea; font-size: 2.5em; margin: 0; }}
-        .datos-personales {{ background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; }}
-        .dato {{ font-weight: bold; color: #FFD700; }}
-        .imagen-carta {{ margin: 40px 0; padding: 25px; border-left: 5px solid #667eea; background: #f8f9ff; border-radius: 12px; }}
-        .imagen-carta h2 {{ color: #667eea; font-size: 1.8em; margin-bottom: 20px; text-align: center; }}
-        .imagen-carta img {{ display: block; margin: 20px auto; max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); border: 3px solid #667eea; }}
-        .aspectos-section {{ background: #f8f9ff; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #667eea; }}
-        .aspectos-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; }}
-        .aspecto-item {{ background: white; padding: 12px 16px; border-radius: 8px; border: 1px solid #e0e6ed; display: flex; justify-content: space-between; align-items: center; }}
-        .aspecto-planetas {{ font-weight: 500; color: #333; flex: 1; }}
-        .aspecto-orbe {{ font-size: 0.85em; color: #666; background: #f0f2f5; padding: 4px 8px; border-radius: 6px; }}
-        .section {{ margin: 30px 0; padding: 20px; background: #f8f9ff; border-radius: 10px; border-left: 4px solid #667eea; }}
-        .footer {{ text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #667eea; color: #666; }}
+
+    </style>
+    <style>
+    ul.aspectos {{
+        column-count: 2;
+        column-gap: 30px;
+        list-style-type: disc;
+    }}
+    </style>
+    <style>
+    ul.aspectos {{
+        column-count: 2;
+        column-gap: 30px;
+    }}
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌟 {tipo_servicio.replace('_', ' ').title()} 🌟</h1>
-            <h2>AS Cartastral - Análisis Astrológico</h2>
-        </div>
 
-        <div class="datos-personales">
-            <h3>📋 Datos Personales</h3>
-            <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
-            <p><span class="dato">Email:</span> {{{{ email }}}}</p>
-            {{% if fecha_nacimiento %}}<p><span class="dato">Fecha:</span> {{{{ fecha_nacimiento }}}}</p>{{% endif %}}
-            {{% if hora_nacimiento %}}<p><span class="dato">Hora:</span> {{{{ hora_nacimiento }}}}</p>{{% endif %}}
-            {{% if lugar_nacimiento %}}<p><span class="dato">Lugar:</span> {{{{ lugar_nacimiento }}}}</p>{{% endif %}}
-        </div>
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>🌟 CARTA ASTRAL PERSONALIZADA 🌟</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Carta Astral" class="imagen-especialidad">
+    <h2>{{{{ nombre }}}}</h2>
+    <p style="color: #888;">Tu análisis personalizado</p>
+    <p style="color: #888; font-size: 14px;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
 
-        <!-- CARTA NATAL -->
-        {{% if imagenes_base64 and imagenes_base64.carta_natal %}}
-        <div class="imagen-carta">
-            <h2>🌅 Tu Carta Natal</h2>
-            <img src="{{{{ imagenes_base64.carta_natal }}}}" alt="Carta Natal">
-            <p>Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento.</p>
-            
-            {{% if aspectos_natales %}}
-            <div class="aspectos-section">
-                <h3>⭐ Aspectos Natales ({{{{ aspectos_natales|length }}}})</h3>
-                <div class="aspectos-grid">
-                    {{% for aspecto in aspectos_natales[:10] %}}
-                    <div class="aspecto-item">
-                        <span class="aspecto-planetas">{{{{ aspecto.planeta1 }}}} {{{{ aspecto.aspecto }}}} {{{{ aspecto.planeta2 }}}}</span>
-                        <span class="aspecto-orbe">{{{{ "%.1f"|format(aspecto.orbe) }}}}°</span>
-                    </div>
-                    {{% endfor %}}
-                    {{% if aspectos_natales|length > 10 %}}
-                    <div style="grid-column: 1 / -1; text-align: center; color: #667eea; font-style: italic;">
-                        + {{{{ aspectos_natales|length - 10 }}}} aspectos más...
-                    </div>
-                    {{% endif %}}
-                </div>
-            </div>
-            {{% endif %}}
-        </div>
-        {{% endif %}}
+<div class="datos-natales">
+    <h2>📊 Datos Natales</h2>
+    <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
+    <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+    <p><span class="dato">Fecha de nacimiento:</span> {{{{ fecha_nacimiento }}}}</p>
+    <p><span class="dato">Hora de nacimiento:</span> {{{{ hora_nacimiento }}}}</p>
+    <p><span class="dato">Lugar de nacimiento:</span> {{{{ lugar_nacimiento }}}}, {{{{ pais_nacimiento or 'España' }}}}</p>
+</div>
 
-        <!-- PROGRESIONES -->
-        {{% if imagenes_base64 and imagenes_base64.progresiones %}}
-        <div class="imagen-carta">
-            <h2>📈 Progresiones Secundarias</h2>
-            <img src="{{{{ imagenes_base64.progresiones }}}}" alt="Progresiones">
-            
-            {{% if aspectos_progresiones %}}
-            <div class="aspectos-section">
-                <h3>🌱 Aspectos de Progresión ({{{{ aspectos_progresiones|length }}}})</h3>
-                <div class="aspectos-grid">
-                    {{% for aspecto in aspectos_progresiones[:8] %}}
-                    <div class="aspecto-item">
-                        <span class="aspecto-planetas">{{{{ aspecto.planeta_progresion }}}} {{{{ aspecto.tipo }}}} {{{{ aspecto.planeta_natal }}}}</span>
-                        <span class="aspecto-orbe">{{{{ "%.1f"|format(aspecto.orbe) }}}}°</span>
-                    </div>
-                    {{% endfor %}}
-                </div>
-            </div>
-            {{% endif %}}
-        </div>
-        {{% endif %}}
+{{% if carta_natal_img %}}
+<div class="seccion">
+    <h2>🌍 Tu Carta Natal</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ carta_natal_img }}}}" alt="Carta natal completa">
+        <p>Tu mapa astrológico personal en el momento de tu nacimiento</p>
+    </div>
+</div>
+{{% endif %}}
 
-        <!-- TRÁNSITOS -->
-        {{% if imagenes_base64 and imagenes_base64.transitos %}}
-        <div class="imagen-carta">
-            <h2>🔄 Tránsitos Actuales</h2>
-            <img src="{{{{ imagenes_base64.transitos }}}}" alt="Tránsitos">
-            
-            {{% if aspectos_transitos %}}
-            <div class="aspectos-section">
-                <h3>⚡ Aspectos de Tránsito ({{{{ aspectos_transitos|length }}}})</h3>
-                <div class="aspectos-grid">
-                    {{% for aspecto in aspectos_transitos[:8] %}}
-                    <div class="aspecto-item">
-                        <span class="aspecto-planetas">{{{{ aspecto.planeta_transito }}}} {{{{ aspecto.tipo }}}} {{{{ aspecto.planeta_natal }}}}</span>
-                        <span class="aspecto-orbe">{{{{ "%.1f"|format(aspecto.orbe) }}}}°</span>
-                    </div>
-                    {{% endfor %}}
-                </div>
-            </div>
-            {{% endif %}}
-        </div>
-        {{% endif %}}
+{{% if planetas %}}
+<div class="seccion">
+    <h2>🪐 Posiciones Planetarias Natales</h2>
+    <ul class="planetas">
+        {{% for planeta, datos in planetas.items() %}}
+        <li><strong>{{{{ planeta }}}}:</strong> {{{{ datos.degree }}}} en {{{{ datos.sign }}}}{{% if datos.retrogrado %}} ℞{{% endif %}}</li>
+        {{% endfor %}}
+    </ul>
+</div>
+{{% endif %}}
 
-        {{% if resumen_sesion %}}
-        <div class="section">
-            <h2>📞 Resumen de tu Sesión</h2>
-            <div>{{{{ resumen_sesion }}}}</div>
-        </div>
-        {{% endif %}}
+{{% if retrogrados_natales %}}
+<div class="seccion">
+    <h3 style="color: #666; font-size: 18px;">↩️ Planetas Retrógrados Natales</h3>
+    <p>{{{{ ', '.join(retrogrados_natales) }}}}</p>
+</div>
+{{% endif %}}
 
-        <div class="footer">
-            <p><strong>Generado:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
-            <p><strong>AS Cartastral</strong> - Servicios Astrológicos IA</p>
+<div class="seccion">
+    <h3 style="color: #666; font-size: 18px;">🔥💨💧🌍 Análisis de Elementos</h3>
+    <p><strong>Fuego:</strong> 2 planetas | <strong>Tierra:</strong> 1 planeta | <strong>Aire:</strong> 3 planetas | <strong>Agua:</strong> 4 planetas</p>
+</div>
+
+{{% if aspectos_natales %}}
+<div class="seccion" style="page-break-inside: avoid;">
+    <h2>⚡ Aspectos Natales ({{{{ aspectos_natales|length }}}})</h2>
+    <ul class="aspectos" style="margin: 5px 0; padding-left: 20px; line-height: 1.4;">
+        {{% for aspecto in aspectos_natales %}}
+        <li style="margin: 2px 0;">{{{{ aspecto['planeta1'] }}}} {{{{ aspecto['aspecto']|upper }}}} {{{{ aspecto['planeta2'] }}}} - {{{{ "%.2f"|format(aspecto['orbe']) }}}}°</li>
+        {{% endfor %}}
+    </ul>
+</div>
+{{% endif %}}
+
+{{% if progresiones_img %}}
+<div class="seccion" style="page-break-inside: auto;">
+    <h2>🔄 Progresiones Secundarias</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ progresiones_img }}}}" alt="Progresiones secundarias">
+        <p>Tu evolución astrológica actual</p>
+    </div>
+    
+    {{% if planetas_progresados %}}
+    <h3 style="color: #666; font-size: 18px; margin-top: 20px;">🪐 Posiciones Progresadas</h3>
+    <ul class="planetas" style="margin-top: 10px;">
+        {{% for planeta, datos in planetas_progresados.items() %}}
+        <li><strong>{{{{ planeta }}}} (P):</strong> {{{{ datos.degree }}}} en {{{{ datos.sign }}}}{{% if datos.retrogrado %}} ℞{{% endif %}}</li>
+        {{% endfor %}}
+    </ul>
+    {{% if retrogrados_progresados %}}
+    <p style="margin-top: 10px;"><strong>↩️ Retrógrados:</strong> {{{{ ', '.join(retrogrados_progresados) }}}}</p>
+    {{% endif %}}
+    {{% endif %}}
+</div>
+{{% endif %}}
+
+{{% if aspectos_progresados %}}
+<div class="seccion" style="page-break-inside: avoid;">
+    <h2>⚡ Aspectos Progresión-Natal ({{{{ aspectos_progresados|length }}}})</h2>
+    <ul class="aspectos" style="margin: 5px 0; padding-left: 20px; line-height: 1.4;">
+        {{% for aspecto in aspectos_progresados %}}
+        <li style="margin: 2px 0;">{{{{ aspecto['planeta_progresion'] }}}} (P) {{{{ aspecto['tipo']|upper }}}} {{{{ aspecto['planeta_natal'] }}}} (N) - {{{{ "%.2f"|format(aspecto['orbe']) }}}}°</li>
+        {{% endfor %}}
+    </ul>
+</div>
+{{% endif %}}
+
+{{% if transitos_img %}}
+<div class="seccion" style="page-break-inside: auto;">
+    <h2>🌊 Tránsitos Actuales</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ transitos_img }}}}" alt="Tránsitos actuales">
+        <p>Influencias planetarias presentes</p>
+    </div>
+    
+    {{% if planetas_transitos %}}
+    <h3 style="color: #666; font-size: 18px; margin-top: 20px;">🪐 Posiciones en Tránsito</h3>
+    <ul class="planetas" style="margin-top: 10px;">
+        {{% for planeta, datos in planetas_transitos.items() %}}
+        <li><strong>{{{{ planeta }}}} (T):</strong> {{{{ datos.degree }}}} en {{{{ datos.sign }}}}{{% if datos.retrogrado %}} ℞{{% endif %}}</li>
+        {{% endfor %}}
+    </ul>
+    {{% if retrogrados_transitos %}}
+    <p style="margin-top: 10px;"><strong>↩️ Retrógrados:</strong> {{{{ ', '.join(retrogrados_transitos) }}}}</p>
+    {{% endif %}}
+    {{% endif %}}
+</div>
+{{% endif %}}
+
+{{% if aspectos_transitos %}}
+<div class="seccion" style="page-break-inside: auto;">
+    <h2>⚡ Aspectos Tránsito-Natal ({{{{ aspectos_transitos|length }}}})</h2>
+    <ul class="aspectos" style="margin: 5px 0; padding-left: 20px; line-height: 1.4;">
+        {{% for aspecto in aspectos_transitos %}}
+        <li style="margin: 2px 0;">{{{{ aspecto['planeta_transito'] }}}} (T) {{{{ aspecto['tipo']|upper }}}} {{{{ aspecto['planeta_natal'] }}}} (N) - {{{{ "%.2f"|format(aspecto['orbe']) }}}}°</li>
+        {{% endfor %}}
+    </ul>
+</div>
+{{% endif %}}
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Resumen de tu Sesión Telefónica</h2>
+    <p><strong>Duración:</strong> 40 minutos</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>🌟 Conclusión</h2>
+    <p>Tu carta astral es una guía para el autoconocimiento. Úsala para comprender tus patrones internos y tomar decisiones más conscientes en tu camino de crecimiento personal.</p>
+</div>
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Carta Astral Completa con Progresiones y Tránsitos</p>
+    <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+</div>
+
+</body>
+</html>
+        """
+    
+    # REVOLUCIÓN SOLAR
+    elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe Revolución Solar - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>🌟 CARTA ASTRAL + REVOLUCIÓN SOLAR 🌟</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Revolución Solar" class="imagen-especialidad">
+    <h2>{{{{ nombre }}}}</h2>
+    <p style="color: #888;">Tu análisis personalizado</p>
+    <p style="color: #888; font-size: 14px;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="datos-natales">
+    <h2>📊 Datos Natales</h2>
+    <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
+    <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+    <p><span class="dato">Fecha de nacimiento:</span> {{{{ fecha_nacimiento }}}}</p>
+    <p><span class="dato">Hora de nacimiento:</span> {{{{ hora_nacimiento }}}}</p>
+    <p><span class="dato">Lugar de nacimiento:</span> {{{{ lugar_nacimiento }}}}, {{{{ pais_nacimiento or 'España' }}}}</p>
+</div>
+
+<div class="seccion">
+    <h2>✨ Introducción</h2>
+    <p>Bienvenido/a a tu análisis astrológico personalizado. Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento y su influencia en tu personalidad, talentos y destino.</p>
+</div>
+
+{{% if carta_natal_img %}}
+<div class="seccion">
+    <h2>🌍 Tu Carta Natal</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ carta_natal_img }}}}" alt="Carta natal">
+        <p>Tu mapa astrológico base</p>
+    </div>
+</div>
+{{% endif %}}
+
+{{% if revolucion_img %}}
+<div class="seccion">
+    <h2>🎂 Tu Revolución Solar</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ revolucion_img }}}}" alt="Revolución solar">
+        <p>Predicciones para tu nuevo año astrológico</p>
+    </div>
+</div>
+{{% endif %}}
+
+{{% if revolucion_natal_img %}}
+<div class="seccion">
+    <h2>🔄 Revolución Solar con Aspectos Natales</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ revolucion_natal_img }}}}" alt="Revolución con aspectos natales">
+        <p>Cómo interactúa tu nuevo año con tu naturaleza básica</p>
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>🔮 Predicciones para tu Nuevo Año</h2>
+    <div class="interpretacion">
+        <p>Tu revolución solar marca el inicio de un nuevo ciclo anual. Las configuraciones planetarias indican las principales tendencias y oportunidades para los próximos 12 meses.</p>
+    </div>
+</div>
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Resumen de tu Sesión Telefónica</h2>
+    <p><strong>Duración:</strong> 50 minutos</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Carta Astral + Revolución Solar</p>
+    <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+</div>
+
+</body>
+</html>
+        """
+    
+    # SINASTRÍA
+    elif tipo_servicio in ['sinastria_ia', 'sinastria']:
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Sinastría - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>💕 SINASTRÍA ASTROLÓGICA 💕</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Sinastría" class="imagen-especialidad">
+    <h2>{{{{ nombre_persona1 }}}} & {{{{ nombre_persona2 }}}}</h2>
+    <p style="color: #888;">Análisis de compatibilidad</p>
+    <p style="color: #888; font-size: 14px;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="datos-natales">
+    <h2>📊 Datos de las Personas</h2>
+    <div style="display: flex; gap: 40px;">
+        <div style="flex: 1;">
+            <h3>👤 Persona 1: {{{{ nombre_persona1 }}}}</h3>
+            <p><span class="dato">Fecha:</span> {{{{ fecha_persona1 }}}}</p>
+            <p><span class="dato">Hora:</span> {{{{ hora_persona1 }}}}</p>
+            <p><span class="dato">Lugar:</span> {{{{ lugar_persona1 }}}}</p>
+        </div>
+        <div style="flex: 1;">
+            <h3>👤 Persona 2: {{{{ nombre_persona2 }}}}</h3>
+            <p><span class="dato">Fecha:</span> {{{{ fecha_persona2 }}}}</p>
+            <p><span class="dato">Hora:</span> {{{{ hora_persona2 }}}}</p>
+            <p><span class="dato">Lugar:</span> {{{{ lugar_persona2 }}}}</p>
         </div>
     </div>
+    <p><span class="dato">Email de contacto:</span> {{{{ email }}}}</p>
+</div>
+
+{{% if sinastria_img %}}
+<div class="seccion">
+    <h2>💞 Carta de Sinastría</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ sinastria_img }}}}" alt="Carta de sinastría">
+        <p>Aspectos planetarios entre ambas cartas natales</p>
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>💝 Análisis de Compatibilidad</h2>
+    <div class="interpretacion">
+        <p>La sinastría analiza cómo interactúan vuestras energías astrológicas, revelando fortalezas, desafíos y el potencial de vuestra relación.</p>
+    </div>
+</div>
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Resumen de tu Sesión Telefónica</h2>
+    <p><strong>Duración:</strong> 30 minutos</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Sinastría Astrológica</p>
+    <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+</div>
+
 </body>
-</html>"""
-        
-        # Preparar datos para template
+</html>
+        """
+    
+    # ASTROLOGÍA HORARIA
+    elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Astrología Horaria - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>⏰ ASTROLOGÍA HORARIA ⏰</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Horaria" class="imagen-especialidad">
+    <h2>{{{{ nombre }}}}</h2>
+    <p style="color: #888;">Respuestas a tu pregunta</p>
+    <p style="color: #888; font-size: 14px;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="datos-natales">
+    <h2>❓ Datos de la Consulta</h2>
+    <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
+    <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+    <p><span class="dato">Fecha de la pregunta:</span> {{{{ fecha_pregunta }}}}</p>
+    <p><span class="dato">Hora de la pregunta:</span> {{{{ hora_pregunta }}}}</p>
+    <p><span class="dato">Lugar de la pregunta:</span> {{{{ lugar_pregunta }}}}</p>
+    <div class="interpretacion">
+        <p><strong>Tu pregunta:</strong> {{{{ pregunta }}}}</p>
+    </div>
+</div>
+
+{{% if carta_horaria_img %}}
+<div class="seccion">
+    <h2>🎯 Carta Horaria</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ carta_horaria_img }}}}" alt="Carta horaria">
+        <p>Mapa astrológico del momento de tu pregunta</p>
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>🔮 Respuesta Astrológica</h2>
+    <div class="interpretacion">
+        <p>La astrología horaria utiliza el momento exacto en que formulas tu pregunta para encontrar respuestas en las configuraciones planetarias.</p>
+    </div>
+</div>
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Resumen de tu Sesión Telefónica</h2>
+    <p><strong>Duración:</strong> 15 minutos</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Astrología Horaria</p>
+    <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+</div>
+
+</body>
+</html>
+        """
+    
+    # LECTURA DE MANOS
+    elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Lectura de Manos - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>👋 LECTURA DE MANOS PERSONALIZADA 👋</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Manos" class="imagen-especialidad">
+    <h2>{{{{ nombre }}}}</h2>
+    <p style="color: #888;">Análisis quiromántico</p>
+    <p style="color: #888; font-size: 14px;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="datos-natales">
+    <h2>✋ Datos de la Lectura</h2>
+    <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
+    <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+    <p><span class="dato">Dominancia:</span> {{{{ dominancia or 'No especificada' }}}}</p>
+</div>
+
+{{% if mano_derecha_img %}}
+<div class="seccion">
+    <h2>🤚 Mano Derecha</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ mano_derecha_img }}}}" alt="Mano derecha">
+        <p>Mano derecha - Representa tu futuro y lo que construyes</p>
+    </div>
+</div>
+{{% endif %}}
+
+{{% if mano_izquierda_img %}}
+<div class="seccion">
+    <h2>🤚 Mano Izquierda</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ mano_izquierda_img }}}}" alt="Mano izquierda">
+        <p>Mano izquierda - Representa tu pasado y naturaleza innata</p>
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>🔍 Análisis Quiromántico</h2>
+    <div class="interpretacion">
+        <p>La lectura de manos revela aspectos de tu personalidad, talentos naturales, y tendencias de vida a través de las líneas, montes y formas de tus palmas.</p>
+    </div>
+</div>
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Resumen de tu Sesión Telefónica</h2>
+    <p><strong>Duración:</strong> 30 minutos</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Lectura de Manos (Quiromancia)</p>
+    <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+</div>
+
+</body>
+</html>
+        """
+    
+    # LECTURA FACIAL
+    elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Lectura Facial - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>😊 LECTURA FACIAL PERSONALIZADA 😊</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Facial" class="imagen-especialidad">
+    <h2>{{{{ nombre }}}}</h2>
+    <p style="color: #888;">Análisis fisiognómico</p>
+    <p style="color: #888; font-size: 14px;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="datos-natales">
+    <h2>👤 Datos de la Lectura</h2>
+    <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
+    <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+</div>
+
+{{% if cara_frente_img %}}
+<div class="seccion">
+    <h2>👤 Vista Frontal</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ cara_frente_img }}}}" alt="Cara frontal">
+        <p>Vista frontal - Análisis de proporciones y simetría</p>
+    </div>
+</div>
+{{% endif %}}
+
+{{% if cara_izquierda_img %}}
+<div class="seccion">
+    <h2>👤 Perfil Izquierdo (45°)</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ cara_izquierda_img }}}}" alt="Perfil izquierdo">
+        <p>Perfil izquierdo - Análisis del lado emocional</p>
+    </div>
+</div>
+{{% endif %}}
+
+{{% if cara_derecha_img %}}
+<div class="seccion">
+    <h2>👤 Perfil Derecho (45°)</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ cara_derecha_img }}}}" alt="Perfil derecho">
+        <p>Perfil derecho - Análisis del lado racional</p>
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>🔍 Análisis Fisiognómico</h2>
+    <div class="interpretacion">
+        <p>La lectura facial estudia las características de tu rostro para revelar rasgos de personalidad, tendencias emocionales y patrones de comportamiento.</p>
+    </div>
+</div>
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Resumen de tu Sesión Telefónica</h2>
+    <p><strong>Duración:</strong> 15 minutos</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Lectura Facial (Fisiognomía)</p>
+    <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
+</div>
+
+</body>
+</html>
+        """
+    
+    # PSICO-COACHING
+    elif tipo_servicio in ['psico_coaching_ia', 'psico_coaching']:
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Psico-Coaching - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>🧠 SESIÓN DE PSICO-COACHING 🧠</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Coaching" class="imagen-especialidad">
+    <h2>{{{{ nombre }}}}</h2>
+    <p style="color: #888;">Desarrollo personal</p>
+    <p style="color: #888; font-size: 14px;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="datos-natales">
+    <h2>👤 Datos del Cliente</h2>
+    <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
+    <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+    <p><span class="dato">Fecha de la sesión:</span> {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="seccion">
+    <h2>🎯 Objetivos de la Sesión</h2>
+    <div class="interpretacion">
+        <p>El psico-coaching combina técnicas psicológicas y de coaching para ayudarte a identificar patrones, superar obstáculos y desarrollar estrategias para tu crecimiento personal.</p>
+    </div>
+</div>
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Resumen de tu Sesión de Coaching</h2>
+    <p><strong>Duración:</strong> 45 minutos</p>
+    <p><strong>Seguimiento disponible:</strong> 3 meses</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>📋 Plan de Acción</h2>
+    <div class="interpretacion">
+        <p>Basándome en nuestra conversación, te recomiendo seguir trabajando en las áreas identificadas y aplicar las estrategias discutidas durante nuestra sesión.</p>
+    </div>
+</div>
+
+<div class="seccion">
+    <h2>🔄 Próximos Pasos</h2>
+    <div class="interpretacion">
+        <p>Recuerda que tienes 3 meses de seguimiento disponible. Puedes contactar nuevamente para continuar trabajando en tu desarrollo personal y resolver cualquier duda que surja.</p>
+    </div>
+</div>
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Sesión de Psico-Coaching</p>
+    <p><strong>Generado por:</strong> AS Cartastral - Servicios de Desarrollo Personal</p>
+</div>
+
+</body>
+</html>
+        """
+    
+    # GRAFOLOGÍA
+    elif tipo_servicio in ['grafologia_ia', 'grafologia']:
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Análisis Grafológico - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>✍️ ANÁLISIS GRAFOLÓGICO PERSONALIZADO ✍️</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Grafología" class="imagen-especialidad">
+    <h2>{{{{ nombre }}}}</h2>
+    <p style="color: #888;">Análisis de personalidad</p>
+    <p style="color: #888; font-size: 14px;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="datos-natales">
+    <h2>📝 Datos del Análisis</h2>
+    <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
+    <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+    <p><span class="dato">Muestra analizada:</span> Escritura manuscrita</p>
+    <p><span class="dato">Confianza del análisis:</span> {{{{ confianza }}}}%</p>
+</div>
+
+{{% if muestra_escritura_img %}}
+<div class="seccion">
+    <h2>✍️ Tu Muestra de Escritura</h2>
+    <div class="carta-img">
+        <img src="file://{{{{ muestra_escritura_img }}}}" alt="Muestra de escritura">
+        <p>Muestra de escritura analizada para el informe</p>
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>🔍 Análisis de Personalidad</h2>
+    <div class="interpretacion">
+        <p>Tu escritura revela aspectos fascinantes de tu personalidad. Cada trazo, inclinación y presión nos habla de características únicas de tu forma de ser.</p>
+    </div>
+</div>
+
+{{% if puntuaciones %}}
+<div class="seccion">
+    <h2>📊 Perfil Grafológico</h2>
+    {{% for dimension, datos in puntuaciones.items() %}}
+    <div class="datos-natales" style="margin: 15px 0;">
+        <h3>{{{{ dimension|title }}}}: {{{{ (datos.score * 100)|round }}}}%</h3>
+        <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+            <div style="background: #2c5aa0; height: 100%; width: {{{{ (datos.score * 100)|round }}}}%; border-radius: 10px;"></div>
+        </div>
+        <ul style="margin-top: 10px;">
+            {{% for texto in datos.textos %}}
+            <li>{{{{ texto }}}}</li>
+            {{% endfor %}}
+        </ul>
+    </div>
+    {{% endfor %}}
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>🎯 Características Principales</h2>
+    <div class="interpretacion">
+        <p><strong>Sociabilidad:</strong> Tu forma de relacionarte con otros se refleja en el espaciado y márgenes de tu escritura.</p>
+        <p><strong>Autocontrol:</strong> La regularidad de tu trazo indica tu nivel de autodominio emocional.</p>
+        <p><strong>Energía:</strong> La presión de tu escritura revela tu vitalidad y determinación.</p>
+        <p><strong>Organización:</strong> La estructura de tu texto muestra tu capacidad organizativa.</p>
+    </div>
+</div>
+
+{{% if medidas_tecnicas %}}
+<div class="seccion">
+    <h2>📏 Medidas Técnicas</h2>
+    <div class="datos-natales">
+        <p><span class="dato">Inclinación:</span> {{{{ medidas_tecnicas.inclinacion_grados }}}}°</p>
+        <p><span class="dato">Presión del trazo:</span> {{{{ medidas_tecnicas.contraste_med }}}} puntos</p>
+        <p><span class="dato">Grosor promedio:</span> {{{{ medidas_tecnicas.grosor_trazo_px }}}} píxeles</p>
+        <p><span class="dato">Regularidad:</span> {{{{ medidas_tecnicas.regularidad_tamano }}}} puntos</p>
+    </div>
+</div>
+{{% endif %}}
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Resumen de tu Sesión Telefónica</h2>
+    <p><strong>Duración:</strong> 30 minutos</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="seccion">
+    <h2>✨ Recomendaciones</h2>
+    <div class="interpretacion">
+        <p>Basándome en tu análisis grafológico, te recomiendo trabajar en potenciar tus fortalezas naturales y ser consciente de las áreas donde puedes desarrollarte más.</p>
+        <p>Recuerda que la grafología es una herramienta de autoconocimiento que te ayuda a comprender mejor tu personalidad y patrones de comportamiento.</p>
+    </div>
+</div>
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Análisis Grafológico Personalizado</p>
+    <p><strong>Generado por:</strong> AS Cartastral - Servicios de Análisis de Personalidad</p>
+</div>
+
+</body>
+</html>
+        """
+    
+    # EXTENSIONES MEDIO TIEMPO (sin portada)
+    elif tipo_servicio.endswith('_half'):
+        # Determinar el tipo base
+        tipo_base = tipo_servicio.replace('_half', '')
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Extensión de Sesión - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="seccion">
+    <h2>🔄 Extensión de Sesión</h2>
+    <p><strong>Continuación de tu análisis</strong></p>
+    <p style="color: #888;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>📞 Contenido de la Extensión</h2>
+    <p><strong>Duración adicional:</strong> 20 minutos</p>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Tipo de análisis:</strong> Extensión de sesión</p>
+    <p><strong>Generado por:</strong> AS Cartastral</p>
+</div>
+
+</body>
+</html>
+        """
+    
+    # Template por defecto
+    else:
+        return f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe Personalizado - AS Cartastral</title>
+    {estilos_comunes}
+</head>
+<body>
+
+<div class="portada">
+    <img src="file://{dir_base}/static/logo.JPG" alt="AS Cartastral" class="logo-portada">
+    <h1>INFORME PERSONALIZADO</h1>
+    <img src="file://{dir_base}/static/{imagen_servicio}" alt="Servicio" class="imagen-especialidad">
+    <h2>{{{{ nombre }}}}</h2>
+    <p style="color: #888;">Generado el {{{{ fecha_generacion }}}}</p>
+</div>
+
+<div class="datos-natales">
+    <h2>Datos del Cliente</h2>
+    <p><span class="dato">Nombre:</span> {{{{ nombre }}}}</p>
+    <p><span class="dato">Email:</span> {{{{ email }}}}</p>
+</div>
+
+{{% if resumen_sesion %}}
+<div class="resumen-sesion">
+    <h2>Resumen de tu Sesión</h2>
+    <div style="margin-top: 15px;">
+        {{{{ resumen_sesion }}}}
+    </div>
+</div>
+{{% endif %}}
+
+<div class="footer">
+    <p><strong>Fecha de generación:</strong> {{{{ fecha_generacion }}}} a las {{{{ hora_generacion }}}}</p>
+    <p><strong>Generado por:</strong> AS Cartastral</p>
+</div>
+
+</body>
+</html>
+        """
+
+def generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=None, datos_interpretacion=None):
+    """Generar informe HTML personalizado según el tipo de servicio"""
+    try:
+        # Obtener fecha y hora de generación
         zona = pytz.timezone('Europe/Madrid')
         ahora = datetime.now(zona)
+        fecha_generacion = ahora.strftime("%d/%m/%Y")
+        hora_generacion = ahora.strftime("%H:%M:%S")
         
+        # Preparar datos base
         datos_template = {
             'nombre': datos_cliente.get('nombre', 'Cliente'),
             'email': datos_cliente.get('email', ''),
-            'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
-            'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
-            'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
-            'fecha_generacion': ahora.strftime("%d/%m/%Y"),
-            'hora_generacion': ahora.strftime("%H:%M:%S"),
+            'fecha_generacion': fecha_generacion,
+            'hora_generacion': hora_generacion,
             'resumen_sesion': resumen_sesion
         }
         
-        # Añadir datos de aspectos si están disponibles
-        for key in ['imagenes_base64', 'aspectos_natales', 'aspectos_progresiones', 'aspectos_transitos', 'posiciones_natales', 'estadisticas']:
-            if key in archivos_unicos:
-                datos_template[key] = archivos_unicos[key]
+        # Datos específicos según tipo de servicio
+        if tipo_servicio in ['carta_astral_ia', 'carta_natal']:
+            # Función para convertir grados decimales a sexagesimales
+            def decimal_a_sexagesimal(grado_decimal):
+                grados = int(grado_decimal)
+                minutos = int((grado_decimal - grados) * 60)
+                return f"{grados}°{minutos:02d}'"
+            
+            # Función para calcular signo
+            def grado_a_signo(grado_abs):
+                signos = ['Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo', 
+                         'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis']
+                grado_norm = grado_abs % 360
+                idx = int(grado_norm / 30)
+                grado_en_signo = grado_norm % 30
+                return signos[idx], grado_en_signo
+            
+            # Inicializar variables
+            planetas_dict = {}
+            aspectos_natales = []
+            retrogrados_natales = []
+            aspectos_progresados = []
+            planetas_progresados = {}
+            retrogrados_progresados = []
+            aspectos_transitos = []
+            planetas_transitos = {}
+            retrogrados_transitos = []
+            
+            # DATOS NATALES
+            if datos_interpretacion and 'carta_natal' in datos_interpretacion:
+                posiciones = datos_interpretacion['carta_natal'].get('posiciones', {})
+                aspectos_natales = datos_interpretacion['carta_natal'].get('aspectos', [])
+                
+                for planeta, datos_planeta in posiciones.items():
+                    if 'grado' in datos_planeta:
+                        grado_abs = datos_planeta['grado']
+                        signo, grado_en_signo = grado_a_signo(grado_abs)
+                        planetas_dict[planeta] = {
+                            'degree': decimal_a_sexagesimal(grado_en_signo),
+                            'sign': signo,
+                            'retrogrado': datos_planeta.get('retrogrado', False)
+                        }
+                        if datos_planeta.get('retrogrado'):
+                            retrogrados_natales.append(planeta)
+            
+            # PROGRESIONES
+            planetas_progresados = {}
+            retrogrados_progresados = []
+            if datos_interpretacion and 'progresiones' in datos_interpretacion:
+                aspectos_progresados = datos_interpretacion['progresiones'].get('aspectos', [])
+                pos_prog = datos_interpretacion['progresiones'].get('posiciones_progresadas', {})
+                
+                for planeta, datos_planeta in pos_prog.items():
+                    if 'grado' in datos_planeta:
+                        grado_abs = datos_planeta['grado']
+                        signo, grado_en_signo = grado_a_signo(grado_abs)
+                        planetas_progresados[planeta] = {
+                            'degree': decimal_a_sexagesimal(grado_en_signo),
+                            'sign': signo,
+                            'retrogrado': datos_planeta.get('retrogrado', False)
+                        }
+                        if datos_planeta.get('retrogrado'):
+                            retrogrados_progresados.append(planeta)
+                            
+            datos_template.update({
+                'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
+                'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
+                'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
+                'pais_nacimiento': datos_cliente.get('pais_nacimiento', 'España'),
+                'planetas': planetas_dict,
+                'aspectos_natales': aspectos_natales,
+                'retrogrados_natales': retrogrados_natales,
+                'aspectos_progresados': aspectos_progresados,
+                'planetas_progresados': planetas_progresados,  # AÑADIR ESTA LÍNEA
+                'retrogrados_progresados': retrogrados_progresados,  # AÑADIR ESTA LÍNEA
+                'aspectos_transitos': aspectos_transitos,
+                'planetas_transitos': planetas_transitos,  # AÑADIR ESTA LÍNEA
+                'retrogrados_transitos': retrogrados_transitos,  # AÑADIR ESTA LÍNEA
+                'carta_natal_img': os.path.abspath(archivos_unicos.get('carta_natal_img', '')) if archivos_unicos.get('carta_natal_img') else None,
+                'progresiones_img': os.path.abspath(archivos_unicos.get('progresiones_img', '')) if archivos_unicos.get('progresiones_img') else None,
+                'transitos_img': os.path.abspath(archivos_unicos.get('transitos_img', '')) if archivos_unicos.get('transitos_img') else None
+            })
+            
+            # TRÁNSITOS
+            planetas_transitos = {}
+            retrogrados_transitos = []
+            if datos_interpretacion and 'transitos' in datos_interpretacion:
+                aspectos_transitos = datos_interpretacion['transitos'].get('aspectos', [])
+                pos_trans = datos_interpretacion['transitos'].get('posiciones_transito', {})
+                
+                for planeta, datos_planeta in pos_trans.items():
+                    if 'grado' in datos_planeta:
+                        grado_abs = datos_planeta['grado']
+                        signo, grado_en_signo = grado_a_signo(grado_abs)
+                        planetas_transitos[planeta] = {
+                            'degree': decimal_a_sexagesimal(grado_en_signo),
+                            'sign': signo,
+                            'retrogrado': datos_planeta.get('retrogrado', False)
+                        }
+                        if datos_planeta.get('retrogrado'):
+                            retrogrados_transitos.append(planeta)
+            
+            datos_template.update({
+                'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
+                'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
+                'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
+                'pais_nacimiento': datos_cliente.get('pais_nacimiento', 'España'),
+                'planetas': planetas_dict,
+                'aspectos_natales': aspectos_natales,
+                'retrogrados_natales': retrogrados_natales,
+                'aspectos_progresados': aspectos_progresados,
+                'planetas_progresados': planetas_progresados,  # AÑADIR ESTA LÍNEA
+                'retrogrados_progresados': retrogrados_progresados,  # AÑADIR ESTA LÍNEA
+                'aspectos_transitos': aspectos_transitos,
+                'planetas_transitos': planetas_transitos,  # AÑADIR ESTA LÍNEA
+                'retrogrados_transitos': retrogrados_transitos,  # AÑADIR ESTA LÍNEA
+                'carta_natal_img': os.path.abspath(archivos_unicos.get('carta_natal_img', '')) if archivos_unicos.get('carta_natal_img') else None,
+                'progresiones_img': os.path.abspath(archivos_unicos.get('progresiones_img', '')) if archivos_unicos.get('progresiones_img') else None,
+                'transitos_img': os.path.abspath(archivos_unicos.get('transitos_img', '')) if archivos_unicos.get('transitos_img') else None
+            })
+            
+        elif tipo_servicio in ['revolucion_solar_ia', 'revolucion_solar']:
+            datos_template.update({
+                'fecha_nacimiento': datos_cliente.get('fecha_nacimiento', ''),
+                'hora_nacimiento': datos_cliente.get('hora_nacimiento', ''),
+                'lugar_nacimiento': datos_cliente.get('lugar_nacimiento', ''),
+                'pais_nacimiento': datos_cliente.get('pais_nacimiento', 'España'),
+                'carta_natal_img': archivos_unicos.get('carta_natal_img'),
+                'revolucion_img': archivos_unicos.get('revolucion_img'),
+                'revolucion_natal_img': archivos_unicos.get('revolucion_natal_img'),
+                'progresiones_img': archivos_unicos.get('progresiones_img'),
+                'transitos_img': archivos_unicos.get('transitos_img')
+            })
+            
+        elif tipo_servicio in ['sinastria_ia', 'sinastria']:
+            datos_template.update({
+                'nombre_persona1': datos_cliente.get('nombre_persona1', 'Persona 1'),
+                'nombre_persona2': datos_cliente.get('nombre_persona2', 'Persona 2'),
+                'fecha_persona1': datos_cliente.get('fecha_persona1', ''),
+                'hora_persona1': datos_cliente.get('hora_persona1', ''),
+                'lugar_persona1': datos_cliente.get('lugar_persona1', ''),
+                'fecha_persona2': datos_cliente.get('fecha_persona2', ''),
+                'hora_persona2': datos_cliente.get('hora_persona2', ''),
+                'lugar_persona2': datos_cliente.get('lugar_persona2', ''),
+                'sinastria_img': archivos_unicos.get('sinastria_img')
+            })
+            
+        elif tipo_servicio in ['astrologia_horaria_ia', 'astrol_horaria']:
+            datos_template.update({
+                'fecha_pregunta': datos_cliente.get('fecha_pregunta', ''),
+                'hora_pregunta': datos_cliente.get('hora_pregunta', ''),
+                'lugar_pregunta': datos_cliente.get('lugar_pregunta', ''),
+                'pregunta': datos_cliente.get('pregunta', ''),
+                'carta_horaria_img': archivos_unicos.get('carta_horaria_img')
+            })
+            
+        elif tipo_servicio in ['lectura_manos_ia', 'lectura_manos']:
+            datos_template.update({
+                'dominancia': datos_cliente.get('dominancia', ''),
+                'mano_derecha_img': archivos_unicos.get('mano_derecha_img'),
+                'mano_izquierda_img': archivos_unicos.get('mano_izquierda_img')
+            })
+            
+        elif tipo_servicio in ['lectura_facial_ia', 'lectura_facial']:
+            datos_template.update({
+                'cara_frente_img': archivos_unicos.get('cara_frente_img'),
+                'cara_izquierda_img': archivos_unicos.get('cara_izquierda_img'),
+                'cara_derecha_img': archivos_unicos.get('cara_derecha_img')
+            })
+            
+        elif tipo_servicio in ['grafologia_ia', 'grafologia']:
+            datos_template.update({
+                'confianza': archivos_unicos.get('confianza', 50),
+                'muestra_escritura_img': archivos_unicos.get('muestra_escritura_img'),
+                'puntuaciones': archivos_unicos.get('puntuaciones', {}),
+                'medidas_tecnicas': archivos_unicos.get('medidas_tecnicas', {})
+            })
+        
+        # Obtener template HTML
+        template_html = obtener_template_html(tipo_servicio)
         
         # Renderizar template
         template = Template(template_html)
         html_content = template.render(**datos_template)
         
-        # Guardar archivo HTML
-        archivo_html = archivos_unicos.get('informe_html', f"templates/informe_{tipo_servicio}_temp.html")
+        # Generar nombre de archivo único
+        nombre_base = generar_nombre_archivo_unico(tipo_servicio, datos_cliente.get('codigo_servicio', ''))
+        archivo_html = f"templates/informe_{nombre_base}.html"
+        
+        # Crear directorio si no existe
         os.makedirs('templates', exist_ok=True)
         
+        # Guardar archivo HTML
         with open(archivo_html, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        print(f"✅ HTML generado: {archivo_html}")
+        print(f"✅ Informe HTML generado: {archivo_html}")
         return archivo_html
         
     except Exception as e:
-        print(f"❌ Error generando HTML: {e}")
-        traceback.print_exc()
-        return None
-
-def convertir_html_a_pdf(archivo_html, archivo_pdf):
-    """Convertir HTML a PDF usando Playwright"""
-    try:
-        print(f"🔄 Convirtiendo HTML a PDF: {archivo_html} -> {archivo_pdf}")
-        
-        directorio_pdf = os.path.dirname(archivo_pdf)
-        if directorio_pdf and not os.path.exists(directorio_pdf):
-            os.makedirs(directorio_pdf)
-        
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            
-            with open(archivo_html, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            page.set_content(html_content)
-            page.wait_for_load_state('networkidle')
-            
-            page.pdf(
-                path=archivo_pdf,
-                format='A4',
-                margin={'top': '1cm', 'right': '1cm', 'bottom': '1cm', 'left': '1cm'},
-                print_background=True,
-                prefer_css_page_size=True
-            )
-            
-            browser.close()
-        
-        if os.path.exists(archivo_pdf):
-            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
-            print(f"✅ PDF generado: {archivo_pdf} ({tamaño_kb:.1f} KB)")
-            return True
-        else:
-            print(f"❌ PDF no se creó: {archivo_pdf}")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Error convirtiendo a PDF: {e}")
-        traceback.print_exc()
-        return False
-
-# =======================================================================
-# FUNCIONES LEGACY REQUERIDAS POR OTROS ARCHIVOS
-# =======================================================================
-
-def generar_y_enviar_informe_desde_agente(datos_cliente, tipo_servicio, resumen_sesion="", archivos_cartas=None):
-    """Función actualizada para agentes"""
-    return generar_pdf_completo_optimizado(datos_cliente, tipo_servicio, resumen_sesion)
-
-def procesar_y_enviar_informe(datos_cliente, tipo_servicio, datos_astrales=None, resumen_sesion=""):
-    """Función actualizada para main.py"""
-    return generar_pdf_completo_optimizado(datos_cliente, tipo_servicio, resumen_sesion)
-
-def generar_informe_completo(datos_cliente, tipo_servicio, datos_astrales=None, resumen_sesion=""):
-    """Función wrapper para compatibilidad"""
-    return procesar_y_enviar_informe(datos_cliente, tipo_servicio, datos_astrales, resumen_sesion)
-
-def crear_archivos_unicos_testing(tipo_servicio, timestamp=None):
-    """Crear estructura de archivos para testing"""
-    if not timestamp:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    
-    return {
-        'timestamp': timestamp,
-        'informe_html': f"templates/informe_{tipo_servicio}_{timestamp}.html",
-        'informe_pdf': f"informes/informe_{tipo_servicio}_{timestamp}.pdf",
-        'es_producto_m': False,
-        'duracion_minutos': 40,
-        'imagenes_base64': {}
-    }
-
-def obtener_ruta_imagen_absoluta(nombre_imagen):
-    """Función legacy para compatibilidad"""
-    ruta = f"./img/{nombre_imagen}"
-    if os.path.exists(ruta):
-        return os.path.abspath(ruta)
-    else:
-        return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y0ZjRmNCIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbiBubyBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg=="
-
-def obtener_portada_con_logo(tipo_servicio, nombre):
-    """Función legacy para compatibilidad"""
-    return f"""
-    <div style="text-align: center; padding: 30px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 10px; margin-bottom: 30px;">
-        <h1 style="margin: 0; font-size: 2.5em;">AS Cartastral</h1>
-        <h2 style="margin: 10px 0;">{tipo_servicio.replace('_', ' ').title()}</h2>
-        <h3 style="margin: 0;">Para {nombre}</h3>
-    </div>
-    """
-
-def enviar_informe_por_email(datos_cliente, archivo_pdf, tipo_servicio):
-    """Función placeholder para envío de email"""
-    try:
-        if os.path.exists(archivo_pdf):
-            return {
-                'success': True,
-                'mensaje': f'Informe {tipo_servicio} preparado para envío',
-                'email': datos_cliente.get('email', ''),
-                'archivo': archivo_pdf
-            }
-        else:
-            return {
-                'success': False,
-                'error': 'Archivo PDF no encontrado'
-            }
-    except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
-
-# Funciones adicionales que podrían ser necesarias
-def obtener_template_html(tipo_servicio):
-    """Obtener template HTML básico"""
-    return "<!-- Template HTML básico -->"
-
-def generar_solo_pdf(datos_cliente, especialidad, client_id=None):
-    """Función actualizada para usar sistema optimizado"""
-    return generar_pdf_completo_optimizado(datos_cliente, especialidad, "Informe astrológico completo")
-        
-# =======================================================================
-# 1. CORREGIR crear_archivos_unicos_testing en informes.py
-# =======================================================================
-
-# REEMPLAZAR en informes.py:
-def crear_archivos_unicos_testing(tipo_servicio, timestamp=None):
-    """Crear estructura de archivos para testing - CORREGIDO"""
-    if not timestamp:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    
-    return {
-        'timestamp': timestamp,
-        'informe_html': f"templates/informe_{tipo_servicio}_{timestamp}.html",
-        'informe_pdf': f"informes/informe_{tipo_servicio}_{timestamp}.pdf",
-        'es_producto_m': False,
-        'duracion_minutos': 40,
-        'imagenes_base64': {}
-    }
-
-# =======================================================================
-# 2. CONVERTIR HTML A PDF OPTIMIZADO PARA BASE64
-# =======================================================================
-
-# REEMPLAZAR en informes.py:
-def convertir_html_a_pdf(archivo_html, archivo_pdf):
-    """Convertir HTML a PDF - VERSIÓN OPTIMIZADA PARA BASE64"""
-    try:
-        print(f"🔄 Convirtiendo HTML a PDF optimizado: {archivo_html} -> {archivo_pdf}")
-        
-        directorio_pdf = os.path.dirname(archivo_pdf)
-        if directorio_pdf and not os.path.exists(directorio_pdf):
-            os.makedirs(directorio_pdf)
-        
-        # Leer HTML
-        with open(archivo_html, 'r', encoding='utf-8') as f:
-            html_content = f.read()
-        
-        # OPTIMIZACIÓN: Reducir calidad de imágenes base64 si son muy grandes
-        if len(html_content) > 5000000:  # Si HTML > 5MB
-            print("⚠️ HTML muy grande, optimizando imágenes...")
-            # Buscar y reemplazar imágenes base64 muy grandes
-            import re
-            pattern = r'data:image/png;base64,([A-Za-z0-9+/=]{50000,})'
-            matches = re.findall(pattern, html_content)
-            print(f"🔍 Encontradas {len(matches)} imágenes grandes")
-            
-            # Por ahora, continuar con el HTML original
-            # En el futuro podríamos comprimir las imágenes aquí
-        
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    '--no-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu',
-                    '--memory-pressure-off',
-                    '--max_old_space_size=4096'
-                ]
-            )
-            
-            page = browser.new_page()
-            
-            # Configurar timeouts más largos para contenido pesado
-            page.set_default_timeout(60000)  # 60 segundos
-            
-            # Cargar HTML con configuración optimizada
-            page.set_content(html_content, wait_until='domcontentloaded')
-            
-            # Esperar que las imágenes base64 se procesen
-            try:
-                page.wait_for_load_state('networkidle', timeout=30000)
-            except:
-                print("⚠️ Timeout esperando networkidle, continuando...")
-            
-            # Generar PDF con configuración optimizada
-            page.pdf(
-                path=archivo_pdf,
-                format='A4',
-                margin={
-                    'top': '1cm',
-                    'right': '1cm', 
-                    'bottom': '1cm',
-                    'left': '1cm'
-                },
-                print_background=True,
-                prefer_css_page_size=True,
-                # Optimizaciones adicionales
-                scale=0.8,  # Reducir escala para contenido más compacto
-            )
-            
-            browser.close()
-        
-        if os.path.exists(archivo_pdf):
-            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
-            print(f"✅ PDF generado optimizado: {archivo_pdf} ({tamaño_kb:.1f} KB)")
-            return True
-        else:
-            print(f"❌ PDF no se creó: {archivo_pdf}")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Error convirtiendo HTML a PDF optimizado: {e}")
+        print(f"❌ Error generando informe HTML: {e}")
         import traceback
         traceback.print_exc()
-        return False
-        
-# =======================================================================
-# 1. GENERAR CARTAS OPTIMIZADAS (TAMAÑO REDUCIDO)
-# =======================================================================
-
-def generar_cartas_astrales_optimizadas(datos_natales):
-    """
-    Generar cartas astrales con tamaño optimizado y archivos temporales
-    """
-    try:
-        print("🔧 Generando cartas astrales OPTIMIZADAS...")
-        
-        # Extraer datos
-        fecha_str = datos_natales.get('fecha_nacimiento', '')
-        hora_str = datos_natales.get('hora_nacimiento', '')
-        lugar_nacimiento = datos_natales.get('lugar_nacimiento', '')
-        
-        if '/' in fecha_str and ':' in hora_str:
-            dia, mes, año = map(int, fecha_str.split('/'))
-            hora, minuto = map(int, hora_str.split(':'))
-            fecha_natal = (año, mes, dia, hora, minuto)
-        else:
-            raise ValueError("Formato fecha/hora incorrecto")
-        
-        coordenadas_ciudades = {
-            'Madrid': (40.42, -3.70),
-            'Barcelona': (41.39, 2.16),
-            'Valencia': (39.47, -0.38),
-        }
-        
-        lugar_coords = coordenadas_ciudades.get('Madrid', (40.42, -3.70))
-        ciudad_nombre = 'Madrid, España'
-        for ciudad, coords in coordenadas_ciudades.items():
-            if ciudad.lower() in lugar_nacimiento.lower():
-                lugar_coords = coords
-                ciudad_nombre = f"{ciudad}, España"
-                break
-        
-        # Crear directorio temporal para esta sesión
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        temp_dir = f"temp_cartas_{timestamp}"
-        os.makedirs(temp_dir, exist_ok=True)
-        
-        archivos_cartas = {}
-        datos_aspectos = {}
-        
-        # =====================================
-        # 1. CARTA NATAL OPTIMIZADA
-        # =====================================
-        print("📊 Generando Carta Natal optimizada...")
-        try:
-            from carta_natal import CartaAstralNatal
-            import matplotlib.pyplot as plt
-            
-            # TAMAÑO OPTIMIZADO: 12x12 en lugar de 16x14
-            carta_natal = CartaAstralNatal(figsize=(12, 12))
-            
-            aspectos_natal, posiciones_natal = carta_natal.crear_carta_astral_natal(
-                fecha_natal=fecha_natal,
-                lugar_natal=lugar_coords,
-                ciudad_natal=ciudad_nombre,
-                guardar_archivo=True,  # Guardar como archivo
-                directorio_salida=temp_dir
-            )
-            
-            # Buscar el archivo generado
-            import glob
-            archivos_png = glob.glob(f"{temp_dir}/*natal*.png")
-            if not archivos_png:
-                archivos_png = glob.glob(f"{temp_dir}/*.png")
-            
-            if archivos_png:
-                archivo_carta_natal = archivos_png[0]
-                # Renombrar para consistencia
-                archivo_final = f"{temp_dir}/carta_natal_{timestamp}.png"
-                shutil.move(archivo_carta_natal, archivo_final)
-                archivos_cartas['carta_natal'] = archivo_final
-            
-            datos_aspectos['natal'] = {
-                'aspectos': aspectos_natal,
-                'posiciones': posiciones_natal
-            }
-            
-            plt.close('all')  # Cerrar todas las figuras
-            gc.collect()      # Limpiar memoria
-            
-            print(f"✅ Carta natal: {len(aspectos_natal)} aspectos, archivo: {archivos_cartas.get('carta_natal', 'No generado')}")
-            
-        except Exception as e:
-            print(f"⚠️ Error en carta natal: {e}")
-            datos_aspectos['natal'] = {'aspectos': [], 'posiciones': {}}
-        
-        # =====================================
-        # 2. PROGRESIONES OPTIMIZADAS
-        # =====================================
-        print("📈 Generando Progresiones optimizadas...")
-        try:
-            from progresiones import CartaProgresiones
-            from datetime import datetime as dt
-            
-            # TAMAÑO OPTIMIZADO
-            carta_prog = CartaProgresiones(figsize=(12, 12))
-            hoy = dt.now()
-            edad_actual = (hoy.year - año) + (hoy.month - mes) / 12.0
-            
-            aspectos_prog, pos_natales, pos_prog, _, _ = carta_prog.crear_carta_progresiones(
-                fecha_nacimiento=fecha_natal,
-                edad_consulta=edad_actual,
-                lugar_nacimiento=lugar_coords,
-                lugar_actual=lugar_coords,
-                ciudad_nacimiento=ciudad_nombre,
-                ciudad_actual=ciudad_nombre,
-                guardar_archivo=True,
-                directorio_salida=temp_dir
-            )
-            
-            # Buscar archivo de progresiones
-            archivos_prog = glob.glob(f"{temp_dir}/*progres*.png")
-            if archivos_prog:
-                archivo_final = f"{temp_dir}/progresiones_{timestamp}.png"
-                shutil.move(archivos_prog[0], archivo_final)
-                archivos_cartas['progresiones'] = archivo_final
-            
-            datos_aspectos['progresiones'] = {
-                'aspectos': aspectos_prog,
-                'posiciones_natales': pos_natales,
-                'posiciones_progresadas': pos_prog
-            }
-            
-            plt.close('all')
-            gc.collect()
-            
-            print(f"✅ Progresiones: {len(aspectos_prog)} aspectos, archivo: {archivos_cartas.get('progresiones', 'No generado')}")
-            
-        except Exception as e:
-            print(f"⚠️ Error en progresiones: {e}")
-            datos_aspectos['progresiones'] = {'aspectos': []}
-        
-        # =====================================
-        # 3. TRÁNSITOS OPTIMIZADOS
-        # =====================================
-        print("🔄 Generando Tránsitos optimizados...")
-        try:
-            from transitos import CartaTransitos
-            from datetime import datetime as dt
-            
-            # TAMAÑO OPTIMIZADO
-            carta_trans = CartaTransitos(figsize=(12, 12))
-            hoy = dt.now()
-            fecha_consulta = (hoy.year, hoy.month, hoy.day, hoy.hour, hoy.minute)
-            
-            resultado = carta_trans.crear_carta_transitos(
-                fecha_nacimiento=fecha_natal,
-                fecha_transito=fecha_consulta,
-                lugar_nacimiento=lugar_coords,
-                guardar_archivo=True,
-                directorio_salida=temp_dir
-            )
-            
-            if resultado and len(resultado) >= 3:
-                aspectos_trans, pos_natales, pos_transitos = resultado[:3]
-                
-                # Buscar archivo de tránsitos
-                archivos_trans = glob.glob(f"{temp_dir}/*transit*.png")
-                if not archivos_trans:
-                    archivos_trans = glob.glob(f"{temp_dir}/*{timestamp[-6:]}*.png")  # Buscar por timestamp
-                
-                if archivos_trans:
-                    archivo_final = f"{temp_dir}/transitos_{timestamp}.png"
-                    shutil.move(archivos_trans[-1], archivo_final)  # Último archivo generado
-                    archivos_cartas['transitos'] = archivo_final
-                
-                datos_aspectos['transitos'] = {
-                    'aspectos': aspectos_trans,
-                    'posiciones_natales': pos_natales,
-                    'posiciones_transitos': pos_transitos
-                }
-                
-                print(f"✅ Tránsitos: {len(aspectos_trans)} aspectos, archivo: {archivos_cartas.get('transitos', 'No generado')}")
-            else:
-                raise Exception("Resultado de tránsitos vacío")
-                
-            plt.close('all')
-            gc.collect()
-                
-        except Exception as e:
-            print(f"⚠️ Error en tránsitos: {e}")
-            datos_aspectos['transitos'] = {'aspectos': []}
-        
-        # =====================================
-        # COMPILAR DATOS COMPLETOS
-        # =====================================
-        aspectos_natales = datos_aspectos['natal']['aspectos']
-        posiciones_natales = datos_aspectos['natal']['posiciones']
-        aspectos_progresiones = datos_aspectos['progresiones']['aspectos']
-        aspectos_transitos = datos_aspectos['transitos']['aspectos']
-        
-        estadisticas = {
-            'total_aspectos_natal': len(aspectos_natales),
-            'total_aspectos_progresiones': len(aspectos_progresiones),
-            'total_aspectos_transitos': len(aspectos_transitos)
-        }
-        
-        datos_completos = {
-            # Datos principales
-            'aspectos_natales': aspectos_natales,
-            'posiciones_natales': posiciones_natales,
-            'aspectos_progresiones': aspectos_progresiones,
-            'aspectos_transitos': aspectos_transitos,
-            'estadisticas': estadisticas,
-            
-            # Archivos de cartas
-            'archivos_cartas': archivos_cartas,
-            'temp_dir': temp_dir,
-            
-            # Metadatos
-            'timestamp': timestamp,
-            'metodo': 'archivos_temporales_optimizados',
-            'datos_originales': datos_natales
-        }
-        
-        print("✅ Cartas astrales OPTIMIZADAS generadas como archivos temporales")
-        print(f"📁 Directorio temporal: {temp_dir}")
-        print(f"📊 Archivos generados: {list(archivos_cartas.keys())}")
-        
-        return True, datos_completos
-        
-    except Exception as e:
-        print(f"❌ Error en cartas optimizadas: {e}")
-        traceback.print_exc()
-        return False, None
-
-# =======================================================================
-# 2. GENERAR HTML CON RUTAS DE ARCHIVOS LOCALES
-# =======================================================================
-
-def generar_html_con_archivos_locales(datos_cliente, tipo_servicio, datos_cartas, resumen_sesion=""):
-    """
-    Generar HTML que usa archivos PNG locales (no base64)
-    """
-    try:
-        zona = pytz.timezone('Europe/Madrid')
-        ahora = datetime.now(zona)
-        timestamp = datos_cartas.get('timestamp', datetime.now().strftime('%Y%m%d_%H%M%S'))
-        archivos_cartas = datos_cartas.get('archivos_cartas', {})
-        
-        # Template HTML con rutas de archivos
-        template_html = f"""<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{datos_cliente.get('nombre', 'Cliente')} - Informe Astrológico - AS Cartastral</title>
-    <style>
-        body {{
-            font-family: 'Georgia', serif;
-            line-height: 1.6;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-        }}
-        .container {{
-            max-width: 900px;
-            margin: 0 auto;
-        }}
-        .header {{
-            text-align: center;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }}
-        .header h1 {{
-            color: #667eea;
-            font-size: 2.5em;
-            margin: 0;
-        }}
-        .datos-personales {{
-            background: #667eea;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }}
-        .dato {{
-            font-weight: bold;
-            color: #FFD700;
-        }}
-        .carta-section {{
-            margin: 40px 0;
-            page-break-inside: avoid;
-        }}
-        .carta-section h2 {{
-            color: #667eea;
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            text-align: center;
-        }}
-        .carta-imagen {{
-            text-align: center;
-            margin: 20px 0;
-        }}
-        .carta-imagen img {{
-            max-width: 100%;
-            height: auto;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-        }}
-        .aspectos-section {{
-            background: #f8f9ff;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #667eea;
-        }}
-        .aspectos-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
-        }}
-        .aspecto-item {{
-            background: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid #e0e6ed;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }}
-        .aspecto-planetas {{
-            font-weight: 500;
-            color: #333;
-            flex: 1;
-        }}
-        .aspecto-orbe {{
-            font-size: 0.85em;
-            color: #666;
-            background: #f0f2f5;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }}
-        .estadisticas {{
-            background: #e8f5e8;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-        }}
-        .footer {{
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #667eea;
-            color: #666;
-        }}
-        @media print {{
-            body {{ margin: 0; }}
-            .container {{ max-width: none; }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🌟 Informe Astrológico Completo 🌟</h1>
-            <h2>AS Cartastral - Análisis Personalizado</h2>
-        </div>
-
-        <div class="datos-personales">
-            <h3>📋 Datos Personales</h3>
-            <p><span class="dato">Nombre:</span> {datos_cliente.get('nombre', 'Cliente')}</p>
-            <p><span class="dato">Email:</span> {datos_cliente.get('email', '')}</p>
-            <p><span class="dato">Fecha de nacimiento:</span> {datos_cliente.get('fecha_nacimiento', '')}</p>
-            <p><span class="dato">Hora de nacimiento:</span> {datos_cliente.get('hora_nacimiento', '')}</p>
-            <p><span class="dato">Lugar de nacimiento:</span> {datos_cliente.get('lugar_nacimiento', '')}</p>
-        </div>
-"""
-        
-        # CARTA NATAL
-        aspectos_natales = datos_cartas.get('aspectos_natales', [])
-        if 'carta_natal' in archivos_cartas:
-            template_html += f"""
-        <div class="carta-section">
-            <h2>🌅 Tu Carta Natal</h2>
-            <div class="carta-imagen">
-                <img src="{archivos_cartas['carta_natal']}" alt="Carta Natal">
-            </div>
-            <p>Esta carta astral revela las posiciones planetarias exactas en el momento de tu nacimiento.</p>
-            
-            <div class="aspectos-section">
-                <h3>⭐ Aspectos Natales ({len(aspectos_natales)})</h3>
-                <div class="aspectos-grid">
-"""
-            
-            for aspecto in aspectos_natales[:15]:
-                planeta1 = aspecto.get('planeta1', 'Planeta1')
-                planeta2 = aspecto.get('planeta2', 'Planeta2')
-                tipo_aspecto = aspecto.get('aspecto', 'aspecto')
-                orbe = aspecto.get('orbe', 0)
-                
-                template_html += f"""
-                    <div class="aspecto-item">
-                        <span class="aspecto-planetas">{planeta1} {tipo_aspecto} {planeta2}</span>
-                        <span class="aspecto-orbe">{orbe:.1f}°</span>
-                    </div>
-"""
-            
-            if len(aspectos_natales) > 15:
-                template_html += f"""
-                    <div style="grid-column: 1 / -1; text-align: center; color: #667eea; font-style: italic;">
-                        + {len(aspectos_natales) - 15} aspectos adicionales
-                    </div>
-"""
-            
-            template_html += """
-                </div>
-            </div>
-        </div>
-"""
-        
-        # PROGRESIONES
-        aspectos_progresiones = datos_cartas.get('aspectos_progresiones', [])
-        if 'progresiones' in archivos_cartas:
-            template_html += f"""
-        <div class="carta-section">
-            <h2>📈 Progresiones Secundarias</h2>
-            <div class="carta-imagen">
-                <img src="{archivos_cartas['progresiones']}" alt="Progresiones Secundarias">
-            </div>
-            <p>Las progresiones muestran tu evolución personal interna.</p>
-            
-            <div class="aspectos-section">
-                <h3>🌱 Aspectos de Progresión ({len(aspectos_progresiones)})</h3>
-                <div class="aspectos-grid">
-"""
-            
-            for aspecto in aspectos_progresiones[:12]:
-                planeta_progresion = aspecto.get('planeta_progresion', 'PlanetaProg')
-                planeta_natal = aspecto.get('planeta_natal', 'PlanetaNatal')
-                tipo = aspecto.get('tipo', 'aspecto')
-                orbe = aspecto.get('orbe', 0)
-                
-                template_html += f"""
-                    <div class="aspecto-item">
-                        <span class="aspecto-planetas">{planeta_progresion} {tipo} {planeta_natal}</span>
-                        <span class="aspecto-orbe">{orbe:.1f}°</span>
-                    </div>
-"""
-            
-            template_html += """
-                </div>
-            </div>
-        </div>
-"""
-        
-        # TRÁNSITOS
-        aspectos_transitos = datos_cartas.get('aspectos_transitos', [])
-        if 'transitos' in archivos_cartas:
-            template_html += f"""
-        <div class="carta-section">
-            <h2>🔄 Tránsitos Actuales</h2>
-            <div class="carta-imagen">
-                <img src="{archivos_cartas['transitos']}" alt="Tránsitos Actuales">
-            </div>
-            <p>Los tránsitos planetarios actuales muestran las energías que están influyendo en tu vida ahora.</p>
-            
-            <div class="aspectos-section">
-                <h3>⚡ Aspectos de Tránsito ({len(aspectos_transitos)})</h3>
-                <div class="aspectos-grid">
-"""
-            
-            for aspecto in aspectos_transitos[:12]:
-                planeta_transito = aspecto.get('planeta_transito', 'PlanetaTrans')
-                planeta_natal = aspecto.get('planeta_natal', 'PlanetaNatal')
-                tipo = aspecto.get('tipo', 'aspecto')
-                orbe = aspecto.get('orbe', 0)
-                
-                template_html += f"""
-                    <div class="aspecto-item">
-                        <span class="aspecto-planetas">{planeta_transito} {tipo} {planeta_natal}</span>
-                        <span class="aspecto-orbe">{orbe:.1f}°</span>
-                    </div>
-"""
-            
-            template_html += """
-                </div>
-            </div>
-        </div>
-"""
-        
-        # ESTADÍSTICAS
-        estadisticas = datos_cartas.get('estadisticas', {})
-        template_html += f"""
-        <div class="estadisticas">
-            <h3>📊 Resumen Estadístico</h3>
-            <p><strong>Total de aspectos natales:</strong> {estadisticas.get('total_aspectos_natal', 0)}</p>
-            <p><strong>Total de aspectos de progresión:</strong> {estadisticas.get('total_aspectos_progresiones', 0)}</p>
-            <p><strong>Total de aspectos de tránsito:</strong> {estadisticas.get('total_aspectos_transitos', 0)}</p>
-        </div>
-"""
-        
-        # RESUMEN DE SESIÓN
-        if resumen_sesion:
-            template_html += f"""
-        <div style="background: #f8f9ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-            <h2>📞 Resumen de tu Sesión</h2>
-            <p>{resumen_sesion}</p>
-        </div>
-"""
-        
-        template_html += f"""
-        <div class="footer">
-            <p><strong>Fecha de generación:</strong> {ahora.strftime("%d/%m/%Y")} a las {ahora.strftime("%H:%M:%S")}</p>
-            <p><strong>Generado por:</strong> AS Cartastral - Servicios Astrológicos IA</p>
-        </div>
-    </div>
-</body>
-</html>"""
-        
-        # Guardar HTML
-        archivo_html = f"templates/informe_cartas_{tipo_servicio}_{timestamp}.html"
-        os.makedirs('templates', exist_ok=True)
-        
-        with open(archivo_html, 'w', encoding='utf-8') as f:
-            f.write(template_html)
-        
-        print(f"✅ HTML con archivos locales generado: {archivo_html}")
-        return archivo_html
-        
-    except Exception as e:
-        print(f"❌ Error generando HTML con archivos: {e}")
-        traceback.print_exc()
         return None
-
-# =======================================================================
-# 3. CONVERTIR A PDF CON WKHTMLTOPDF (ALTERNATIVA A PLAYWRIGHT)
-# =======================================================================
-
-def convertir_html_a_pdf_wkhtmltopdf(archivo_html, archivo_pdf):
-    """
-    Convertir HTML a PDF usando wkhtmltopdf (más robusto para imágenes)
-    """
-    try:
-        print(f"🔄 Convirtiendo con wkhtmltopdf: {archivo_html} -> {archivo_pdf}")
-        
-        # Crear directorio de salida
-        directorio_pdf = os.path.dirname(archivo_pdf)
-        if directorio_pdf and not os.path.exists(directorio_pdf):
-            os.makedirs(directorio_pdf)
-        
-        # Comando wkhtmltopdf
-        comando = [
-            'wkhtmltopdf',
-            '--page-size', 'A4',
-            '--margin-top', '1cm',
-            '--margin-right', '1cm',
-            '--margin-bottom', '1cm',
-            '--margin-left', '1cm',
-            '--enable-local-file-access',
-            '--print-media-type',
-            archivo_html,
-            archivo_pdf
-        ]
-        
-        # Ejecutar comando
-        resultado = subprocess.run(comando, capture_output=True, text=True, timeout=60)
-        
-        if resultado.returncode == 0 and os.path.exists(archivo_pdf):
-            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
-            print(f"✅ PDF generado con wkhtmltopdf: {archivo_pdf} ({tamaño_kb:.1f} KB)")
-            return True
-        else:
-            print(f"❌ Error en wkhtmltopdf: {resultado.stderr}")
-            return False
-            
-    except subprocess.TimeoutExpired:
-        print("❌ Timeout en wkhtmltopdf")
-        return False
-    except FileNotFoundError:
-        print("❌ wkhtmltopdf no está instalado, usando Playwright como fallback")
-        return convertir_html_a_pdf_playwright_fallback(archivo_html, archivo_pdf)
-    except Exception as e:
-        print(f"❌ Error en wkhtmltopdf: {e}")
-        return False
-
-def convertir_html_a_pdf_playwright_fallback(archivo_html, archivo_pdf):
-    """
-    Fallback a Playwright si wkhtmltopdf no está disponible
-    """
-    try:
-        from playwright.sync_api import sync_playwright
-        
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            
-            # Leer HTML
-            with open(archivo_html, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            page.set_content(html_content)
-            page.wait_for_load_state('domcontentloaded')
-            
-            page.pdf(
-                path=archivo_pdf,
-                format='A4',
-                margin={'top': '1cm', 'right': '1cm', 'bottom': '1cm', 'left': '1cm'},
-                print_background=True
-            )
-            
-            browser.close()
-        
-        if os.path.exists(archivo_pdf):
-            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
-            print(f"✅ PDF generado con Playwright (fallback): {archivo_pdf} ({tamaño_kb:.1f} KB)")
-            return True
-        else:
-            return False
-            
-    except Exception as e:
-        print(f"❌ Error en Playwright fallback: {e}")
-        return False
-
-# =======================================================================
-# 4. FUNCIÓN PRINCIPAL COMPLETA
-# =======================================================================
-
-def generar_pdf_completo_optimizado(datos_cliente, tipo_servicio, resumen_sesion=""):
-    """
-    Función principal: generar PDF completo con cartas optimizadas
-    """
-    try:
-        print(f"🚀 Generando PDF completo optimizado: {tipo_servicio}")
-        
-        # PASO 1: Generar cartas optimizadas como archivos
-        exito_cartas, datos_cartas = generar_cartas_astrales_optimizadas(datos_cliente)
-        
-        if not exito_cartas or not datos_cartas:
-            return {
-                'success': False,
-                'error': 'No se pudieron generar las cartas astrales'
-            }
-        
-        # PASO 2: Generar HTML con rutas de archivos
-        archivo_html = generar_html_con_archivos_locales(
-            datos_cliente, tipo_servicio, datos_cartas, resumen_sesion
-        )
-        
-        if not archivo_html:
-            return {
-                'success': False,
-                'error': 'No se pudo generar el HTML'
-            }
-        
-        # PASO 3: Convertir a PDF
-        timestamp = datos_cartas.get('timestamp')
-        archivo_pdf = f"informes/informe_completo_{tipo_servicio}_{timestamp}.pdf"
-        
-        # Intentar wkhtmltopdf primero, luego Playwright
-        pdf_success = convertir_html_a_pdf_wkhtmltopdf(archivo_html, archivo_pdf)
-        
-        # PASO 4: Limpiar archivos temporales (opcional - mantener por una semana)
-        temp_dir = datos_cartas.get('temp_dir')
-        if temp_dir and os.path.exists(temp_dir):
-            # Por ahora mantener archivos - se pueden limpiar con cron job
-            print(f"📁 Archivos temporales mantenidos en: {temp_dir}")
-        
-        if pdf_success:
-            return {
-                'success': True,
-                'archivo_html': archivo_html,
-                'archivo_pdf': archivo_pdf,
-                'mensaje': 'PDF completo generado con cartas optimizadas',
-                'aspectos_incluidos': {
-                    'natal': len(datos_cartas.get('aspectos_natales', [])),
-                    'progresiones': len(datos_cartas.get('aspectos_progresiones', [])),
-                    'transitos': len(datos_cartas.get('aspectos_transitos', []))
-                },
-                'metodo': 'cartas_optimizadas_archivos_temporales',
-                'temp_dir': temp_dir,
-                'timestamp': timestamp
-            }
-        else:
-            return {
-                'success': False,
-                'error': 'No se pudo convertir HTML a PDF',
-                'archivo_html': archivo_html,
-                'temp_dir': temp_dir
-            }
-            
-    except Exception as e:
-        print(f"❌ Error en PDF completo optimizado: {e}")
-        traceback.print_exc()
-        return {
-            'success': False,
-            'error': str(e),
-            'traceback': traceback.format_exc()
-        }
-        
-# SOLUCIÓN DEFINITIVA - AÑADIR A informes.py
 
 def convertir_html_a_pdf_weasyprint(archivo_html, archivo_pdf):
     """
@@ -1125,7 +1443,6 @@ def convertir_html_a_pdf_weasyprint(archivo_html, archivo_pdf):
     WeasyPrint maneja mejor las imágenes base64 grandes
     """
     try:
-        import subprocess
         import os
         
         print(f"📄 Convirtiendo con WeasyPrint: {archivo_html} -> {archivo_pdf}")
@@ -1135,16 +1452,11 @@ def convertir_html_a_pdf_weasyprint(archivo_html, archivo_pdf):
         if directorio_pdf and not os.path.exists(directorio_pdf):
             os.makedirs(directorio_pdf)
         
-        # Instalar weasyprint si no está disponible
-        try:
-            import weasyprint
-        except ImportError:
-            print("📦 Instalando WeasyPrint...")
-            subprocess.run(['pip', 'install', 'weasyprint'], check=True)
-            import weasyprint
+        # Import explícito para evitar conflictos con ReportLab
+        from weasyprint import HTML as WeasyHTML
         
         # Convertir HTML a PDF
-        weasyprint.HTML(filename=archivo_html).write_pdf(archivo_pdf)
+        WeasyHTML(filename=archivo_html).write_pdf(archivo_pdf)
         
         if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
             tamaño_kb = os.path.getsize(archivo_pdf) / 1024
@@ -1155,1214 +1467,241 @@ def convertir_html_a_pdf_weasyprint(archivo_html, archivo_pdf):
             
     except Exception as e:
         print(f"❌ Error en WeasyPrint: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
-def convertir_html_a_pdf_reportlab_fallback(archivo_html, archivo_pdf):
-    """
-    Fallback usando ReportLab - generar PDF simple con datos textuales
-    """
+def enviar_informe_por_email(email_cliente, archivo_pdf, tipo_servicio, nombre_cliente="Cliente"):
+    """Enviar informe por email"""
     try:
-        import subprocess
+        # Configuración email
+        email_sender = os.getenv("EMAIL_SENDER")
+        email_password = os.getenv("EMAIL_PASSWORD")
         
-        # Instalar reportlab si no está disponible
-        try:
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import A4
-        except ImportError:
-            print("📦 Instalando ReportLab...")
-            subprocess.run(['pip', 'install', 'reportlab'], check=True)
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import A4
+        if not email_sender or not email_password:
+            print("❌ Credenciales de email no configuradas")
+            return False
         
-        # Leer HTML y extraer texto importante
-        with open(archivo_html, 'r', encoding='utf-8') as f:
-            html_content = f.read()
+        # Determinar nombre del servicio
+        nombres_servicios = {
+            'carta_astral_ia': 'Carta Astral',
+            'carta_natal': 'Carta Astral',
+            'revolucion_solar_ia': 'Carta Astral + Revolución Solar',
+            'revolucion_solar': 'Carta Astral + Revolución Solar',
+            'sinastria_ia': 'Sinastría Astrológica',
+            'sinastria': 'Sinastría Astrológica',
+            'astrologia_horaria_ia': 'Astrología Horaria',
+            'astrol_horaria': 'Astrología Horaria',
+            'lectura_manos_ia': 'Lectura de Manos',
+            'lectura_manos': 'Lectura de Manos',
+            'lectura_facial_ia': 'Lectura Facial',
+            'lectura_facial': 'Lectura Facial',
+            'psico_coaching_ia': 'Psico-Coaching',
+            'psico_coaching': 'Psico-Coaching',
+            'grafologia_ia': 'Análisis Grafológico',
+            'grafologia': 'Análisis Grafológico'
+        }
         
-        # Crear PDF simple con ReportLab
-        c = canvas.Canvas(archivo_pdf, pagesize=A4)
-        width, height = A4
+        nombre_servicio = nombres_servicios.get(tipo_servicio, 'Informe Personalizado')
         
-        # Título
-        c.setFont("Helvetica-Bold", 16)
-        c.drawString(50, height - 50, "INFORME CARTA ASTRAL")
+        # Crear mensaje
+        msg = MIMEMultipart()
+        msg['From'] = email_sender
+        msg['To'] = email_cliente
+        msg['Subject'] = f"Tu informe de {nombre_servicio} - AS Cartastral"
         
-        # Contenido básico
-        c.setFont("Helvetica", 12)
-        y_position = height - 100
+        # Cuerpo del email
+        cuerpo = f"""
+Estimado/a {nombre_cliente},
+
+Te enviamos tu informe personalizado de {nombre_servicio} que has solicitado.
+
+Este informe contiene:
+✨ Análisis detallado basado en tu sesión telefónica
+📊 Gráficos e imágenes personalizadas 
+📝 Resumen completo de todo lo tratado durante la consulta
+🔮 Interpretaciones y recomendaciones específicas para ti
+
+Fecha de generación: {datetime.now(pytz.timezone('Europe/Madrid')).strftime('%d/%m/%Y %H:%M')}
+
+Esperamos que este análisis te sea de gran utilidad para tu crecimiento personal.
+
+Si tienes alguna duda sobre tu informe, no dudes en contactarnos.
+
+Saludos cordiales,
+Equipo AS Cartastral
+📧 Email: {email_sender}
+🌐 Web: AS Cartastral - Servicios Astrológicos Personalizados
+
+---
+Nota: Este informe es confidencial y está destinado únicamente para el uso personal del destinatario.
+        """
         
-        lines = [
-            "Informe astrológico completo generado",
-            "Incluye aspectos natales, progresiones y tránsitos",
-            "Para visualización completa, contacte con AS Cartastral"
-        ]
+        msg.attach(MIMEText(cuerpo, 'plain'))
         
-        for line in lines:
-            c.drawString(50, y_position, line)
-            y_position -= 20
-        
-        c.save()
-        
+        # Adjuntar archivo
         if os.path.exists(archivo_pdf):
-            print(f"✅ PDF básico generado con ReportLab: {archivo_pdf}")
-            return True
-        return False
-        
-    except Exception as e:
-        print(f"❌ Error en ReportLab: {e}")
-        return False
-
-# REEMPLAZAR la función principal de conversión en informes.py
-def convertir_html_a_pdf(archivo_html, archivo_pdf):
-    """
-    Función principal de conversión - Múltiples métodos con fallbacks
-    """
-    try:
-        print(f"🔄 Iniciando conversión PDF: {archivo_html} -> {archivo_pdf}")
-        
-        # MÉTODO 1: WeasyPrint (mejor para imágenes base64)
-        if convertir_html_a_pdf_weasyprint(archivo_html, archivo_pdf):
-            return True
-            
-        # MÉTODO 2: Playwright optimizado (si WeasyPrint falla)
-        if convertir_html_a_pdf_playwright_optimizado(archivo_html, archivo_pdf):
-            return True
-            
-        # MÉTODO 3: ReportLab simple (si todo falla)
-        print("⚠️ Fallback a PDF básico con ReportLab...")
-        if convertir_html_a_pdf_reportlab_fallback(archivo_html, archivo_pdf):
-            return True
-            
-        return False
-        
-    except Exception as e:
-        print(f"❌ Error crítico en conversión PDF: {e}")
-        return False
-
-def convertir_html_a_pdf_playwright_optimizado(archivo_html, archivo_pdf):
-    """
-    Playwright optimizado específicamente para Railway
-    """
-    try:
-        from playwright.sync_api import sync_playwright
-        import os
-        
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox', 
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu',
-                    '--disable-extensions',
-                    '--disable-background-timer-throttling',
-                    '--disable-backgrounding-occluded-windows',
-                    '--disable-renderer-backgrounding',
-                    '--memory-pressure-off',
-                    '--max_old_space_size=2048'
-                ]
-            )
-            
-            page = browser.new_page()
-            
-            # Leer HTML
-            with open(archivo_html, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            # Si el HTML es muy grande, reducir imágenes
-            if len(html_content) > 3000000:  # 3MB
-                print("⚠️ HTML muy grande, usando versión optimizada...")
-                # Reemplazar imágenes base64 con placeholders
-                import re
-                html_content = re.sub(
-                    r'data:image/png;base64,[A-Za-z0-9+/=]+',
-                    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y0ZjRmNCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5DQVJUQSBBU1RSQUw8L3RleHQ+PC9zdmc+',
-                    html_content
+            with open(archivo_pdf, "rb") as attachment:
+                part = MIMEBase('application', 'octet-stream')
+                part.set_payload(attachment.read())
+                encoders.encode_base64(part)
+                
+                # Generar nombre de archivo para el email
+                timestamp = datetime.now().strftime('%Y%m%d')
+                prefijo = generar_nombre_archivo_unico(tipo_servicio, '').split('_')[0]
+                nombre_archivo = f"Informe_{nombre_servicio.replace(' ', '_')}_{timestamp}.pdf"
+                
+                part.add_header(
+                    'Content-Disposition',
+                    f'attachment; filename= {nombre_archivo}'
                 )
-            
-            page.set_content(html_content, wait_until='domcontentloaded')
-            
-            # Configurar página para PDF
-            page.pdf(
-                path=archivo_pdf,
-                format='A4',
-                margin={'top': '1cm', 'right': '1cm', 'bottom': '1cm', 'left': '1cm'},
-                print_background=True,
-                prefer_css_page_size=True
-            )
-            
-            browser.close()
+                msg.attach(part)
         
-        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
-            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
-            print(f"✅ PDF generado con Playwright optimizado: {archivo_pdf} ({tamaño_kb:.1f} KB)")
-            return True
-        return False
+        # Enviar email
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(email_sender, email_password)
+        text = msg.as_string()
+        server.sendmail(email_sender, email_cliente, text)
+        server.quit()
         
-    except Exception as e:
-        print(f"❌ Error en Playwright optimizado: {e}")
-        return False
-        
-# SOLUCIÓN ESPECÍFICA PARA RAILWAY - AÑADIR A informes.py
-
-def instalar_playwright_railway():
-    """
-    Instalar Playwright y browsers específicamente para Railway
-    """
-    try:
-        import subprocess
-        import os
-        
-        print("🔧 Verificando instalación de Playwright en Railway...")
-        
-        # Verificar si Playwright está instalado
-        try:
-            from playwright.sync_api import sync_playwright
-            print("✅ Playwright importado correctamente")
-        except ImportError:
-            print("📦 Instalando Playwright...")
-            subprocess.run(['pip', 'install', 'playwright'], check=True)
-            from playwright.sync_api import sync_playwright
-        
-        # Instalar browsers de Playwright si no están disponibles
-        try:
-            print("🌐 Instalando Chromium para Playwright...")
-            subprocess.run(['playwright', 'install', 'chromium'], check=True)
-            print("✅ Chromium instalado")
-        except Exception as e:
-            print(f"⚠️ No se pudo instalar Chromium automáticamente: {e}")
-            # Intentar instalación alternativa
-            try:
-                subprocess.run(['python', '-m', 'playwright', 'install', 'chromium'], check=True)
-                print("✅ Chromium instalado (método alternativo)")
-            except Exception as e2:
-                print(f"❌ Error instalando Chromium: {e2}")
-                return False
-        
+        print(f"✅ Informe de {nombre_servicio} enviado por email a: {email_cliente}")
         return True
         
     except Exception as e:
-        print(f"❌ Error en instalación Playwright: {e}")
-        return False
-
-def convertir_html_a_pdf_railway_optimizado(archivo_html, archivo_pdf):
-    """
-    Conversión PDF optimizada específicamente para Railway
-    """
-    try:
-        print(f"🚀 Conversión PDF Railway: {archivo_html} -> {archivo_pdf}")
-        
-        # Verificar instalación
-        if not instalar_playwright_railway():
-            print("❌ Playwright no disponible, intentando wkhtmltopdf...")
-            return convertir_html_a_pdf_wkhtmltopdf_railway(archivo_html, archivo_pdf)
-        
-        from playwright.sync_api import sync_playwright
-        import os
-        
-        # Crear directorio
-        directorio_pdf = os.path.dirname(archivo_pdf)
-        if directorio_pdf and not os.path.exists(directorio_pdf):
-            os.makedirs(directorio_pdf)
-        
-        # Configuración específica para Railway
-        browser_args = [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--disable-software-rasterizer',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding',
-            '--disable-features=TranslateUI',
-            '--disable-extensions',
-            '--disable-component-extensions-with-background-pages',
-            '--disable-default-apps',
-            '--mute-audio',
-            '--no-first-run',
-            '--disable-web-security',
-            '--allow-running-insecure-content',
-            '--disable-features=VizDisplayCompositor',
-            '--memory-pressure-off',
-            '--max_old_space_size=4096',
-            '--aggressive-cache-discard'
-        ]
-        
-        with sync_playwright() as p:
-            print("🌐 Lanzando Chromium con configuración Railway...")
-            
-            browser = p.chromium.launch(
-                headless=True,
-                args=browser_args,
-                slow_mo=0,
-                devtools=False
-            )
-            
-            # Configurar contexto con límites de memoria
-            context = browser.new_context(
-                viewport={'width': 1200, 'height': 800},
-                device_scale_factor=1,
-                has_touch=False,
-                is_mobile=False,
-                java_script_enabled=True,
-                user_agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
-            )
-            
-            page = context.new_page()
-            
-            # Configurar timeouts más largos
-            page.set_default_timeout(120000)  # 2 minutos
-            page.set_default_navigation_timeout(120000)
-            
-            print("📄 Cargando HTML...")
-            
-            # Leer HTML
-            with open(archivo_html, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            # Configurar página antes de cargar contenido
-            page.add_init_script("""
-                // Optimizaciones para Railway
-                window.addEventListener('load', () => {
-                    console.log('Página cargada completamente');
-                });
-                
-                // Limpiar console para reducir memoria
-                console.log = () => {};
-                console.warn = () => {};
-                console.error = () => {};
-            """)
-            
-            # Cargar contenido
-            page.set_content(html_content, wait_until='domcontentloaded')
-            
-            print("⏳ Esperando que el contenido se procese...")
-            
-            # Esperar que las imágenes se carguen (con timeout)
-            try:
-                page.wait_for_load_state('networkidle', timeout=60000)
-                print("✅ Imágenes cargadas")
-            except:
-                print("⚠️ Timeout esperando imágenes, continuando...")
-            
-            # Pequeña pausa adicional para asegurar renderizado
-            page.wait_for_timeout(2000)
-            
-            print("📄 Generando PDF...")
-            
-            # Generar PDF con configuración optimizada
-            page.pdf(
-                path=archivo_pdf,
-                format='A4',
-                margin={
-                    'top': '1cm',
-                    'right': '1cm', 
-                    'bottom': '1cm',
-                    'left': '1cm'
-                },
-                print_background=True,
-                prefer_css_page_size=True,
-                display_header_footer=False,
-                scale=1.0
-            )
-            
-            print("🔒 Cerrando browser...")
-            context.close()
-            browser.close()
-        
-        # Verificar resultado
-        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
-            tamaño_mb = os.path.getsize(archivo_pdf) / (1024*1024)
-            print(f"✅ PDF generado exitosamente: {archivo_pdf} ({tamaño_mb:.2f} MB)")
-            return True
-        else:
-            print("❌ PDF no generado correctamente")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Error en Playwright Railway: {e}")
+        print(f"❌ Error enviando email: {e}")
         import traceback
         traceback.print_exc()
-        
-        # Fallback a wkhtmltopdf
-        print("🔄 Intentando fallback con wkhtmltopdf...")
-        return convertir_html_a_pdf_wkhtmltopdf_railway(archivo_html, archivo_pdf)
-
-def convertir_html_a_pdf_wkhtmltopdf_railway(archivo_html, archivo_pdf):
-    """
-    Fallback usando wkhtmltopdf en Railway
-    """
-    try:
-        import subprocess
-        import os
-        
-        print("🔧 Intentando wkhtmltopdf en Railway...")
-        
-        # Verificar si wkhtmltopdf está disponible
-        try:
-            subprocess.run(['wkhtmltopdf', '--version'], capture_output=True, check=True)
-            print("✅ wkhtmltopdf disponible")
-        except:
-            print("❌ wkhtmltopdf no está instalado en Railway")
-            return False
-        
-        # Comando wkhtmltopdf
-        comando = [
-            'wkhtmltopdf',
-            '--page-size', 'A4',
-            '--margin-top', '1cm',
-            '--margin-right', '1cm',
-            '--margin-bottom', '1cm', 
-            '--margin-left', '1cm',
-            '--enable-local-file-access',
-            '--print-media-type',
-            '--load-error-handling', 'ignore',
-            '--load-media-error-handling', 'ignore',
-            '--disable-smart-shrinking',
-            '--zoom', '1.0',
-            archivo_html,
-            archivo_pdf
-        ]
-        
-        # Ejecutar con timeout
-        resultado = subprocess.run(
-            comando, 
-            capture_output=True, 
-            text=True, 
-            timeout=120  # 2 minutos
-        )
-        
-        if resultado.returncode == 0 and os.path.exists(archivo_pdf):
-            tamaño_kb = os.path.getsize(archivo_pdf) / 1024
-            print(f"✅ PDF generado con wkhtmltopdf: {archivo_pdf} ({tamaño_kb:.1f} KB)")
-            return True
-        else:
-            print(f"❌ Error en wkhtmltopdf: {resultado.stderr}")
-            return False
-            
-    except subprocess.TimeoutExpired:
-        print("❌ Timeout en wkhtmltopdf")
-        return False
-    except Exception as e:
-        print(f"❌ Error en wkhtmltopdf: {e}")
         return False
 
-def generar_cartas_tamaño_original(datos_natales):
-    """
-    Generar cartas con el tamaño original que funcionaba antes
-    """
+def procesar_y_enviar_informe(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion=None, datos_interpretacion=None):
+    """Función principal que coordina todo el proceso de generación y envío"""
     try:
-        import os
-        from datetime import datetime
-        from datos_astrales import GraficosAstrales
+        print(f"🎯 Procesando informe {tipo_servicio} para: {datos_cliente.get('email', 'Cliente')}")
         
-        print("🎨 Generando cartas con tamaño original...")
-        
-        # Timestamp único
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        temp_dir = f"temp_cartas_{timestamp}"
-        os.makedirs(temp_dir, exist_ok=True)
-        
-        # Inicializar clase de gráficos
-        graficos = GraficosAstrales()
-        
-        # CONFIGURACIÓN ORIGINAL (la que funcionaba antes)
-        config_original = {
-            'figsize': (14, 12),     # Tamaño que funcionaba antes
-            'dpi': 120,              # DPI balanceado
-            'format': 'png',
-            'bbox_inches': 'tight',
-            'facecolor': 'white',
-            'edgecolor': 'none'
-        }
-        
-        rutas_cartas = {}
-        aspectos_data = {}
-        
-        # 1. CARTA NATAL
-        try:
-            print("🌟 Generando carta natal (tamaño original)...")
-            ruta_natal = os.path.join(temp_dir, f"carta_natal_{timestamp}.png")
-            
-            # Generar carta natal
-            aspectos_natales = graficos.crear_carta_natal_completa(
-                datos_natales, 
-                ruta_natal, 
-                config_original
-            )
-            
-            if os.path.exists(ruta_natal):
-                tamaño_mb = os.path.getsize(ruta_natal) / (1024*1024)
-                print(f"✅ Carta natal: {ruta_natal} ({tamaño_mb:.2f} MB)")
-                rutas_cartas['carta_natal'] = ruta_natal
-                aspectos_data['aspectos_natales'] = aspectos_natales
-                
-        except Exception as e:
-            print(f"❌ Error carta natal: {e}")
-        
-        # 2. PROGRESIONES
-        try:
-            print("📈 Generando progresiones (tamaño original)...")
-            ruta_progresiones = os.path.join(temp_dir, f"progresiones_{timestamp}.png")
-            
-            aspectos_progresiones = graficos.crear_progresiones_completa(
-                datos_natales,
-                ruta_progresiones,
-                config_original
-            )
-            
-            if os.path.exists(ruta_progresiones):
-                tamaño_mb = os.path.getsize(ruta_progresiones) / (1024*1024)
-                print(f"✅ Progresiones: {ruta_progresiones} ({tamaño_mb:.2f} MB)")
-                rutas_cartas['progresiones'] = ruta_progresiones
-                aspectos_data['aspectos_progresiones'] = aspectos_progresiones
-                
-        except Exception as e:
-            print(f"❌ Error progresiones: {e}")
-        
-        # 3. TRÁNSITOS
-        try:
-            print("🔄 Generando tránsitos (tamaño original)...")
-            ruta_transitos = os.path.join(temp_dir, f"transitos_{timestamp}.png")
-            
-            aspectos_transitos = graficos.crear_transitos_completa(
-                datos_natales,
-                ruta_transitos,
-                config_original
-            )
-            
-            if os.path.exists(ruta_transitos):
-                tamaño_mb = os.path.getsize(ruta_transitos) / (1024*1024)
-                print(f"✅ Tránsitos: {ruta_transitos} ({tamaño_mb:.2f} MB)")
-                rutas_cartas['transitos'] = ruta_transitos
-                aspectos_data['aspectos_transitos'] = aspectos_transitos
-                
-        except Exception as e:
-            print(f"❌ Error tránsitos: {e}")
-        
-        # Resultado
-        resultado = {
-            'success': True,
-            'temp_dir': temp_dir,
-            'timestamp': timestamp,
-            'rutas_cartas': rutas_cartas,
-            'total_archivos': len(rutas_cartas),
-            'tamaño_total_mb': sum([
-                os.path.getsize(ruta) / (1024*1024)
-                for ruta in rutas_cartas.values() 
-                if os.path.exists(ruta)
-            ]),
-            **aspectos_data
-        }
-        
-        print(f"✅ Cartas originales generadas: {len(rutas_cartas)} archivos")
-        print(f"📏 Tamaño total: {resultado['tamaño_total_mb']:.2f} MB")
-        
-        return True, resultado
-        
-    except Exception as e:
-        print(f"❌ Error generando cartas originales: {e}")
-        import traceback
-        traceback.print_exc()
-        return False, {'error': str(e)}
+        # 1. Generar HTML
+        # Generar cartas primero si es un servicio astrológico
+        datos_interpretacion = None
+        if tipo_servicio in ['carta_astral_ia', 'revolucion_solar_ia']:
+            from agents.sofia import generar_cartas_astrales_completas
+            exito, datos_interpretacion = generar_cartas_astrales_completas(datos_cliente, archivos_unicos)
+            if not exito:
+                print("⚠️ Error generando cartas, continuando sin datos astrológicos")
 
-# FUNCIÓN PRINCIPAL CON CONFIGURACIÓN RAILWAY
-def generar_pdf_railway_configurado(datos_cliente, tipo_servicio, resumen_sesion=""):
-    """
-    Generar PDF con configuración específica para Railway
-    """
-    try:
-        print(f"🚀 Generando PDF en Railway: {tipo_servicio}")
-        
-        # PASO 1: Generar cartas con tamaño original
-        exito, datos_cartas = generar_cartas_tamaño_original(datos_cliente)
-        
-        if not exito:
-            return {
-                'success': False,
-                'error': 'No se pudieron generar las cartas astrales',
-                'debug': datos_cartas
-            }
-        
-        # PASO 2: Generar HTML con rutas de archivos
-        archivo_html = generar_html_con_rutas_archivos(
-            datos_cliente, tipo_servicio, datos_cartas, resumen_sesion
-        )
-        
+        archivo_html = generar_informe_html(datos_cliente, tipo_servicio, archivos_unicos, resumen_sesion, datos_interpretacion)
         if not archivo_html:
-            return {
-                'success': False,
-                'error': 'No se pudo generar el HTML'
-            }
-        
-        # PASO 3: Convertir a PDF con configuración Railway
-        timestamp = datos_cartas.get('timestamp')
-        archivo_pdf = f"informes/informe_railway_{tipo_servicio}_{timestamp}.pdf"
-        
-        pdf_success = convertir_html_a_pdf_railway_optimizado(archivo_html, archivo_pdf)
-        
-        if pdf_success:
-            return {
-                'success': True,
-                'archivo_html': archivo_html,
-                'archivo_pdf': archivo_pdf,
-                'mensaje': '¡PDF generado exitosamente en Railway!',
-                'aspectos_incluidos': {
-                    'natal': len(datos_cartas.get('aspectos_natales', [])),
-                    'progresiones': len(datos_cartas.get('aspectos_progresiones', [])),
-                    'transitos': len(datos_cartas.get('aspectos_transitos', []))
-                },
-                'metodo': 'railway_optimizado',
-                'temp_dir': datos_cartas.get('temp_dir'),
-                'timestamp': timestamp,
-                'tamaño_cartas_mb': datos_cartas.get('tamaño_total_mb', 0)
-            }
-        else:
-            return {
-                'success': False,
-                'error': 'No se pudo convertir HTML a PDF en Railway',
-                'archivo_html': archivo_html,
-                'temp_dir': datos_cartas.get('temp_dir'),
-                'sugerencia': 'Verificar instalación de Playwright en Railway'
-            }
-            
-    except Exception as e:
-        print(f"❌ Error en PDF Railway: {e}")
-        import traceback
-        traceback.print_exc()
-        return {
-            'success': False,
-            'error': str(e),
-            'traceback': traceback.format_exc()
-        }
-        
-def guardar_imagen_carta_en_static(imagen_data, nombre_archivo):
-    """
-    Guardar imagen de carta en static/img/ (método probado)
-    """
-    try:
-        # Crear directorio static/img si no existe
-        static_dir = os.path.join(os.getcwd(), 'static', 'img', 'cartas')
-        os.makedirs(static_dir, exist_ok=True)
-        
-        # Guardar imagen
-        ruta_completa = os.path.join(static_dir, f"{nombre_archivo}.png")
-        
-        if isinstance(imagen_data, bytes):
-            # Si son bytes directos
-            with open(ruta_completa, 'wb') as f:
-                f.write(imagen_data)
-        else:
-            # Si es una figura de matplotlib
-            imagen_data.savefig(ruta_completa, dpi=120, bbox_inches='tight', 
-                              facecolor='white', format='png')
-        
-        # Devolver ruta relativa para url_for
-        return f"img/cartas/{nombre_archivo}.png"
-        
-    except Exception as e:
-        print(f"Error guardando imagen: {e}")
-        return None
-
-def obtener_url_imagen_publica(nombre_rel):
-    """
-    Obtener URL pública absoluta de imagen (método probado)
-    """
-    try:
-        return url_for('static', filename=nombre_rel, _external=True)
-    except RuntimeError:
-        # Fallback si no hay contexto de request
-        base = os.environ.get('APP_URL', 'https://as-webhooks-production.up.railway.app')
-        return f"{base}/static/{nombre_rel}"
-
-def generar_cartas_en_static(datos_natales):
-    """
-    Usar el sistema que YA funciona - crear_archivos_unicos_testing
-    """
-    try:
-        from datetime import datetime
-        import os
-        import shutil
-        
-        print("Generando cartas con sistema existente...")
-        
-        # PASO 1: Usar la función que YA funciona
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        archivos_sistema = crear_archivos_unicos_testing('carta_astral_ia', timestamp)
-        
-        print(f"DEBUG archivos_sistema: {archivos_sistema}")
-        
-        # PASO 2: Crear directorio static/img/cartas/
-        static_dir = os.path.join('static', 'img', 'cartas')
-        os.makedirs(static_dir, exist_ok=True)
-        
-        # PASO 3: Copiar imágenes existentes a static/
-        cartas_urls = {}
-        
-        # Buscar imágenes en el sistema actual
-        for key, valor in archivos_sistema.items():
-            if key.endswith('_img') and isinstance(valor, str) and os.path.exists(valor):
-                # Copiar a static/img/cartas/
-                nombre_archivo = f"{key.replace('_img', '')}_{timestamp}.png"
-                destino = os.path.join(static_dir, nombre_archivo)
-                
-                try:
-                    shutil.copy2(valor, destino)
-                    # URL pública
-                    cartas_urls[key.replace('_img', '')] = obtener_url_imagen_publica(f"img/cartas/{nombre_archivo}")
-                    print(f"✅ Copiada {key}: {valor} -> {destino}")
-                except Exception as e:
-                    print(f"❌ Error copiando {key}: {e}")
-        
-        # PASO 4: Si no hay imágenes, usar las que existen en static/
-        if not cartas_urls:
-            print("⚠️ No se encontraron imágenes generadas, usando las existentes...")
-            # Buscar imágenes existentes en static/
-            for archivo in os.listdir('static'):
-                if 'carta' in archivo and archivo.endswith('.png'):
-                    if 'natal' in archivo:
-                        cartas_urls['carta_natal'] = obtener_url_imagen_publica(f"{archivo}")
-                    elif 'progresion' in archivo:
-                        cartas_urls['progresiones'] = obtener_url_imagen_publica(f"{archivo}")
-                    elif 'transit' in archivo:
-                        cartas_urls['transitos'] = obtener_url_imagen_publica(f"{archivo}")
-        
-        # PASO 5: Usar aspectos del sistema existente o generar datos de prueba
-        aspectos_data = {
-            'aspectos_natales': archivos_sistema.get('aspectos_natales', [
-                {'planeta1': 'Sol', 'aspecto': 'conjunción', 'planeta2': 'Luna', 'orbe': '1.2°', 'tipo': 'mayor'},
-                {'planeta1': 'Marte', 'aspecto': 'trígono', 'planeta2': 'Júpiter', 'orbe': '2.1°', 'tipo': 'mayor'},
-                {'planeta1': 'Venus', 'aspecto': 'sextil', 'planeta2': 'Mercurio', 'orbe': '0.8°', 'tipo': 'menor'}
-            ]),
-            'aspectos_progresiones': archivos_sistema.get('aspectos_progresiones', [
-                {'planeta1': 'Sol prog', 'aspecto': 'cuadratura', 'planeta2': 'Saturno', 'orbe': '1.5°', 'tipo': 'mayor'},
-                {'planeta1': 'Luna prog', 'aspecto': 'trígono', 'planeta2': 'Venus', 'orbe': '2.3°', 'tipo': 'mayor'}
-            ]),
-            'aspectos_transitos': archivos_sistema.get('aspectos_transitos', [
-                {'planeta1': 'Júpiter tr', 'aspecto': 'sextil', 'planeta2': 'Sol natal', 'orbe': '1.8°', 'tipo': 'mayor'},
-                {'planeta1': 'Saturno tr', 'aspecto': 'oposición', 'planeta2': 'Luna natal', 'orbe': '0.9°', 'tipo': 'mayor'}
-            ])
-        }
-        
-        resultado = {
-            'success': True,
-            'timestamp': timestamp,
-            'cartas_urls': cartas_urls,
-            'total_cartas': len(cartas_urls),
-            **aspectos_data
-        }
-        
-        print(f"✅ Resultado: {len(cartas_urls)} cartas, {len(aspectos_data['aspectos_natales'])} aspectos natales")
-        return True, resultado
-        
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
-        return False, {'error': str(e)}
-
-def generar_html_con_urls_publicas(datos_cliente, tipo_servicio, datos_cartas, resumen_sesion=""):
-    """
-    Generar HTML usando URLs públicas (método probado)
-    """
-    try:
-        from datetime import datetime
-        import pytz
-        from jinja2 import Template
-        
-        print("Generando HTML con URLs públicas...")
-        
-        # Template HTML con base href
-        template_html = '''<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <base href="{{ request.host_url }}">
-    <title>Informe Carta Astral - {{ datos_cliente.nombre }}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 40px;
-            background-color: #f8f9fa;
-            color: #333;
-            line-height: 1.6;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-        .carta-seccion {
-            background: white;
-            margin: 20px 0;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .carta-imagen {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .carta-imagen img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .aspectos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .aspecto-item {
-            background: #f8f9fa;
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            border-left: 3px solid #667eea;
-        }
-        .estadisticas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-box {
-            background: #e3f2fd;
-            padding: 15px;
-            text-align: center;
-            border-radius: 8px;
-        }
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #1976d2;
-        }
-        h2 {
-            color: #444;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🌟 INFORME CARTA ASTRAL COMPLETO</h1>
-        <h2>{{ datos_cliente.nombre }}</h2>
-        <p>{{ datos_cliente.fecha_nacimiento }} • {{ datos_cliente.lugar_nacimiento }}</p>
-        <p>Generado: {{ fecha_generacion }}</p>
-    </div>
-    
-    <!-- CARTA NATAL -->
-    <div class="carta-seccion">
-        <h2>🌅 Carta Natal</h2>
-        {% if cartas_urls.carta_natal %}
-        <div class="carta-imagen">
-            <img src="{{ cartas_urls.carta_natal }}" alt="Carta Natal" loading="lazy">
-        </div>
-        {% endif %}
-        
-        <h3>Aspectos Natales ({{ aspectos_natales|length }})</h3>
-        <div class="aspectos-grid">
-            {% for aspecto in aspectos_natales[:20] %}
-            <div class="aspecto-item">
-                <strong>{{ aspecto.planeta1 }}</strong> {{ aspecto.aspecto }} <strong>{{ aspecto.planeta2 }}</strong>
-                <br><small>Orbe: {{ aspecto.orbe }}° | Tipo: {{ aspecto.tipo }}</small>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- PROGRESIONES -->
-    <div class="carta-seccion">
-        <h2>📈 Progresiones Secundarias</h2>
-        {% if cartas_urls.progresiones %}
-        <div class="carta-imagen">
-            <img src="{{ cartas_urls.progresiones }}" alt="Progresiones" loading="lazy">
-        </div>
-        {% endif %}
-        
-        <h3>Aspectos de Progresión ({{ aspectos_progresiones|length }})</h3>
-        <div class="aspectos-grid">
-            {% for aspecto in aspectos_progresiones[:15] %}
-            <div class="aspecto-item">
-                <strong>{{ aspecto.planeta1 }}</strong> {{ aspecto.aspecto }} <strong>{{ aspecto.planeta2 }}</strong>
-                <br><small>Orbe: {{ aspecto.orbe }}° | Tipo: {{ aspecto.tipo }}</small>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- TRÁNSITOS -->
-    <div class="carta-seccion">
-        <h2>🔄 Tránsitos Actuales</h2>
-        {% if cartas_urls.transitos %}
-        <div class="carta-imagen">
-            <img src="{{ cartas_urls.transitos }}" alt="Tránsitos" loading="lazy">
-        </div>
-        {% endif %}
-        
-        <h3>Aspectos de Tránsito ({{ aspectos_transitos|length }})</h3>
-        <div class="aspectos-grid">
-            {% for aspecto in aspectos_transitos[:15] %}
-            <div class="aspecto-item">
-                <strong>{{ aspecto.planeta1 }}</strong> {{ aspecto.aspecto }} <strong>{{ aspecto.planeta2 }}</strong>
-                <br><small>Orbe: {{ aspecto.orbe }}° | Tipo: {{ aspecto.tipo }}</small>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- ESTADÍSTICAS -->
-    <div class="carta-seccion">
-        <h2>📊 Resumen del Análisis</h2>
-        <div class="estadisticas">
-            <div class="stat-box">
-                <div class="stat-number">{{ aspectos_natales|length }}</div>
-                <div>Aspectos Natales</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ aspectos_progresiones|length }}</div>
-                <div>Progresiones</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ aspectos_transitos|length }}</div>
-                <div>Tránsitos</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-number">{{ total_cartas }}</div>
-                <div>Cartas Generadas</div>
-            </div>
-        </div>
-    </div>
-    
-    <div style="text-align: center; margin-top: 40px; color: #666; font-size: 0.9em;">
-        <p><strong>AS CARTASTRAL</strong> - Astrología Profesional</p>
-        <p>{{ timestamp }}</p>
-    </div>
-</body>
-</html>'''
-        
-        # Datos para el template
-        ahora = datetime.now(pytz.timezone('Europe/Madrid'))
-        
-        datos_template = {
-            'datos_cliente': datos_cliente,
-            'cartas_urls': datos_cartas.get('cartas_urls', {}),
-            'aspectos_natales': datos_cartas.get('aspectos_natales', []),
-            'aspectos_progresiones': datos_cartas.get('aspectos_progresiones', []),
-            'aspectos_transitos': datos_cartas.get('aspectos_transitos', []),
-            'total_cartas': datos_cartas.get('total_cartas', 0),
-            'timestamp': datos_cartas.get('timestamp', ''),
-            'fecha_generacion': ahora.strftime('%d/%m/%Y %H:%M'),
-            'resumen_sesion': resumen_sesion,
-            'request': {'host_url': 'https://as-webhooks-production.up.railway.app/'}
-        }
-        
-        # Renderizar template
-        template = Template(template_html)
-        html_content = template.render(**datos_template)
-        
-        # Guardar archivo HTML
-        timestamp = datos_cartas.get('timestamp', 'temp')
-        archivo_html = f"templates/informe_static_{tipo_servicio}_{timestamp}.html"
-        os.makedirs('templates', exist_ok=True)
-        
-        with open(archivo_html, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        
-        print(f"✅ HTML con URLs públicas generado: {archivo_html}")
-        return archivo_html
-        
-    except Exception as e:
-        print(f"Error generando HTML: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
-
-def generar_pdf_desde_url_publica(url_html_publica, archivo_pdf):
-    """
-    Generar PDF desde URL pública (método probado con Playwright)
-    """
-    try:
-        from playwright.sync_api import sync_playwright
-        
-        print(f"Generando PDF desde URL: {url_html_publica} -> {archivo_pdf}")
-        
-        # Crear directorio
-        directorio_pdf = os.path.dirname(archivo_pdf)
-        if directorio_pdf and not os.path.exists(directorio_pdf):
-            os.makedirs(directorio_pdf)
-        
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
-            )
-            
-            page = browser.new_page(viewport={"width": 1200, "height": 1800})
-            
-            # Navegar a URL pública (método probado)
-            page.goto(url_html_publica, wait_until="networkidle")
-            
-            # Generar PDF
-            page.pdf(
-                path=archivo_pdf,
-                print_background=True,
-                width="210mm",
-                height="297mm",
-                margin={'top': '1cm', 'right': '1cm', 'bottom': '1cm', 'left': '1cm'}
-            )
-            
-            browser.close()
-        
-        if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
-            tamaño_mb = os.path.getsize(archivo_pdf) / (1024*1024)
-            print(f"✅ PDF generado desde URL: {archivo_pdf} ({tamaño_mb:.2f} MB)")
-            return True
-        else:
+            print("❌ Error generando HTML")
             return False
-            
-    except Exception as e:
-        print(f"Error generando PDF desde URL: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-def generar_informe_completo_metodo_probado(datos_cliente, tipo_servicio, resumen_sesion=""):
-    """
-    Función principal usando el método probado con static/img/
-    """
-    try:
-        print(f"🚀 Generando informe método probado: {tipo_servicio}")
         
-        # PASO 1: Generar cartas en static/img/
-        exito, datos_cartas = generar_cartas_en_static(datos_cliente)
+        # 2. Convertir a PDF
+        archivo_pdf = archivo_html.replace('templates/', 'informes/').replace('.html', '.pdf')
+        resultado_pdf = convertir_html_a_pdf_weasyprint(archivo_html, archivo_pdf)
+        if not resultado_pdf:
+            print("❌ Error generando PDF")
+            return False
         
-        if not exito:
-            return {
-                'success': False,
-                'error': 'No se pudieron generar las cartas en static/',
-                'debug': datos_cartas
-            }
+        # Usar el resultado (puede ser PDF o HTML fallback)
+        archivo_final = archivo_pdf if resultado_pdf == True else resultado_pdf
         
-        # PASO 2: Generar HTML con URLs públicas
-        archivo_html = generar_html_con_urls_publicas(
-            datos_cliente, tipo_servicio, datos_cartas, resumen_sesion
-        )
-        
-        if not archivo_html:
-            return {
-                'success': False,
-                'error': 'No se pudo generar el HTML'
-            }
-        
-        # PASO 3: Crear endpoint público para el HTML (se hace en main.py)
-        timestamp = datos_cartas.get('timestamp')
-        url_html_publica = f"https://as-webhooks-production.up.railway.app/preview/informe/{timestamp}"
-        
-        # PASO 4: Generar PDF desde URL pública
-        archivo_pdf = f"informes/informe_metodo_probado_{tipo_servicio}_{timestamp}.pdf"
-        pdf_success = generar_pdf_desde_url_publica(url_html_publica, archivo_pdf)
-        
-        if pdf_success:
-            return {
-                'success': True,
-                'archivo_html': archivo_html,
-                'archivo_pdf': archivo_pdf,
-                'url_html_publica': url_html_publica,
-                'mensaje': '¡PDF generado con método probado!',
-                'aspectos_incluidos': {
-                    'natal': len(datos_cartas.get('aspectos_natales', [])),
-                    'progresiones': len(datos_cartas.get('aspectos_progresiones', [])),
-                    'transitos': len(datos_cartas.get('aspectos_transitos', []))
-                },
-                'cartas_generadas': list(datos_cartas.get('cartas_urls', {}).keys()),
-                'metodo': 'static_img_url_publica',
-                'timestamp': timestamp
-            }
-        else:
-            return {
-                'success': False,
-                'error': 'No se pudo generar PDF desde URL pública',
-                'archivo_html': archivo_html,
-                'url_html_publica': url_html_publica,
-                'debug': 'Verificar que las imágenes se cargan en la URL pública'
-            }
-            
-    except Exception as e:
-        print(f"Error en método probado: {e}")
-        import traceback
-        traceback.print_exc()
-        return {
-            'success': False,
-            'error': str(e),
-            'traceback': traceback.format_exc()
-        }
-        
-def generar_pdf_directo_sin_archivos(datos_cliente, tipo_servicio, resumen_sesion=""):
-    """
-    Generar PDF directamente sin archivos intermedios
-    TODO EN MEMORIA - funciona en Railway
-    """
-    try:
-        from datetime import datetime
-        import os
-        import base64
-        import matplotlib.pyplot as plt
-        import matplotlib
-        matplotlib.use('Agg')
-        import io
-        
-        print("Generando PDF directo en memoria...")
-        
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # PASO 1: Generar cartas EN MEMORIA (no archivos)
-        cartas_base64 = {}
-        
-        # Generar carta natal en memoria
-        fig, ax = plt.subplots(figsize=(10, 10))
-        ax.text(0.5, 0.5, f'CARTA NATAL\n{datos_cliente.get("nombre", "Cliente")}\n{datos_cliente.get("fecha_nacimiento", "")}', 
-                ha='center', va='center', fontsize=16, transform=ax.transAxes)
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.axis('off')
-        
-        # Convertir a base64
-        buffer = io.BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
-        buffer.seek(0)
-        cartas_base64['carta_natal'] = base64.b64encode(buffer.getvalue()).decode()
-        plt.close(fig)
-        
-        # Generar progresiones en memoria
-        fig, ax = plt.subplots(figsize=(10, 10))
-        ax.text(0.5, 0.5, f'PROGRESIONES\n{datos_cliente.get("nombre", "Cliente")}\nEvol. Personal', 
-                ha='center', va='center', fontsize=16, transform=ax.transAxes)
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.axis('off')
-        
-        buffer = io.BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
-        buffer.seek(0)
-        cartas_base64['progresiones'] = base64.b64encode(buffer.getvalue()).decode()
-        plt.close(fig)
-        
-        # Generar tránsitos en memoria
-        fig, ax = plt.subplots(figsize=(10, 10))
-        ax.text(0.5, 0.5, f'TRÁNSITOS\n{datos_cliente.get("nombre", "Cliente")}\nEnergías Actuales', 
-                ha='center', va='center', fontsize=16, transform=ax.transAxes)
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.axis('off')
-        
-        buffer = io.BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
-        buffer.seek(0)
-        cartas_base64['transitos'] = base64.b64encode(buffer.getvalue()).decode()
-        plt.close(fig)
-        
-        # PASO 2: Aspectos reales
-        aspectos_natales = [
-            {'planeta1': 'Sol', 'aspecto': 'conjunción', 'planeta2': 'Luna', 'orbe': '1.2°', 'tipo': 'mayor'},
-            {'planeta1': 'Marte', 'aspecto': 'trígono', 'planeta2': 'Júpiter', 'orbe': '2.1°', 'tipo': 'mayor'},
-            {'planeta1': 'Venus', 'aspecto': 'sextil', 'planeta2': 'Mercurio', 'orbe': '0.8°', 'tipo': 'menor'},
-            {'planeta1': 'Saturno', 'aspecto': 'cuadratura', 'planeta2': 'Plutón', 'orbe': '1.5°', 'tipo': 'mayor'},
-            {'planeta1': 'Urano', 'aspecto': 'oposición', 'planeta2': 'Neptuno', 'orbe': '2.3°', 'tipo': 'mayor'}
-        ]
-        
-        # PASO 3: HTML con imágenes embebidas
-        html_content = f'''<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Informe Carta Astral - {datos_cliente.get("nombre", "Cliente")}</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }}
-        .header {{ background: #667eea; color: white; padding: 20px; text-align: center; border-radius: 10px; }}
-        .seccion {{ margin: 30px 0; padding: 20px; background: white; border-radius: 8px; }}
-        .carta-img {{ text-align: center; margin: 20px 0; }}
-        .carta-img img {{ max-width: 100%; height: auto; border-radius: 8px; }}
-        .aspectos {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }}
-        .aspecto {{ background: #f8f9fa; padding: 10px; border-radius: 5px; }}
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>INFORME CARTA ASTRAL COMPLETO</h1>
-        <h2>{datos_cliente.get("nombre", "Cliente")}</h2>
-        <p>{datos_cliente.get("fecha_nacimiento", "")} • {datos_cliente.get("lugar_nacimiento", "")}</p>
-    </div>
-    
-    <div class="seccion">
-        <h2>🌅 Carta Natal</h2>
-        <div class="carta-img">
-            <img src="data:image/png;base64,{cartas_base64['carta_natal']}" alt="Carta Natal">
-        </div>
-        <h3>Aspectos Natales ({len(aspectos_natales)})</h3>
-        <div class="aspectos">
-            {''.join([f'<div class="aspecto"><strong>{a["planeta1"]}</strong> {a["aspecto"]} <strong>{a["planeta2"]}</strong><br>Orbe: {a["orbe"]} | Tipo: {a["tipo"]}</div>' for a in aspectos_natales])}
-        </div>
-    </div>
-    
-    <div class="seccion">
-        <h2>📈 Progresiones</h2>
-        <div class="carta-img">
-            <img src="data:image/png;base64,{cartas_base64['progresiones']}" alt="Progresiones">
-        </div>
-    </div>
-    
-    <div class="seccion">
-        <h2>🔄 Tránsitos Actuales</h2>
-        <div class="carta-img">
-            <img src="data:image/png;base64,{cartas_base64['transitos']}" alt="Tránsitos">
-        </div>
-    </div>
-    
-    <div style="text-align: center; margin-top: 40px; color: #666;">
-        <p><strong>AS CARTASTRAL</strong> - {timestamp}</p>
-    </div>
-</body>
-</html>'''
-        
-        # PASO 4: Convertir HTML a PDF con WeasyPrint
-        try:
-            import weasyprint
-            
-            archivo_pdf = f"informes/informe_directo_{tipo_servicio}_{timestamp}.pdf"
-            os.makedirs('informes', exist_ok=True)
-            
-            # Convertir desde string HTML (no archivos)
-            html_doc = weasyprint.HTML(string=html_content)
-            html_doc.write_pdf(archivo_pdf)
-            
-            if os.path.exists(archivo_pdf) and os.path.getsize(archivo_pdf) > 1000:
-                return {
-                    'success': True,
-                    'archivo_pdf': archivo_pdf,
-                    'mensaje': 'PDF generado directamente en memoria (Railway compatible)',
-                    'metodo': 'directo_sin_archivos',
-                    'timestamp': timestamp,
-                    'aspectos_incluidos': len(aspectos_natales),
-                    'cartas_incluidas': list(cartas_base64.keys())
-                }
+        # 3. Enviar por email
+        email_cliente = datos_cliente.get('email')
+        if email_cliente:
+            nombre_cliente = datos_cliente.get('nombre', 'Cliente')
+            exito_email = enviar_informe_por_email(email_cliente, archivo_final, tipo_servicio, nombre_cliente)
+            if exito_email:
+                print(f"✅ Proceso completo: Informe {tipo_servicio} enviado a {email_cliente}")
+                return True
             else:
-                return {'success': False, 'error': 'PDF no generado correctamente'}
-                
-        except ImportError:
-            return {'success': False, 'error': 'WeasyPrint no disponible - instalar con pip install weasyprint'}
-        
+                print(f"⚠️ Informe generado pero no enviado: {archivo_final}")
+                return archivo_final
+        else:
+            print(f"⚠️ No hay email del cliente. Informe guardado: {archivo_final}")
+            return archivo_final
+            
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"❌ Error en proceso completo: {e}")
         import traceback
         traceback.print_exc()
-        return {'success': False, 'error': str(e)}
+        return False
+
+# Función de utilidad para llamar desde los agentes
+def generar_y_enviar_informe_desde_agente(data, tipo_servicio, resumen_conversacion=None):
+    """
+    Función simplificada para llamar desde los agentes especialistas
+    
+    Args:
+        data: Datos del webhook que contiene información del cliente
+        tipo_servicio: Tipo de servicio (carta_astral_ia, sinastria_ia, etc.)
+        resumen_conversacion: Resumen de lo hablado en la sesión telefónica
+    """
+    try:
+        # Extraer datos del cliente
+        datos_cliente = {
+            'nombre': data.get('nombre', 'Cliente'),
+            'email': data.get('email', ''),
+            'codigo_servicio': data.get('codigo_servicio', ''),
+            # Datos astrológicos si existen
+            'fecha_nacimiento': data.get('fecha_nacimiento', ''),
+            'hora_nacimiento': data.get('hora_nacimiento', ''),
+            'lugar_nacimiento': data.get('lugar_nacimiento', ''),
+            'pais_nacimiento': data.get('pais_nacimiento', 'España'),
+            'planetas': data.get('planetas', {}),
+            # Datos específicos de sinastría
+            'nombre_persona1': data.get('nombre_persona1', ''),
+            'nombre_persona2': data.get('nombre_persona2', ''),
+            'fecha_persona1': data.get('fecha_persona1', ''),
+            'hora_persona1': data.get('hora_persona1', ''),
+            'lugar_persona1': data.get('lugar_persona1', ''),
+            'fecha_persona2': data.get('fecha_persona2', ''),
+            'hora_persona2': data.get('hora_persona2', ''),
+            'lugar_persona2': data.get('lugar_persona2', ''),
+            # Datos de astrología horaria
+            'fecha_pregunta': data.get('fecha_pregunta', ''),
+            'hora_pregunta': data.get('hora_pregunta', ''),
+            'lugar_pregunta': data.get('lugar_pregunta', ''),
+            'pregunta': data.get('pregunta', ''),
+            # Datos de lectura de manos
+            'dominancia': data.get('dominancia', '')
+        }
+        
+        # Archivos únicos (imágenes generadas)
+        archivos_unicos = data.get('archivos_unicos', {})
+        
+        # Procesar y enviar informe
+        resultado = procesar_y_enviar_informe(
+            datos_cliente, 
+            tipo_servicio, 
+            archivos_unicos, 
+            resumen_conversacion
+        )
+        
+        return resultado
+        
+    except Exception as e:
+        print(f"❌ Error en generar_y_enviar_informe_desde_agente: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+if __name__ == "__main__":
+    # Ejemplo de uso para testing
+    datos_test = {
+        'nombre': 'Albert Test',
+        'email': 'test@example.com',
+        'codigo_servicio': 'AI_123456',
+        'fecha_nacimiento': '15/07/1985',
+        'hora_nacimiento': '08:00',
+        'lugar_nacimiento': 'Barcelona',
+        'pais_nacimiento': 'España'
+    }
+    
+    archivos_test = {
+        'carta_natal_img': 'static/carta_natal_test.png',
+        'progresiones_img': 'static/progresiones_test.png',
+        'transitos_img': 'static/transitos_test.png'
+    }
+    
+    resumen_test = "Durante nuestra sesión de 40 minutos hablamos sobre tu carta astral y las principales influencias planetarias en tu vida."
+    
+    resultado = procesar_y_enviar_informe(datos_test, 'carta_astral_ia', archivos_test, resumen_test)
+    print(f"Resultado del test: {resultado}")

@@ -1,0 +1,69 @@
+def generar_cartas_astrales_completas(datos_natales, archivos_unicos):
+    """Generar cartas astrales completas (natal, progresiones, tránsitos) - CORREGIDO"""
+    try:
+        from carta_natal import CartaAstralNatal
+        
+        # Extraer y parsear datos
+        fecha_str = datos_natales.get('fecha_nacimiento', '')
+        hora_str = datos_natales.get('hora_nacimiento', '')
+        lugar_nacimiento = datos_natales.get('lugar_nacimiento', '')
+        
+        # Parsear fecha DD/MM/YYYY y hora HH:MM
+        if '/' in fecha_str and ':' in hora_str:
+            dia, mes, año = map(int, fecha_str.split('/'))
+            hora, minuto = map(int, hora_str.split(':'))
+            fecha_natal = (año, mes, dia, hora, minuto)
+        else:
+            raise ValueError("Formato fecha/hora incorrecto")
+        
+        # Coordenadas de ciudades
+        coordenadas_ciudades = {
+            'Madrid': (40.42, -3.70),
+            'Barcelona': (41.39, 2.16),
+            'Valencia': (39.47, -0.38),
+            'Sevilla': (37.39, -5.98),
+            'Zaragoza': (41.65, -0.89),
+        }
+        
+        lugar_coords = coordenadas_ciudades.get('Madrid', (40.42, -3.70))
+        for ciudad, coords in coordenadas_ciudades.items():
+            if ciudad.lower() in lugar_nacimiento.lower():
+                lugar_coords = coords
+                break
+        
+        # GENERAR CARTA NATAL (forma CORRECTA)
+        carta = CartaAstralNatal(figsize=(16, 14))
+        carta.nombre_archivo_personalizado = archivos_unicos['carta_natal_img']
+        
+        aspectos_natal, posiciones_natal = carta.crear_carta_astral_natal(
+            fecha_natal=fecha_natal,
+            lugar_natal=lugar_coords,
+            ciudad_natal=lugar_nacimiento,
+            guardar_archivo=True,
+            directorio_salida="static"
+        )
+        
+        # Generar progresiones
+        datos_progresiones = generar_progresiones(datos_natales, archivos_unicos['progresiones_img'])
+        
+        # Generar tránsitos
+        datos_transitos = generar_transitos(datos_natales, archivos_unicos['transitos_img'])
+        
+        # Preparar datos completos
+        datos_completos = {
+            'carta_natal': {
+                'aspectos': aspectos_natal,
+                'posiciones': posiciones_natal
+            },
+            'progresiones': datos_progresiones,
+            'transitos': datos_transitos
+        }
+        
+        print("✅ Cartas astrales generadas correctamente")
+        return True, datos_completos
+        
+    except Exception as e:
+        print(f"❌ Error generando cartas astrales: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, None
