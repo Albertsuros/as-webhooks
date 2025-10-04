@@ -13,11 +13,8 @@ from datetime import datetime, timedelta
 
 # IMPORTACIONES para generar cartas astrales
 from carta_natal import CartaAstralNatal
-
-# Cargar funciones wrapper corregidas
-exec(open('sofia_fixes.py').read())
-generar_progresiones = generar_progresiones_desde_datos_natales  
-generar_transitos = generar_transitos_desde_datos_natales
+from progresiones import generar_progresiones_personalizada as generar_progresiones
+from transitos import generar_transitos_personalizada as generar_transitos
 
 # IMPORTACIONES para revolución solar
 from revolucion_sola import generar_revolucion_solar_sola_personalizada as generar_revolucion_sola
@@ -51,7 +48,6 @@ DURACIONES_SERVICIO = {
     'sinastria_ia': 30,
     'astrologia_horaria_ia': 15,
     'psico_coaching_ia': 45,
-        'grafologia_ia': 30,
     'lectura_manos_ia': 30,
     'lectura_facial_ia': 15,
     'astrologo_humano': 60,
@@ -61,25 +57,9 @@ DURACIONES_SERVICIO = {
     'revolucion_solar_ia_half': 25,
     'sinastria_ia_half': 15,
     'lectura_manos_ia_half': 15,
-    'psico_coaching_ia_half': 20
+    'psico_coaching_ia_half': 20,
+    'grafologia_ia': 30
 }
-
-def manejar_save_lead_sofia(data):
-    """save_lead SOLO para recados/contactos - NO reservas"""
-    # Marcar claramente que es contacto general
-    data['agente'] = 'Sofia - Contacto General'
-    data['notas'] = f"RECADO/CONTACTO: {data.get('notas', '')}"
-    
-    import requests
-    try:
-        response = requests.post(
-            'https://as-webhooks-production.up.railway.app/api/save_lead',
-            json=data,
-            timeout=10
-        )
-        return response.json()
-    except Exception as e:
-        return {"success": False, "error": str(e)}
 
 def verificar_sesion_activa(telefono):
     """Verificar si hay sesión cortada recientemente (últimos 5 minutos)"""
@@ -129,22 +109,22 @@ def manejar_reconexion(sesion_activa, data):
         
         # Transferir directo al especialista
         especialistas = {
-            'carta_astral_ia': 'Rosa',
-            'revolucion_solar_ia': 'Luna', 
-            'sinastria_ia': 'Olga',
-            'astrologia_horaria_ia': 'Oscar',
-            'psico_coaching_ia': 'Marta',
-            'lectura_manos_ia': 'Paloma',
-            'lectura_facial_ia': 'Iris',
-            'grafologia_ia': 'Román'
+            'carta_astral_ia': 'Astolog Carta Astral',
+            'revolucion_solar_ia': 'Astolog Rev. Solar', 
+            'sinastria_ia': 'Astrol Sinastría',
+            'astrologia_horaria_ia': 'Astologia Horaria',
+            'psico_coaching_ia': 'Psico_Coaching',
+            'lectura_manos_ia': 'Lectura Manos',
+            'lectura_facial_ia': 'Lectura Facial',
+            'grafologia_ia': 'Grafologia'
         }
         
         especialista = especialistas.get(sesion_activa['tipo_servicio'])
         
         if especialista:
             return {
-                "type": "function_call",
-                "function": {"type": "assistant", "assistantId": especialista},
+                "type": "transfer_call",
+                "transfer": {"type": "assistant", "assistantName": especialista},
                 "data_extra": {
                     "sesion_activa": sesion_activa,
                     "reconexion_automatica": True
@@ -752,16 +732,35 @@ def calcular_año_revolucion_solar(fecha_nacimiento_str, preferencia_año):
         return datetime.now().year
 
 def generar_cartas_astrales_completas(datos_natales, archivos_unicos):
-    """Generar cartas usando BASE64 - NO filesystem"""
-    exito, datos_completos = generar_cartas_astrales_base64(datos_natales)
-    
-    if exito:
-        # IMPORTANTE: Pasar TODOS los datos a archivos_unicos
-        archivos_unicos.update(datos_completos)
+    """Generar cartas astrales completas (natal, progresiones, tránsitos)"""
+    try:
+        # Generar carta natal
+        carta_natal = CartaAstralNatal(
+            nombre=datos_natales['nombre'],
+            fecha_nacimiento=datos_natales['fecha_nacimiento'],
+            hora_nacimiento=datos_natales['hora_nacimiento'],
+            lugar_nacimiento=datos_natales['lugar_nacimiento'],
+            residencia_actual=datos_natales['residencia_actual']
+        )
+        
+        carta_natal.generar_carta_completa(archivo_salida=archivos_unicos['carta_natal_img'])
+        
+        # Generar progresiones
+        datos_progresiones = generar_progresiones(datos_natales, archivos_unicos['progresiones_img'])
+        
+        # Generar tránsitos
+        datos_transitos = generar_transitos(datos_natales, archivos_unicos['transitos_img'])
+        
+        # Extraer datos para interpretación
+        datos_completos = extraer_datos_para_interpretacion(carta_natal, datos_progresiones, datos_transitos)
+        
+        print("✅ Cartas astrales generadas correctamente")
         return True, datos_completos
-    else:
+        
+    except Exception as e:
+        print(f"❌ Error generando cartas astrales: {e}")
         return False, None
-    
+
 def generar_revoluciones_solares_completas(datos_natales, archivos_unicos, año_revolucion):
     """Generar revolución solar completa (5 cartas)"""
     try:
@@ -887,26 +886,6 @@ def responder_ia_contextual(mensaje, contexto, numero_telefono):
         print(f"Error en respuesta IA: {e}")
         return "¿En qué puedo ayudarte?"
 
-def calcular_tiempo_disponible(codigo_servicio, tipo_servicio):
-    """Calcular tiempo disponible según código y tipo de servicio"""
-    es_medio_tiempo = 'M' in codigo_servicio
-    
-    # SERVICIOS CON OPCIÓN MEDIO TIEMPO (solo 5)
-    servicios_medio_tiempo = ['carta_astral_ia', 'revolucion_solar_ia', 'sinastria_ia', 'lectura_manos_ia', 'psico_coaching_ia']
-    
-    if tipo_servicio in servicios_medio_tiempo and es_medio_tiempo:
-        tiempos_medios = {
-            'carta_astral_ia': 20,
-            'revolucion_solar_ia': 25, 
-            'sinastria_ia': 15,
-            'lectura_manos_ia': 15,
-            'psico_coaching_ia': 20
-        }
-        return tiempos_medios[tipo_servicio], "medio"
-    else:
-        # Tiempo completo según servicio
-        return DURACIONES_SERVICIO.get(tipo_servicio, 30), "completo"
-
 def handle_sofia_webhook(data):
     """Handler principal de Sofía - LIMPIO (sin interferir con WooCommerce)"""
     try:
@@ -1007,24 +986,24 @@ def handle_sofia_webhook(data):
             
             # TRANSFERIR DIRECTAMENTE AL ESPECIALISTA CON DATOS EXISTENTES
             especialistas = {
-                'carta_astral_ia': 'Rosa',
-                'revolucion_solar_ia': 'Luna', 
-                'sinastria_ia': 'Olga',
-                'astrologia_horaria_ia': 'Oscar',
-                'psico_coaching_ia': 'Marta',
-                'lectura_manos_ia': 'Paloma',
-                'lectura_facial_ia': 'Iris',
-                'grafologia_ia': 'Román'
+                'carta_astral_ia': 'Astolog Carta Astral',
+                'revolucion_solar_ia': 'Astolog Rev. Solar', 
+                'sinastria_ia': 'Astrol Sinastría',
+                'astrologia_horaria_ia': 'Astologia Horaria',
+                'psico_coaching_ia': 'Psico_Coaching',
+                'lectura_manos_ia': 'Lectura Manos',
+                'lectura_facial_ia': 'Lectura Facial',
+                'grafologia_ia': 'Grafologia'
             }
             
             especialista = especialistas.get(sesion_activa['tipo_servicio'])
             
             if especialista:
                 return {
-                    "type": "function_call",
-                    "function": {
-                        "name": "Sofi_transfers", 
-                        "arguments": {"destino": especialista}
+                    "type": "transfer_call",
+                    "transfer": {
+                        "type": "assistant", 
+                        "assistantName": especialista
                     },
                     "data_extra": {
                         "sesion_activa": sesion_activa,
@@ -1100,20 +1079,6 @@ def handle_sofia_webhook(data):
                     if exito:
                         # Limpiar sesión
                         sessions.pop(session_id, None)
-                        enviar_telegram_mejora(f"""
-                    🔮 <b>NUEVA CITA - AS CARTASTRAL</b>
-
-                    👤 <b>Cliente:</b> {confirmacion['cliente']}
-                    📧 <b>Email:</b> {confirmacion['email']}
-                    📞 <b>Teléfono:</b> {confirmacion['telefono']}
-                    🔢 <b>Código:</b> {confirmacion['codigo_reserva']}
-                    🎯 <b>Servicio:</b> {confirmacion['servicio']}
-                    📅 <b>Fecha:</b> {confirmacion['fecha']}
-                    ⏰ <b>Horario:</b> {confirmacion['horario']}
-
-                    ✅ <b>Estado:</b> Confirmada automáticamente
-                    🏢 <b>Empresa:</b> AS Cartastral
-                        """)
                         
                         return {"type": "speak", "text": f"¡Perfecto! Tu cita con {confirmacion['servicio']} está confirmada para {confirmacion['fecha']} a las {confirmacion['horario']}. Código de reserva: {confirmacion['codigo_reserva']}. Te enviaremos un recordatorio por email a {datos_cita['email']}. ¡Hasta entonces!"}
                     else:
@@ -1127,10 +1092,6 @@ def handle_sofia_webhook(data):
             
             # Continuar en flujo de agendamiento
             return {"type": "speak", "text": "¿Qué horario prefieres? Dime la hora exacta, por ejemplo: 11:00-12:00"}
-            
-        # NUEVA DETECCIÓN: Reprogramación de citas
-        if detectar_reprogramacion_sofia(mensaje_usuario):
-            return manejar_reprogramacion_sofia(mensaje_usuario, session_id, numero_telefono)
 
         # DETECTAR SI SOLICITA SERVICIO HUMANO QUE SOFIA PUEDE AGENDAR
         servicio_humano_agendable = detectar_servicio_humano_agendable(mensaje_usuario)
@@ -1462,20 +1423,15 @@ def handle_sofia_webhook(data):
                         'datos_cliente': datos_natales
                     }
                 
-                # CALCULAR TIEMPO DISPONIBLE SEGÚN CÓDIGO
-                codigo_servicio = contexto_sesion['codigo_servicio']
-                tiempo_disponible, tipo_codigo = calcular_tiempo_disponible(codigo_servicio, contexto_sesion['tipo_servicio'])
-                
                 # TRANSFERIR AL ESPECIALISTA
                 especialistas = {
-                    'carta_astral_ia': 'asst_78f4bfbd-cf67-46cb-910d-c8f0f8adf3fc',
-                    'revolucion_solar_ia': 'asst_9513ec30-f231-4171-959c-26c8588d248e', 
-                    'sinastria_ia': 'asst_9960b33c-db72-4ebd-ae3e-69ce6f7e6660',
-                    'astrologia_horaria_ia': 'asst_d218cde4-d4e1-4943-8fd9-a1df9404ebd6',
-                    'psico_coaching_ia': 'asst_63a0f9b9-c5d5-4df6-ba6f-52d700b51275',
-                    'lectura_manos_ia': 'asst_8473d3ab-22a7-479c-ae34-427e992023de',
-                    'lectura_facial_ia': 'asst_9cae2faa-2a8e-498b-b8f4-ab7af65bf734',
-                    'grafologia_ia': 'asst_84c67029-8059-4066-a5ae-8532b99fd24c'
+                    'carta_astral_ia': 'Astolog Carta Astral',
+                    'revolucion_solar_ia': 'Astolog Rev. Solar', 
+                    'sinastria_ia': 'Astrol Sinastría',
+                    'astrologia_horaria_ia': 'Astologia Horaria',
+                    'psico_coaching_ia': 'Psico_Coaching',
+                    'lectura_manos_ia': 'Lectura Manos',
+                    'lectura_facial_ia': 'Lectura Facial'
                 }
                 
                 # BUSCAR FOTOS PARA SERVICIOS QUE LAS NECESITAN
@@ -1504,28 +1460,37 @@ def handle_sofia_webhook(data):
                 especialista = especialistas.get(contexto_sesion['tipo_servicio'])
                 
                 if especialista:
-                    # Mensaje de recordatorio según tipo de servicio Y TIEMPO
+                    # Mensaje de recordatorio según tipo de servicio
                     if contexto_sesion['tipo_servicio'] == 'carta_astral_ia':
-                        if tipo_codigo == "medio":
-                            mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga Rosa. Recuerda que tienes {tiempo_disponible} minutos de sesión (código medio). Un momento, por favor."
-                        else:
-                            mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga Rosa. Recuerda que tienes {tiempo_disponible} minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono, y también puedes pedir revolución solar gratis. Un momento, por favor."
+                        mensaje_final = "Perfecto. Te paso ahora con nuestra astróloga especialista. Recuerda que tienes 40 minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono, y también puedes pedir revolución solar gratis. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] == 'revolucion_solar_ia':
-                        mensaje_final = f"Perfecto. Te paso ahora con nuestra astróloga Luna en revolución solar. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
+                        mensaje_final = "Perfecto. Te paso ahora con nuestra astróloga especialista en revolución solar. Recuerda que tienes 50 minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] in ['sinastria_ia', 'lectura_manos_ia']:
-                        mensaje_final = f"Perfecto. Te paso ahora con nuestro especialista. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
+                        duracion = DURACIONES_SERVICIO.get(contexto_sesion['tipo_servicio'], 30)
+                        mensaje_final = f"Perfecto. Te paso ahora con nuestro especialista. Recuerda que tienes {duracion} minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono. Un momento, por favor."
                     elif contexto_sesion['tipo_servicio'] == 'psico_coaching_ia':
-                        mensaje_final = f"Perfecto. Te paso ahora con nuestra coach Marta. Recuerda que tienes {tiempo_disponible} minutos de sesión {'(código medio)' if tipo_codigo == 'medio' else 'y tiempo adicional para seguir la conversación desde este teléfono'}. Un momento, por favor."
+                        mensaje_final = "Perfecto. Te paso ahora con nuestro coach. Recuerda que tienes 45 minutos de sesión y tiempo adicional para seguir la conversación desde este teléfono. Un momento, por favor."
                     else:
-                        mensaje_final = f"Perfecto. Te paso ahora con nuestro especialista. Tienes {tiempo_disponible} minutos de sesión. Un momento, por favor."
+                        mensaje_final = "Perfecto. Te paso ahora con nuestro especialista. Un momento, por favor."
                     
                     # Limpiar sesión temporal
                     sessions.pop(session_id, None)
                     
                     return {
-                        "type": "speak", 
-                        "text": mensaje_final
-}
+                        "type": "transfer_call",
+                        "transfer": {
+                            "type": "assistant",
+                            "assistantName": especialista
+                        },
+                        "data_extra": {
+                            "codigo_servicio": contexto_sesion['codigo_servicio'],
+                            "datos_interpretacion": datos_interpretacion,
+                            "session_id": session_id,
+                            "numero_telefono": numero_telefono,
+                            "sesion_db_id": sesion_id_db if numero_telefono else None
+                        },
+                        "speak_first": mensaje_final
+                    }
                 else:
                     return {"type": "speak", "text": "Servicio configurado correctamente. En breve te contactaremos."}
             else:
