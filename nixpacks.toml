@@ -2,7 +2,7 @@
 nixPkgs = ["python311", "cairo", "pango", "gdk-pixbuf", "libffi", "gobject-introspection"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+dependsOn = ["setup"]
 
 [start]
 cmd = "gunicorn main:app"
