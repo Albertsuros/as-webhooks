@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["python311", "cairo", "pango", "gdk-pixbuf", "libffi", "gobject-introspection"]
-
-[phases.install]
-dependsOn = ["setup"]
-
-[start]
-cmd = "gunicorn main:app"
